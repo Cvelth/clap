@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "gl.hpp"
 
 struct GLFWwindow;
 struct GLFWmonitor;
@@ -68,12 +69,13 @@ namespace engine {
 	private:
 		const detail::glfw_const_video_mode_handle handle;
 	};
-
-	bool load_gl();
+	namespace gl {
+		class state;
+	}
 
 	class glfw {
 		friend glfw_window;
-		friend bool load_gl();
+		friend gl::state;
 	public:
 		static void initialize();
 		static void terminate();
@@ -99,6 +101,10 @@ namespace engine {
 		static glfw_video_mode const primary_monitor_video_mode() {
 			return video_mode(primary_monitor());
 		}
+
+		glfw() = delete;
+		glfw(glfw const &other) = delete;
+		glfw(glfw &&other) = delete;
 
 	protected:
 		static void initialize_implicitly();

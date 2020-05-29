@@ -1,8 +1,7 @@
-#include "gl.hpp"
-#include "error.hpp"
+#include "glfw.hpp"
+#include "../error.hpp"
 
-#include "../dependencies/glad/glad.h"
-#include "../dependencies/glfw/glfw3.h"
+#include "../../dependencies/glfw/glfw3.h"
 
 bool engine::glfw::is_initialized = false;
 bool engine::glfw::is_context_selected = false;
@@ -141,16 +140,3 @@ int engine::glfw_video_mode::red_bits() const { return handle->redBits; }
 int engine::glfw_video_mode::green_bits() const { return handle->greenBits; }
 int engine::glfw_video_mode::blue_bits() const { return handle->blueBits; }
 int engine::glfw_video_mode::refresh_rate() const { return handle->refreshRate; }
-
-bool engine::load_gl() {
-	if (!glfw::is_context_selected) {
-		error::critical("An attempt to load GL before a context was created."
-						" Call 'make_current' on a window handle first.");
-		return false;
-	}
-
-	bool out = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-	if (!out)
-		error::critical("Unable to load GL. 'glad' returns false.");
-	return out;
-}

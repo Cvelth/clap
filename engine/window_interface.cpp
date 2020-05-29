@@ -1,6 +1,7 @@
 #include "window_interface.hpp"
 #include "error.hpp"
-#include "gl.hpp"
+#include "gl/glfw.hpp"
+#include "gl/state.hpp"
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
@@ -23,7 +24,7 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 	}
 
 	handle->make_current();
-	load_gl();
+	gl::state::load();
 }
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode) 

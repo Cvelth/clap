@@ -1,5 +1,6 @@
 #include "window.hpp"
 #include "../dependencies/glad/glad.h"
+#include "../engine/gl/buffer.hpp"
 
 void window::initialize() {
 	glClearColor(0.6f, 0.1f, 0.7f, 1.0f);
@@ -14,13 +15,14 @@ void window::initialize() {
 		0.0f,  1.0f, 0.0f,
 	};
 
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+	using namespace engine::gl;
+
+	buffer::single vertexbuffer;
+
+	vertexbuffer.data(g_vertex_buffer_data, sizeof(g_vertex_buffer_data), buffer::usage::static_draw);
 
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	vertexbuffer.bind();
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
 }
 

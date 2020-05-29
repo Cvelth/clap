@@ -3,11 +3,38 @@
   <ItemGroup>
     <ClCompile Include="window_interface.cpp" />
     <ClCompile Include="error.cpp" />
-    <ClCompile Include="gl.cpp" />
+    <ClCompile Include="gl\gl.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
+    <ClCompile Include="gl\buffer.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
+    <ClCompile Include="gl\glfw.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
+    <ClCompile Include="gl\state.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window_interface.hpp" />
     <ClInclude Include="error.hpp" />
-    <ClInclude Include="gl.hpp" />
+    <ClInclude Include="gl\gl.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="gl\buffer.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="gl\glfw.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="gl\state.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="gl">
+      <UniqueIdentifier>{cbfa1254-3d84-4849-ace8-acab199098c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
