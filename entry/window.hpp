@@ -7,8 +7,6 @@ class window : public engine::window_interface {
 public:
 	using window_interface::window_interface;
 
-	int loop();
-
 protected:
 	virtual void initialize() override;
 	virtual void render() override;

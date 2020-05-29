@@ -69,3 +69,14 @@ size_t engine::window_interface::height() {
 bool engine::window_interface::should_close() {
 	return handle->should_close();
 }
+
+int engine::window_interface::loop() {
+	initialize();
+	while (!should_close()) {
+		render();
+		update();
+	}
+	cleanup();
+
+	return 0;
+}

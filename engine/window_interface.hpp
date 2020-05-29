@@ -24,6 +24,8 @@ namespace engine {
 
 		bool should_close();
 
+		int loop();
+
 	protected:
 		virtual void initialize() = 0;
 		virtual void render() = 0;
