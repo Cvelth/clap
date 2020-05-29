@@ -3,9 +3,6 @@
   <ItemGroup>
     <ClCompile Include="window_interface.cpp" />
     <ClCompile Include="error.cpp" />
-    <ClCompile Include="gl\gl.cpp">
-      <Filter>gl</Filter>
-    </ClCompile>
     <ClCompile Include="gl\buffer.cpp">
       <Filter>gl</Filter>
     </ClCompile>
@@ -19,9 +16,6 @@
   <ItemGroup>
     <ClInclude Include="window_interface.hpp" />
     <ClInclude Include="error.hpp" />
-    <ClInclude Include="gl\gl.hpp">
-      <Filter>gl</Filter>
-    </ClInclude>
     <ClInclude Include="gl\buffer.hpp">
       <Filter>gl</Filter>
     </ClInclude>

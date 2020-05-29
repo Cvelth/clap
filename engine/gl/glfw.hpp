@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include "gl.hpp"
 
 struct GLFWwindow;
 struct GLFWmonitor;

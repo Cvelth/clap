@@ -176,7 +176,6 @@
   <ItemGroup>
     <ClCompile Include="error.cpp" />
     <ClCompile Include="gl\buffer.cpp" />
-    <ClCompile Include="gl\gl.cpp" />
     <ClCompile Include="gl\glfw.cpp" />
     <ClCompile Include="gl\state.cpp" />
     <ClCompile Include="window_interface.cpp" />
@@ -184,7 +183,6 @@
   <ItemGroup>
     <ClInclude Include="error.hpp" />
     <ClInclude Include="gl\buffer.hpp" />
-    <ClInclude Include="gl\gl.hpp" />
     <ClInclude Include="gl\glfw.hpp" />
     <ClInclude Include="gl\state.hpp" />
     <ClInclude Include="window_interface.hpp" />
