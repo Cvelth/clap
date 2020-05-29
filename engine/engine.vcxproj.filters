@@ -3,11 +3,11 @@
   <ItemGroup>
     <ClCompile Include="window_interface.cpp" />
     <ClCompile Include="error.cpp" />
-    <ClCompile Include="glfw.cpp" />
+    <ClCompile Include="gl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window_interface.hpp" />
     <ClInclude Include="error.hpp" />
-    <ClInclude Include="glfw.hpp" />
+    <ClInclude Include="gl.hpp" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 #include "window_interface.hpp"
 #include "error.hpp"
-#include "glfw.hpp"
+#include "gl.hpp"
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
@@ -23,13 +23,7 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 	}
 
 	handle->make_current();
-
-
-	// NOTE: I should probably replace glew with glad.
-
-	//glewExperimental = GL_TRUE
-	//if (error_code = glewInit(); error_code != GLEW_OK)
-	//	error::critical("Unable to initialize glew.");
+	load_gl();
 }
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode) 

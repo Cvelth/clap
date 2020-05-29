@@ -69,8 +69,11 @@ namespace engine {
 		const detail::glfw_const_video_mode_handle handle;
 	};
 
+	bool load_gl();
+
 	class glfw {
 		friend glfw_window;
+		friend bool load_gl();
 	public:
 		static void initialize();
 		static void terminate();
@@ -107,5 +110,6 @@ namespace engine {
 		}
 	private:
 		static bool is_initialized;
+		static bool is_context_selected;
 	};
 }

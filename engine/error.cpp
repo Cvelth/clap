@@ -26,7 +26,7 @@ private:
 };
 
 void log_error(std::string type, std::string description) {
-	static temporary_logger error_logger("errors.txt");
+	static temporary_logger error_logger("error.log");
 	auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	error_logger << "  > " << std::ctime(&now) 
 		<< type << (type != "" ? ": " : "") 

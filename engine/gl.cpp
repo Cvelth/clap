@@ -1,9 +1,11 @@
-#include "glfw.hpp"
+#include "gl.hpp"
 #include "error.hpp"
 
+#include "../dependencies/glad/glad.h"
 #include "../dependencies/glfw/glfw3.h"
 
 bool engine::glfw::is_initialized = false;
+bool engine::glfw::is_context_selected = false;
 
 void engine::glfw::initialize_implicitly() {
 	error::info(std::string("Initializing glfw. Version: ") + glfwGetVersionString());
@@ -32,8 +34,8 @@ void engine::glfw::terminate() {
 }
 
 engine::glfw_window engine::glfw::create_window(size_t width, size_t height, std::string title,
-															   detail::glfw_monitor_handle monitor, 
-															   detail::glfw_window_handle share) {
+												detail::glfw_monitor_handle monitor,
+												detail::glfw_window_handle share) {
 	ensure_initialization();
 
 	int signed_width = int(width);
@@ -47,22 +49,22 @@ engine::glfw_window engine::glfw::create_window(size_t width, size_t height, std
 		error::critical("Unable to initialize GLFWwindow. glfwCreateWindow returns a nullptr.");
 }
 engine::glfw_window engine::glfw::create_window_windowed(size_t width, size_t height, std::string title,
-																		detail::glfw_window_handle share) {
+														 detail::glfw_window_handle share) {
 	return create_window(width, height, title, nullptr, share);
 }
 engine::glfw_window engine::glfw::create_window_fullscreen(size_t width, size_t height, std::string title,
-																		  detail::glfw_window_handle share) {
+														   detail::glfw_window_handle share) {
 	return create_window(width, height, title, primary_monitor(), share);
 }
 engine::glfw_window engine::glfw::create_window_fullscreen(std::string title,
-																		  detail::glfw_window_handle share) {
+														   detail::glfw_window_handle share) {
 	ensure_initialization();
 
 	auto video_mode = primary_monitor_video_mode();
 	return create_window_fullscreen(size_t(video_mode->width), size_t(video_mode->height), title, share);
 }
 engine::glfw_window engine::glfw::create_window_borderless(std::string title,
-																		  detail::glfw_window_handle share) {
+														   detail::glfw_window_handle share) {
 	auto video_mode = glfw::primary_monitor_video_mode();
 
 	glfwWindowHint(GLFW_RED_BITS, video_mode->redBits);
@@ -70,7 +72,7 @@ engine::glfw_window engine::glfw::create_window_borderless(std::string title,
 	glfwWindowHint(GLFW_BLUE_BITS, video_mode->blueBits);
 	glfwWindowHint(GLFW_REFRESH_RATE, video_mode->refreshRate);
 
-	return glfw::create_window(size_t(video_mode->width), size_t(video_mode->height), 
+	return glfw::create_window(size_t(video_mode->width), size_t(video_mode->height),
 							   title.c_str(), primary_monitor(), share);
 }
 
@@ -103,7 +105,7 @@ engine::glfw_video_mode const engine::glfw::video_mode(detail::glfw_monitor_hand
 }
 
 void engine::glfw_window::destroy() {
-	glfw::ensure_initialization();	
+	glfw::ensure_initialization();
 	glfwDestroyWindow(handle);
 }
 void engine::glfw_window::update() {
@@ -117,6 +119,7 @@ bool engine::glfw_window::should_close() {
 void engine::glfw_window::make_current() {
 	glfw::ensure_initialization();
 	glfwMakeContextCurrent(handle);
+	glfw::is_context_selected = true;
 }
 
 size_t engine::glfw_window::width() {
@@ -138,3 +141,16 @@ int engine::glfw_video_mode::red_bits() const { return handle->redBits; }
 int engine::glfw_video_mode::green_bits() const { return handle->greenBits; }
 int engine::glfw_video_mode::blue_bits() const { return handle->blueBits; }
 int engine::glfw_video_mode::refresh_rate() const { return handle->refreshRate; }
+
+bool engine::load_gl() {
+	if (!glfw::is_context_selected) {
+		error::critical("An attempt to load GL before a context was created."
+						" Call 'make_current' on a window handle first.");
+		return false;
+	}
+
+	bool out = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+	if (!out)
+		error::critical("Unable to load GL. 'glad' returns false.");
+	return out;
+}
