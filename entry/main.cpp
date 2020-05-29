@@ -1,4 +1,6 @@
+#include "window.hpp"
 
 int main() {
-	return 0;
+	window w("rrl", window_mode::windowed, 1280, 720);
+	return w.loop();
 }
