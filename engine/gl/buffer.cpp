@@ -5,7 +5,8 @@
 #include "../../dependencies/glad/glad.h"
 
 GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::target v) {
-	switch (v) {		case engine::gl::buffer::target::array: return GL_ARRAY_BUFFER;
+	switch (v) {
+		case engine::gl::buffer::target::array: return GL_ARRAY_BUFFER;
 		case engine::gl::buffer::target::atomic_counter: return GL_ATOMIC_COUNTER_BUFFER;
 		case engine::gl::buffer::target::copy_read: return GL_COPY_READ_BUFFER;
 		case engine::gl::buffer::target::copy_write: return GL_COPY_WRITE_BUFFER;
@@ -23,7 +24,8 @@ GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::target v) {
 	engine::error::critical("Unsupported enum value.");
 }
 engine::gl::buffer::target engine::gl::detail::convert::to_target(GLenum v) {
-	switch (v) {		case GL_ARRAY_BUFFER: return engine::gl::buffer::target::array;
+	switch (v) {
+		case GL_ARRAY_BUFFER: return engine::gl::buffer::target::array;
 		case GL_ATOMIC_COUNTER_BUFFER: return engine::gl::buffer::target::atomic_counter;
 		case GL_COPY_READ_BUFFER: return engine::gl::buffer::target::copy_read;
 		case GL_COPY_WRITE_BUFFER: return engine::gl::buffer::target::copy_write;
@@ -42,14 +44,16 @@ engine::gl::buffer::target engine::gl::detail::convert::to_target(GLenum v) {
 }
 
 GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::access v) {
-	switch (v) {		case engine::gl::buffer::access::read_only: return GL_READ_ONLY;
+	switch (v) {
+		case engine::gl::buffer::access::read_only: return GL_READ_ONLY;
 		case engine::gl::buffer::access::read_write: return GL_READ_WRITE;
 		case engine::gl::buffer::access::write_only: return GL_WRITE_ONLY;
 	}
 	engine::error::critical("Unsupported enum value.");
 }
 engine::gl::buffer::access engine::gl::detail::convert::to_access(GLenum v) {
-	switch (v) {		case GL_READ_ONLY: return engine::gl::buffer::access::read_only;
+	switch (v) {
+		case GL_READ_ONLY: return engine::gl::buffer::access::read_only;
 		case GL_READ_WRITE: return engine::gl::buffer::access::read_write;
 		case GL_WRITE_ONLY: return engine::gl::buffer::access::write_only;
 	}
@@ -57,7 +61,8 @@ engine::gl::buffer::access engine::gl::detail::convert::to_access(GLenum v) {
 }
 
 GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::usage v) {
-	switch (v) {		case engine::gl::buffer::usage::stream_draw: return GL_STREAM_DRAW;
+	switch (v) {
+		case engine::gl::buffer::usage::stream_draw: return GL_STREAM_DRAW;
 		case engine::gl::buffer::usage::stream_read: return GL_STREAM_READ;
 		case engine::gl::buffer::usage::stream_copy: return GL_STREAM_COPY;
 		case engine::gl::buffer::usage::static_draw: return GL_STATIC_DRAW;
@@ -70,7 +75,8 @@ GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::usage v) {
 	engine::error::critical("Unsupported enum value.");
 }
 engine::gl::buffer::usage engine::gl::detail::convert::to_usage(GLenum v) {
-	switch (v) {		case GL_STREAM_DRAW: return engine::gl::buffer::usage::stream_draw;
+	switch (v) {
+		case GL_STREAM_DRAW: return engine::gl::buffer::usage::stream_draw;
 		case GL_STREAM_READ: return engine::gl::buffer::usage::stream_read;
 		case GL_STREAM_COPY: return engine::gl::buffer::usage::stream_copy;
 		case GL_STATIC_DRAW: return engine::gl::buffer::usage::static_draw;
@@ -85,7 +91,7 @@ engine::gl::buffer::usage engine::gl::detail::convert::to_usage(GLenum v) {
 
 engine::gl::buffer::multiple::multiple(size_t count)
 	: count(count), currently_mapped_id(size_t(-1)), currently_mapped_pointer(nullptr) {
-	gl::state::check_load();
+	gl::state::ensure_loaded();
 
 	ids = new uint32_t[count];
 	glGenBuffers(GLsizei(count), ids);
@@ -100,6 +106,18 @@ engine::gl::buffer::detail::indexed engine::gl::buffer::multiple::id(size_t inde
 	if (index >= count)
 		error::critical("Attempting to access an out of bounds buffer.");
 	return detail::indexed(this, index);
+}
+
+engine::gl::buffer::multiple::multiple(size_t count, uint32_t *ids, size_t currently_mapped_id, 
+									   void *currently_mapped_pointer) : count(count), ids(ids), 
+													currently_mapped_id(currently_mapped_id), 
+													currently_mapped_pointer(currently_mapped_pointer) {
+	gl::state::ensure_loaded();
+
+	for (size_t i = 0; i < count; i++)
+		if (!glIsBuffer(ids[i]))
+			error::critical("Unable to perform a buffer move operation. "
+							"Passed buffer seems to be corrupted.");
 }
 
 void engine::gl::buffer::detail::indexed::bind(target target) {

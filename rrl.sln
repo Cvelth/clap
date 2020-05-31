@@ -9,6 +9,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "entry", "entry\entry.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gl_bindings", "gl_bindings\gl_bindings.vcxproj", "{D50D7EB1-233B-4F10-A18C-971D6B75FED2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shaders", "shaders", "{4F48B281-86AD-4772-93E7-AFBA16C9D0A6}"
+	ProjectSection(SolutionItems) = preProject
+		shaders\fragment.glsl = shaders\fragment.glsl
+		shaders\vertex.glsl = shaders\vertex.glsl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

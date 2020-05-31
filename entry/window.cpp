@@ -1,29 +1,48 @@
 #include "window.hpp"
 #include "../dependencies/glad/glad.h"
 #include "../engine/gl/buffer.hpp"
+#include "../engine/gl/shader.hpp"
+
+#include <iostream>
 
 void window::initialize() {
-	glClearColor(0.6f, 0.1f, 0.7f, 1.0f);
+	using namespace engine::gl;
 
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
+	glClearColor(0.4f, 0.0f, 0.5f, 1.0f);
 
-	static const GLfloat g_vertex_buffer_data[] = {
+	GLuint vertex_array;
+	glGenVertexArrays(1, &vertex_array);
+	glBindVertexArray(vertex_array);
+
+	buffer::single vertices;
+	static const GLfloat vertex_data[] = {
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f,
 		0.0f,  1.0f, 0.0f,
 	};
-
-	using namespace engine::gl;
-
-	buffer::single vertexbuffer;
-
-	vertexbuffer.data(g_vertex_buffer_data, sizeof(g_vertex_buffer_data), buffer::usage::static_draw);
-
+	vertices.data(vertex_data, sizeof(vertex_data), buffer::usage::static_draw);
 	glEnableVertexAttribArray(0);
-	vertexbuffer.bind();
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+
+	buffer::single colors;
+	static const GLfloat color_data[] = {
+		1.f, 0.5f, 0.5f, 1.f,
+		0.5f, 1.f, 0.5f, 1.f,
+		0.5f, 0.5f, 1.f, 1.f,
+	};
+	colors.data(color_data, sizeof(color_data), buffer::usage::static_draw);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) 0);
+
+	shader::program program;
+	program.add(shader::from_file(shader::type::vertex, "../shaders/vertex.glsl"));
+	program.add(shader::from_file(shader::type::fragment, "../shaders/fragment.glsl"));
+
+	//glBindAttribLocation(program.id, 0, "aPos");
+
+	program.link();
+
+	program.use();
 }
 
 void window::render() {

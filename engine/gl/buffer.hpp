@@ -25,11 +25,11 @@ namespace engine::gl {
 
 		namespace detail {
 			class indexed {
+				friend multiple;
+				friend single;
 			public:
-				explicit indexed(multiple *pointer = nullptr, size_t index = -1) : pointer(pointer), index(index) {}
-
 				indexed(indexed const &other) = delete;
-				indexed(indexed &&other) = delete;
+				indexed(indexed &&other) noexcept : indexed(other.pointer, other.index) {}
 
 				void bind(target target = target::array);
 				void *map(access access, target target = target::array);
@@ -52,6 +52,8 @@ namespace engine::gl {
 				uint32_t operator *() const;
 
 			protected:
+				explicit indexed(multiple *pointer = nullptr, size_t index = -1) : pointer(pointer), index(index) {}
+
 				void data(void *data, size_t size, usage usage, target target = target::array);
 				void subdata(void *data, size_t size, size_t offset = 0, target target = target::array);
 
@@ -65,14 +67,21 @@ namespace engine::gl {
 			friend detail::indexed;
 		public:
 			explicit multiple(size_t count);
-			multiple(multiple const &other) = delete;
-			multiple(multiple &&other) noexcept = default;
 			~multiple();
+
+			multiple(multiple const &other) = delete;
+			multiple(multiple &&other) noexcept 
+				: multiple(other.count, other.ids, 
+						   other.currently_mapped_id, other.currently_mapped_pointer) {}
 
 			detail::indexed id(size_t index);
 			inline detail::indexed operator[](size_t index) {
 				return id(index);
 			}
+
+		private:
+			multiple(size_t count, uint32_t *ids,
+					 size_t currently_mapped_id, void *currently_mapped_pointer);
 
 		private:
 			size_t const count;
@@ -88,7 +97,8 @@ namespace engine::gl {
 			inline virtual ~single() {}
 
 			single(single const &other) = delete;
-			single(single &&other) = default;
+			single(single &&other) noexcept
+				: multiple(std::move(other)) {}
 
 			inline operator detail::indexed() {
 				return detail::indexed(this, 0);
