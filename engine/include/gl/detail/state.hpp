@@ -1,7 +1,7 @@
 #pragma once
 #include <optional>
-#include "buffer.hpp"
-#include "vertex_array.hpp"
+#include "gl/buffer.hpp"
+#include "gl/vertex_array.hpp"
 
 namespace engine::gl {
 	namespace buffer {
@@ -18,7 +18,9 @@ namespace engine::gl {
 	namespace shader {
 		class program;
 	}
+}
 
+namespace engine::gl::detail {
 	class state {
 	public:
 		static bool load();
@@ -44,7 +46,5 @@ namespace engine::gl {
 		static std::optional<vertex_array::detail::indexed> bound_vertex_array;
 		static shader::program *program_used;
 	};
-
-	void log_last_error();
 }
 

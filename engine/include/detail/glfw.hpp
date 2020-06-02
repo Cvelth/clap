@@ -5,7 +5,11 @@ struct GLFWwindow;
 struct GLFWmonitor;
 struct GLFWvidmode;
 
-namespace engine {
+namespace engine::gl::detail {
+	class state;
+}
+
+namespace engine::detail {
 	namespace detail {
 		template <typename glfw_struct>
 		class glfw_struct_handle {
@@ -68,13 +72,10 @@ namespace engine {
 	private:
 		const detail::glfw_const_video_mode_handle handle;
 	};
-	namespace gl {
-		class state;
-	}
 
 	class glfw {
 		friend glfw_window;
-		friend gl::state;
+		friend gl::detail::state;
 	public:
 		static void initialize();
 		static void terminate();

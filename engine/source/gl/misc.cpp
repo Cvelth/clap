@@ -1,6 +1,8 @@
-#include "misc.hpp"
-#include "../../dependencies/glad/glad.h"
-#include "../error.hpp"
+#include "gl/misc.hpp"
+
+#include "glad/glad.h"
+
+#include "error.hpp"
 
 void engine::gl::clear::set_color(float r, float g, float b, float a) {
 	glClearColor(r, g, b, a);

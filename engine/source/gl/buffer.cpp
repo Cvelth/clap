@@ -1,8 +1,9 @@
-#include "buffer.hpp"
-#include "state.hpp"
-#include "../error.hpp"
+#include "gl/buffer.hpp"
 
-#include "../../dependencies/glad/glad.h"
+#include "gl/detail/state.hpp"
+#include "error.hpp"
+
+#include "glad/glad.h"
 
 GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::target v) {
 	switch (v) {
@@ -91,7 +92,7 @@ engine::gl::buffer::usage engine::gl::detail::convert::to_usage(GLenum v) {
 
 engine::gl::buffer::multiple::multiple(size_t count)
 	: count(count), currently_mapped_id(size_t(-1)), currently_mapped_pointer(nullptr) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	ids = new uint32_t[count];
 	glGenBuffers(GLsizei(count), ids);
@@ -110,7 +111,7 @@ engine::gl::buffer::multiple::multiple(size_t count, uint32_t *ids, size_t curre
 									   void *currently_mapped_pointer) : count(count), ids(ids), 
 													currently_mapped_id(currently_mapped_id), 
 													currently_mapped_pointer(currently_mapped_pointer) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	for (size_t i = 0; i < count; i++)
 		if (!glIsBuffer(ids[i]))
@@ -119,7 +120,7 @@ engine::gl::buffer::multiple::multiple(size_t count, uint32_t *ids, size_t curre
 }
 
 void engine::gl::buffer::detail::indexed::bind(target target) {
-	state::bind(target, std::move(*this));
+	gl::detail::state::bind(target, std::move(*this));
 }
 
 void engine::gl::buffer::detail::indexed::data(size_t size, usage usage, target target) {

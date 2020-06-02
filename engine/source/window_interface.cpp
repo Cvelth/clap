@@ -1,22 +1,23 @@
 #include "window_interface.hpp"
+
+#include "detail/glfw.hpp"
+#include "gl/detail/state.hpp"
 #include "error.hpp"
-#include "gl/glfw.hpp"
-#include "gl/state.hpp"
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
 										: aspect_ratio(double(width) / height), handle(nullptr) {
 	switch (mode) {
 		case window_mode::windowed:
-			handle = new glfw_window(glfw::create_window_windowed(width, height, title));
+			handle = new detail::glfw_window(detail::glfw::create_window_windowed(width, height, title));
 			break;
 
 		case window_mode::fullscreen:
-			handle = new glfw_window(glfw::create_window_fullscreen(width, height, title));
+			handle = new detail::glfw_window(detail::glfw::create_window_fullscreen(width, height, title));
 			break;
 
 		case window_mode::borderless_window:
-			handle = new glfw_window(glfw::create_window_borderless(title));
+			handle = new detail::glfw_window(detail::glfw::create_window_borderless(title));
 			break;
 
 		default:
@@ -24,12 +25,12 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 	}
 
 	handle->make_current();
-	gl::state::load();
+	gl::detail::state::load();
 }
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode) 
-	: window_interface(title, mode, glfw::primary_monitor_video_mode().width(),
-					   glfw::primary_monitor_video_mode().height()) {
+	: window_interface(title, mode, detail::glfw::primary_monitor_video_mode().width(),
+					   detail::glfw::primary_monitor_video_mode().height()) {
 	if (mode == window_mode::windowed)
 		error::warn("It's recommended to implicitly set width and height when starting in windowed mode.");
 }
@@ -46,11 +47,11 @@ void engine::window_interface::update() {
 }
 
 void engine::window_interface::poll_events() {
-	glfw::poll_events();
+	detail::glfw::poll_events();
 }
 
 void engine::window_interface::wait_events() {
-	glfw::wait_events();
+	detail::glfw::wait_events();
 }
 
 size_t engine::window_interface::width() {

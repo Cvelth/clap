@@ -1,15 +1,16 @@
-#include "shader.hpp"
-#include "state.hpp"
-#include "../error.hpp"
-
-#include "../../dependencies/glad/glad.h"
+#include "gl/shader.hpp"
 
 #include <fstream>
 #include <string>
 #include <vector>
 
+#include "glad/glad.h"
+
+#include "gl/detail/state.hpp"
+#include "error.hpp"
+
 engine::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	id = glCreateShader(gl::detail::convert::to_gl(type));
 	if (id == 0 || id == -1)
@@ -43,7 +44,7 @@ engine::gl::shader::detail::object::object(type type, std::string source) : obje
 }
 
 engine::gl::shader::detail::object::object(uint32_t id) : id(id) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	if (id == 0 || !glIsShader(id))
 		error::critical("Unable to perform a shader object move operation. "
@@ -97,7 +98,7 @@ engine::gl::shader::variable::variable(std::string const &name, storage_type con
 }
 
 engine::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	id = glCreateProgram();
 	if (id == 0 || id == -1)
@@ -134,7 +135,7 @@ void engine::gl::shader::program::link() {
 
 void engine::gl::shader::program::use() {
 	if (!needs_linking)
-		state::use(this);
+		gl::detail::state::use(this);
 	else
 		error::warn("Attempting to use an unlinked program.");
 }
@@ -180,7 +181,7 @@ std::map<std::string, engine::gl::shader::variable> engine::gl::shader::program:
 }
 
 engine::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	if (id == 0 || !glIsProgram(id))
 		error::critical("Unable to perform a shader program move operation. "

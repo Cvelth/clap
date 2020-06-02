@@ -90,17 +90,17 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4715</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>include;../dependencies/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalDependencies>glfw/glfw3.lib</AdditionalDependencies>
-    </Lib>
-    <Lib>
-      <AdditionalLibraryDirectories>../dependencies/;dependencies/</AdditionalLibraryDirectories>
-    </Lib>
+    <Lib />
+    <Lib />
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -111,17 +111,17 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4715</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>include;../dependencies/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalDependencies>glfw/glfw3.lib</AdditionalDependencies>
-    </Lib>
-    <Lib>
-      <AdditionalLibraryDirectories>../dependencies/;dependencies/</AdditionalLibraryDirectories>
-    </Lib>
+    <Lib />
+    <Lib />
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -134,6 +134,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4715</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>include;../dependencies/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,12 +142,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalDependencies>glfw/glfw3.lib</AdditionalDependencies>
-    </Lib>
-    <Lib>
-      <AdditionalLibraryDirectories>../dependencies/;dependencies/</AdditionalLibraryDirectories>
-    </Lib>
+    <Lib />
+    <Lib />
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -159,6 +159,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DisableSpecificWarnings>4715</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>include;../dependencies/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -166,33 +167,32 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalDependencies>glfw/glfw3.lib</AdditionalDependencies>
-    </Lib>
-    <Lib>
-      <AdditionalLibraryDirectories>../dependencies/;dependencies/</AdditionalLibraryDirectories>
-    </Lib>
+    <Lib />
+    <Lib />
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="error.cpp" />
-    <ClCompile Include="gl\buffer.cpp" />
-    <ClCompile Include="gl\glfw.cpp" />
-    <ClCompile Include="gl\misc.cpp" />
-    <ClCompile Include="gl\shader.cpp" />
-    <ClCompile Include="gl\state.cpp" />
-    <ClCompile Include="gl\vertex_array.cpp" />
-    <ClCompile Include="window_interface.cpp" />
+    <ClInclude Include="include\detail\glfw.hpp" />
+    <ClInclude Include="include\error.hpp" />
+    <ClInclude Include="include\gl.hpp" />
+    <ClInclude Include="include\gl\buffer.hpp" />
+    <ClInclude Include="include\gl\detail\state.hpp" />
+    <ClInclude Include="include\gl\misc.hpp" />
+    <ClInclude Include="include\gl\shader.hpp" />
+    <ClInclude Include="include\gl\vertex_array.hpp" />
+    <ClInclude Include="include\window_interface.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="error.hpp" />
-    <ClInclude Include="gl\buffer.hpp" />
-    <ClInclude Include="gl\gl.hpp" />
-    <ClInclude Include="gl\glfw.hpp" />
-    <ClInclude Include="gl\misc.hpp" />
-    <ClInclude Include="gl\shader.hpp" />
-    <ClInclude Include="gl\state.hpp" />
-    <ClInclude Include="gl\vertex_array.hpp" />
-    <ClInclude Include="window_interface.hpp" />
+    <ClCompile Include="source\detail\glfw.cpp" />
+    <ClCompile Include="source\error.cpp" />
+    <ClCompile Include="source\gl\buffer.cpp" />
+    <ClCompile Include="source\gl\detail\state.cpp" />
+    <ClCompile Include="source\gl\misc.cpp" />
+    <ClCompile Include="source\gl\shader.cpp" />
+    <ClCompile Include="source\gl\vertex_array.cpp" />
+    <ClCompile Include="source\window_interface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\gl_bindings\gl_bindings.vcxproj">

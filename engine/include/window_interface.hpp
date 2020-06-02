@@ -7,7 +7,9 @@ namespace engine {
 		windowed,
 		borderless_window
 	};
-	class glfw_window;
+	namespace detail {
+		class glfw_window;
+	}
 
 	class window_interface {
 	public:
@@ -35,6 +37,6 @@ namespace engine {
 		double aspect_ratio;
 
 	private:
-		glfw_window *handle;
+		detail::glfw_window *handle;
 	};
 }

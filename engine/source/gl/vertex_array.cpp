@@ -1,14 +1,15 @@
-#include "vertex_array.hpp"
-#include "buffer.hpp"
-#include "shader.hpp"
-#include "state.hpp"
-#include "../error.hpp"
+#include "gl/vertex_array.hpp"
 
-#include "../../dependencies/glad/glad.h"
+#include "glad/glad.h"
+
+#include "gl/detail/state.hpp"
+#include "gl/buffer.hpp"
+#include "gl/shader.hpp"
+#include "error.hpp"
 
 engine::gl::vertex_array::multiple::multiple(size_t count)
 	: count(count) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	ids = new uint32_t[count];
 	glGenBuffers(GLsizei(count), ids);
@@ -22,7 +23,7 @@ engine::gl::vertex_array::detail::indexed engine::gl::vertex_array::multiple::id
 }
 
 engine::gl::vertex_array::multiple::multiple(size_t count, uint32_t *ids) : count(count), ids(ids) {
-	gl::state::ensure_loaded();
+	gl::detail::state::ensure_loaded();
 
 	for (size_t i = 0; i < count; i++)
 		if (!glIsBuffer(ids[i]))
@@ -31,7 +32,7 @@ engine::gl::vertex_array::multiple::multiple(size_t count, uint32_t *ids) : coun
 }
 
 void engine::gl::vertex_array::detail::indexed::bind() {
-	state::bind(std::move(*this));
+	gl::detail::state::bind(std::move(*this));
 }
 
 void engine::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
@@ -82,7 +83,7 @@ void engine::gl::vertex_array::detail::indexed::draw(connection connection, size
 void engine::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t count,
 															 size_t first, int base_vertex,
 															 index_type type) {
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_indexed' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -98,7 +99,7 @@ void engine::gl::vertex_array::detail::indexed::draw_indexed(connection connecti
 void engine::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t start,
 															 size_t end, size_t count, size_t first,
 															 int base_vertex, index_type type) {
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_indexed' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -113,7 +114,7 @@ void engine::gl::vertex_array::detail::indexed::draw_indexed(connection connecti
 }
 
 void engine::gl::vertex_array::detail::indexed::draw_indirect(connection connection, size_t byte_offset) {
-	if (!state::bound(buffer::target::indirect_draw))
+	if (!gl::detail::state::bound(buffer::target::indirect_draw))
 		error::critical("'vertex_array::draw_indirect' cannot be called without a buffer with draw data "
 						"being bound to 'buffer::target::indirect_draw'.");
 	bind();
@@ -123,10 +124,10 @@ void engine::gl::vertex_array::detail::indexed::draw_indirect(connection connect
 void engine::gl::vertex_array::detail::indexed::draw_indexed_indirect(connection connection,
 																	  size_t byte_offset,
 																	  index_type type) {
-	if (!state::bound(buffer::target::indirect_draw))
+	if (!gl::detail::state::bound(buffer::target::indirect_draw))
 		error::critical("'vertex_array::draw_indexed_indirect' cannot be called without a buffer with draw data "
 						"being bound to 'buffer::target::indirect_draw'.");
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_indexed_indirect' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -147,7 +148,7 @@ void engine::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection
 																	  int const *counts,
 																	  int const *byte_offsets,
 																	  index_type type) {
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -161,7 +162,7 @@ void engine::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection
 																	  int const *byte_offsets,
 																	  int const *base_vertices,
 																	  index_type type) {
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -174,7 +175,7 @@ void engine::gl::vertex_array::detail::indexed::draw_multiple_indirect(connectio
 																	   size_t drawcount, 
 																	   size_t byte_offset, 
 																	   size_t stride) {
-	if (!state::bound(buffer::target::indirect_draw))
+	if (!gl::detail::state::bound(buffer::target::indirect_draw))
 		error::critical("'vertex_array::draw_multiple_indirect' cannot be called without a buffer with draw data "
 						"being bound to 'buffer::target::indirect_draw'.");
 	bind();
@@ -187,10 +188,10 @@ void engine::gl::vertex_array::detail::indexed::draw_multiple_indexed_indirect(c
 																			   size_t byte_offset, 
 																			   size_t stride, 
 																			   index_type type) {
-	if (!state::bound(buffer::target::indirect_draw))
+	if (!gl::detail::state::bound(buffer::target::indirect_draw))
 		error::critical("'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with draw data "
 						"being bound to 'buffer::target::indirect_draw'.");
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
@@ -215,7 +216,7 @@ void engine::gl::vertex_array::detail::indexed::draw_instanced_indexed(connectio
 																	   size_t draw_count, size_t first,
 																	   int base_vertex, int base_instance,
 																	   index_type type) {
-	if (!state::bound(buffer::target::element_array))
+	if (!gl::detail::state::bound(buffer::target::element_array))
 		error::critical("'vertex_array::draw_instanced_indexed' cannot be called without a buffer with index data "
 						"being bound to 'buffer::target::element_array'.");
 	bind();
