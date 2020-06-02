@@ -10,6 +10,15 @@ void window::initialize() {
 
 	glClearColor(0.4f, 0.0f, 0.5f, 1.0f);
 
+	shader::program program;
+	program.add(shader::from_file(shader::type::vertex, "../shaders/vertex.glsl"));
+	program.add(shader::from_file(shader::type::fragment, "../shaders/fragment.glsl"));
+
+	program.link();
+
+	auto uniforms = program.getUniforms();
+	auto attributes = program.getAttributes();
+
 	GLuint vertex_array;
 	glGenVertexArrays(1, &vertex_array);
 	glBindVertexArray(vertex_array);
@@ -33,14 +42,6 @@ void window::initialize() {
 	colors.data(color_data, sizeof(color_data), buffer::usage::static_draw);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) 0);
-
-	shader::program program;
-	program.add(shader::from_file(shader::type::vertex, "../shaders/vertex.glsl"));
-	program.add(shader::from_file(shader::type::fragment, "../shaders/fragment.glsl"));
-
-	//glBindAttribLocation(program.id, 0, "aPos");
-
-	program.link();
 
 	program.use();
 }

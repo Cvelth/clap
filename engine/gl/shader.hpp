@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <set>
 
 typedef unsigned int GLenum;
 
@@ -50,6 +51,35 @@ namespace engine::gl {
 		detail::object from_file(type type, std::string_view filename);
 		detail::object from_file(type type, char const *filename);
 
+		class variable {
+			friend program;
+		public:
+			enum class storage_type {
+				attribute, uniform
+			};
+			enum class datatype_t {
+				_float, _double, _int, _unsigned, _bool
+			};
+			struct dimentions_t {
+				size_t x, y;
+			};
+
+			std::string const name;
+
+			bool operator<(variable const &other) const { return location < other.location; }
+
+		private:
+			explicit variable(std::string const &name, storage_type const &storage,
+							  uint32_t location, datatype_t const &datatype_name,
+							  dimentions_t const &dimentions);
+
+		private:
+			storage_type const type;
+			uint32_t const location;
+			datatype_t const datatype;
+			dimentions_t dimentions;
+		};
+
 		class program {
 			friend state;
 		public:
@@ -81,6 +111,10 @@ namespace engine::gl {
 
 			void use();
 
+			std::set<variable> getUniforms();
+			std::set<variable> getAttributes();
+			std::set<variable> getVariables();
+
 		private:
 			program(uint32_t id);
 
@@ -93,5 +127,9 @@ namespace engine::gl {
 	namespace detail::convert {
 		GLenum to_gl(engine::gl::shader::type v);
 		engine::gl::shader::type to_shader_type(GLenum v);
+
+		GLenum to_gl(shader::variable::datatype_t datatype, shader::variable::dimentions_t dimentions);
+		std::pair<shader::variable::datatype_t, shader::variable::dimentions_t>
+			to_variable_datatype_pair(GLenum v);
 	}
 }
