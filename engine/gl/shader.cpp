@@ -81,11 +81,15 @@ engine::gl::shader::detail::object engine::gl::shader::from_file(type type, char
 	return from_file(type, std::string(filename));
 }
 
+size_t engine::gl::shader::variable::size() const {
+	return dimentions.x * dimentions.y * gl::detail::convert::to_size(datatype);
+}
+
 engine::gl::shader::variable::variable(std::string const &name, storage_type const &storage,
-							 uint32_t location, datatype_t const &datatype_name,
-							 dimentions_t const &dimentions) 
-			: name(name), type(storage), location(location),
-			datatype(datatype_name), dimentions(dimentions) {
+									   uint32_t location, datatype_t const &datatype_name,
+									   dimentions_t const &dimentions)
+	: name(name), type(storage), location(location),
+	datatype(datatype_name), dimentions(dimentions) {
 	if (dimentions.x < 1 || dimentions.x > 4 || dimentions.y < 1 || dimentions.y > 4)
 		error::critical("Variable dimentions must be in [1; 4] range.");
 	if (dimentions.x > 1 && (datatype_name != datatype_t::_float || datatype_name != datatype_t::_double))
@@ -136,40 +140,40 @@ void engine::gl::shader::program::use() {
 }
 
 template<typename gl_get_lambda_t, typename create_variable_lambda_t>
-std::set<engine::gl::shader::variable> local_get(uint32_t program_id, GLenum active_type,
-												 GLenum active_type_length, gl_get_lambda_t gl_get_lambda,
-												 create_variable_lambda_t create_variable_lambda) {
+std::map<std::string, engine::gl::shader::variable> local_get(uint32_t program_id, GLenum active_type,
+															  GLenum active_type_length, gl_get_lambda_t gl_get_lambda,
+															  create_variable_lambda_t create_variable_lambda) {
 	GLint number, max_length, name_length, size;
 	GLenum type;
 
-	std::set<engine::gl::shader::variable> out;
+	std::map<std::string, engine::gl::shader::variable> out;
 
 	glGetProgramiv(program_id, active_type, &number);
 	glGetProgramiv(program_id, active_type_length, &max_length);
 	for (int i = 0; i < number; i++) {
 		std::vector<GLchar> name(max_length);
 		gl_get_lambda(program_id, i, max_length, &name_length, &size, &type, name.data());
-		out.insert(create_variable_lambda(name.data(), i, type));
+		out.insert(std::make_pair(name.data(), create_variable_lambda(name.data(), i, type)));
 	}
 	return out;
 }
-std::set<engine::gl::shader::variable> engine::gl::shader::program::getUniforms() {
-	return local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, 
+std::map<std::string, engine::gl::shader::variable> engine::gl::shader::program::getUniforms() {
+	return local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH,
 					 glGetActiveUniform, [](auto name, auto location, auto datatype) {
 						 auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
 						 return shader::variable(name, variable::storage_type::uniform, location,
 												 datatype_pair.first, datatype_pair.second);
 					 });
 }
-std::set<engine::gl::shader::variable> engine::gl::shader::program::getAttributes() {
-	return local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, 
+std::map<std::string, engine::gl::shader::variable> engine::gl::shader::program::getAttributes() {
+	return local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
 					 glGetActiveAttrib, [](auto name, auto location, auto datatype) {
 						 auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
 						 return shader::variable(name, variable::storage_type::attribute, location,
 												 datatype_pair.first, datatype_pair.second);
 					 });
 }
-std::set<engine::gl::shader::variable> engine::gl::shader::program::getVariables() {
+std::map<std::string, engine::gl::shader::variable> engine::gl::shader::program::getVariables() {
 	auto out = getUniforms();
 	out.merge(getAttributes());
 	return out;
@@ -206,7 +210,7 @@ engine::gl::shader::type engine::gl::detail::convert::to_shader_type(GLenum v) {
 	engine::error::critical("Unsupported enum value.");
 }
 
-GLenum engine::gl::detail::convert::to_gl(shader::variable::datatype_t datatype, 
+GLenum engine::gl::detail::convert::to_gl(shader::variable::datatype_t datatype,
 										  shader::variable::dimentions_t dimentions) {
 	switch (datatype) {
 		case engine::gl::shader::variable::datatype_t::_float:
@@ -353,6 +357,28 @@ engine::gl::detail::convert::to_variable_datatype_pair(GLenum v) {
 		case GL_DOUBLE_MAT2x4: return make_pair(shader::variable::datatype_t::_double, 2, 4);
 		case GL_DOUBLE_MAT3x4: return make_pair(shader::variable::datatype_t::_double, 3, 4);
 		case GL_DOUBLE_MAT4x3: return make_pair(shader::variable::datatype_t::_double, 4, 3);
+	}
+	engine::error::critical("Unsupported enum value.");
+}
+
+GLenum engine::gl::detail::convert::to_gl(shader::variable::datatype_t datatype) {
+	switch (datatype) {
+		case engine::gl::shader::variable::datatype_t::_float: return GL_FLOAT;
+		case engine::gl::shader::variable::datatype_t::_double: return GL_DOUBLE;
+		case engine::gl::shader::variable::datatype_t::_int: return GL_INT;
+		case engine::gl::shader::variable::datatype_t::_unsigned: return GL_UNSIGNED_INT;
+		case engine::gl::shader::variable::datatype_t::_bool: return GL_BOOL;
+	}
+	engine::error::critical("Unsupported enum value.");
+}
+
+size_t engine::gl::detail::convert::to_size(shader::variable::datatype_t datatype) {
+	switch (datatype) {
+		case engine::gl::shader::variable::datatype_t::_float: return sizeof(float);
+		case engine::gl::shader::variable::datatype_t::_double: return sizeof(double);
+		case engine::gl::shader::variable::datatype_t::_int: return sizeof(int);
+		case engine::gl::shader::variable::datatype_t::_unsigned: return sizeof(unsigned);
+		case engine::gl::shader::variable::datatype_t::_bool: return sizeof(bool);
 	}
 	engine::error::critical("Unsupported enum value.");
 }

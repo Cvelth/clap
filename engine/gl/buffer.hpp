@@ -5,6 +5,7 @@
 typedef unsigned int GLenum;
 
 namespace engine::gl {
+	class state;
 	namespace buffer {
 		enum class target {
 			array, atomic_counter, copy_read, copy_write,
@@ -27,9 +28,17 @@ namespace engine::gl {
 			class indexed {
 				friend multiple;
 				friend single;
+				friend state;
 			public:
 				indexed(indexed const &other) = delete;
-				indexed(indexed &&other) noexcept : indexed(other.pointer, other.index) {}
+				inline indexed(indexed &&other) noexcept : indexed(other.pointer, other.index) {}
+
+				indexed &operator=(indexed const &other) = delete;
+				inline indexed &operator=(indexed &&other) noexcept {
+					pointer = other.pointer;
+					index = other.index;
+					return *this;
+				}
 
 				void bind(target target = target::array);
 				void *map(access access, target target = target::array);
@@ -44,19 +53,20 @@ namespace engine::gl {
 					data((void *) _data, size, usage, target);
 				}
 				template <typename T>
-				inline void subdata(T *data, size_t size, size_t offset = 0, target target = target::array) {
+				inline void subdata(T *data, size_t size, size_t offset = 0, 
+									target target = target::array) {
 					subdata((void *) data, size, offset, target);
 				}
 
-				operator bool() const;				
-				uint32_t operator *() const;
+				operator bool() const;
 
 			protected:
-				explicit indexed(multiple *pointer = nullptr, size_t index = -1) : pointer(pointer), index(index) {}
+				explicit indexed(multiple *pointer = nullptr, size_t index = -1);
+				uint32_t operator *() const;
 
 				void data(void *data, size_t size, usage usage, target target = target::array);
 				void subdata(void *data, size_t size, size_t offset = 0, target target = target::array);
-
+				
 			private:
 				multiple *pointer;
 				size_t index;

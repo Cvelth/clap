@@ -179,6 +179,7 @@
     <ClCompile Include="gl\glfw.cpp" />
     <ClCompile Include="gl\shader.cpp" />
     <ClCompile Include="gl\state.cpp" />
+    <ClCompile Include="gl\vertex_array.cpp" />
     <ClCompile Include="window_interface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +188,7 @@
     <ClInclude Include="gl\glfw.hpp" />
     <ClInclude Include="gl\shader.hpp" />
     <ClInclude Include="gl\state.hpp" />
+    <ClInclude Include="gl\vertex_array.hpp" />
     <ClInclude Include="window_interface.hpp" />
   </ItemGroup>
   <ItemGroup>

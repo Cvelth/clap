@@ -103,8 +103,6 @@ engine::gl::buffer::multiple::~multiple() {
 }
 
 engine::gl::buffer::detail::indexed engine::gl::buffer::multiple::id(size_t index) {
-	if (index >= count)
-		error::critical("Attempting to access an out of bounds buffer.");
 	return detail::indexed(this, index);
 }
 
@@ -121,7 +119,7 @@ engine::gl::buffer::multiple::multiple(size_t count, uint32_t *ids, size_t curre
 }
 
 void engine::gl::buffer::detail::indexed::bind(target target) {
-	state::bind(target, this);
+	state::bind(target, std::move(*this));
 }
 
 void engine::gl::buffer::detail::indexed::data(size_t size, usage usage, target target) {
@@ -176,3 +174,9 @@ void engine::gl::buffer::detail::indexed::invalidate() {
 
 engine::gl::buffer::detail::indexed::operator bool() const { return pointer && index < pointer->count; }
 uint32_t engine::gl::buffer::detail::indexed::operator*() const { return pointer->ids[index]; }
+
+engine::gl::buffer::detail::indexed::indexed(multiple *pointer, size_t index) 
+										: pointer(pointer), index(index) {
+	if (!*this)
+		error::critical("Attempting to access an out of bounds buffer.");
+}

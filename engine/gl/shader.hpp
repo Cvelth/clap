@@ -1,14 +1,15 @@
 #pragma once
 #include <cstdint>
+#include <map>
 #include <string>
-#include <string_view>
-#include <set>
 
 typedef unsigned int GLenum;
 
 namespace engine::gl {
 	class state;
-
+	namespace vertex_array::detail {
+		class indexed;
+	}
 	namespace shader {
 		enum class type {
 			fragment, vertex, geometry, compute, tesselation_control, tesselation_evaluation
@@ -53,6 +54,7 @@ namespace engine::gl {
 
 		class variable {
 			friend program;
+			friend vertex_array::detail::indexed;
 		public:
 			enum class storage_type {
 				attribute, uniform
@@ -67,6 +69,7 @@ namespace engine::gl {
 			std::string const name;
 
 			bool operator<(variable const &other) const { return location < other.location; }
+			size_t size() const;
 
 		private:
 			explicit variable(std::string const &name, storage_type const &storage,
@@ -111,9 +114,9 @@ namespace engine::gl {
 
 			void use();
 
-			std::set<variable> getUniforms();
-			std::set<variable> getAttributes();
-			std::set<variable> getVariables();
+			std::map<std::string, variable> getUniforms();
+			std::map<std::string, variable> getAttributes();
+			std::map<std::string, variable> getVariables();
 
 		private:
 			program(uint32_t id);
@@ -131,5 +134,8 @@ namespace engine::gl {
 		GLenum to_gl(shader::variable::datatype_t datatype, shader::variable::dimentions_t dimentions);
 		std::pair<shader::variable::datatype_t, shader::variable::dimentions_t>
 			to_variable_datatype_pair(GLenum v);
+
+		GLenum to_gl(shader::variable::datatype_t datatype);
+		size_t to_size(shader::variable::datatype_t datatype);
 	}
 }

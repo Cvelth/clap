@@ -15,6 +15,9 @@
     <ClCompile Include="gl\shader.cpp">
       <Filter>gl</Filter>
     </ClCompile>
+    <ClCompile Include="gl\vertex_array.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window_interface.hpp" />
@@ -29,6 +32,9 @@
       <Filter>gl</Filter>
     </ClInclude>
     <ClInclude Include="gl\shader.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="gl\vertex_array.hpp">
       <Filter>gl</Filter>
     </ClInclude>
   </ItemGroup>
