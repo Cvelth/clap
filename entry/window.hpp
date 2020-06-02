@@ -1,7 +1,6 @@
 #pragma once
 #include "../engine/window_interface.hpp"
-#include "../engine/gl/shader.hpp"
-#include "../engine/gl/vertex_array.hpp"
+#include "../engine/gl/gl.hpp"
 
 using engine::window_mode;
 

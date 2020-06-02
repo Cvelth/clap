@@ -9,10 +9,13 @@
     <ClCompile Include="gl\glfw.cpp">
       <Filter>gl</Filter>
     </ClCompile>
-    <ClCompile Include="gl\state.cpp">
+    <ClCompile Include="gl\misc.cpp">
       <Filter>gl</Filter>
     </ClCompile>
     <ClCompile Include="gl\shader.cpp">
+      <Filter>gl</Filter>
+    </ClCompile>
+    <ClCompile Include="gl\state.cpp">
       <Filter>gl</Filter>
     </ClCompile>
     <ClCompile Include="gl\vertex_array.cpp">
@@ -25,13 +28,19 @@
     <ClInclude Include="gl\buffer.hpp">
       <Filter>gl</Filter>
     </ClInclude>
+    <ClInclude Include="gl\gl.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
     <ClInclude Include="gl\glfw.hpp">
       <Filter>gl</Filter>
     </ClInclude>
-    <ClInclude Include="gl\state.hpp">
+    <ClInclude Include="gl\misc.hpp">
       <Filter>gl</Filter>
     </ClInclude>
     <ClInclude Include="gl\shader.hpp">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="gl\state.hpp">
       <Filter>gl</Filter>
     </ClInclude>
     <ClInclude Include="gl\vertex_array.hpp">
@@ -40,7 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gl">
-      <UniqueIdentifier>{cbfa1254-3d84-4849-ace8-acab199098c3}</UniqueIdentifier>
+      <UniqueIdentifier>{76c2192d-1f67-4f48-8b97-da11bab20947}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

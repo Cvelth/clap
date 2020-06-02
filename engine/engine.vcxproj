@@ -177,6 +177,7 @@
     <ClCompile Include="error.cpp" />
     <ClCompile Include="gl\buffer.cpp" />
     <ClCompile Include="gl\glfw.cpp" />
+    <ClCompile Include="gl\misc.cpp" />
     <ClCompile Include="gl\shader.cpp" />
     <ClCompile Include="gl\state.cpp" />
     <ClCompile Include="gl\vertex_array.cpp" />
@@ -185,7 +186,9 @@
   <ItemGroup>
     <ClInclude Include="error.hpp" />
     <ClInclude Include="gl\buffer.hpp" />
+    <ClInclude Include="gl\gl.hpp" />
     <ClInclude Include="gl\glfw.hpp" />
+    <ClInclude Include="gl\misc.hpp" />
     <ClInclude Include="gl\shader.hpp" />
     <ClInclude Include="gl\state.hpp" />
     <ClInclude Include="gl\vertex_array.hpp" />
