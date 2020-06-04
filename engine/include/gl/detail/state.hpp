@@ -27,22 +27,26 @@ namespace engine::gl::detail {
 		static void ensure_loaded();
 
 		static void bind(buffer::target const &target, buffer::detail::indexed &&buffer);
-		static void unbind(buffer::target const &target);
+		static std::optional<buffer::detail::indexed> const unbind(buffer::target const &target);
 		static std::optional<buffer::detail::indexed> const &bound(buffer::target const &target);
+		static std::optional<buffer::target> is_bound(buffer::detail::indexed const &buffer);
 
 		static void bind(vertex_array::detail::indexed &&vertex_array);
-		static void unbind();
+		static std::optional<vertex_array::detail::indexed> const unbind();
 		static std::optional<vertex_array::detail::indexed> const &bound();
+		static bool is_bound(vertex_array::detail::indexed const &vertex_array);
 
 		static void use(shader::program *program);
 		static shader::program *being_used();
+		static bool is_used(shader::program *program);
 
 		state() = delete;
 		state(state const &other) = delete;
 		state(state &&other) = delete;
 
 	private:
-		static std::optional<buffer::detail::indexed> bound_buffers[14];
+		static constexpr size_t buffer_target_count = 14;
+		static std::optional<buffer::detail::indexed> bound_buffers[buffer_target_count];
 		static std::optional<vertex_array::detail::indexed> bound_vertex_array;
 		static shader::program *program_used;
 	};

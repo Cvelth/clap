@@ -1,8 +1,8 @@
 #include "window_interface.hpp"
 
 #include "detail/glfw.hpp"
+#include "log.hpp"
 #include "gl/detail/state.hpp"
-#include "error.hpp"
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
@@ -21,7 +21,8 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 			break;
 
 		default:
-			error::critical("Unsupported window_mode enum value passed on window initialization.");
+			log::warning::critical << "Unsupported window_mode enum value passed on window initialization.";
+			return;
 	}
 
 	handle->make_current();
@@ -32,7 +33,7 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 	: window_interface(title, mode, detail::glfw::primary_monitor_video_mode().width(),
 					   detail::glfw::primary_monitor_video_mode().height()) {
 	if (mode == window_mode::windowed)
-		error::warn("It's recommended to implicitly set width and height when starting in windowed mode.");
+		log::warning::minor << "It's recommended to implicitly set width and height when starting in windowed mode.";
 }
 
 engine::window_interface::~window_interface() {
@@ -67,11 +68,14 @@ bool engine::window_interface::should_close() {
 }
 
 int engine::window_interface::loop() {
+	log::message::critical << "Window loop initialization has started.";
 	initialize();
+	log::message::critical << "Window loop initialization is complete. Starting the loop...";
 	while (!should_close()) {
 		render();
 		update();
 	}
+	log::message::critical << "Window loop is complete. Cleaning up...";
 	cleanup();
 
 	return 0;

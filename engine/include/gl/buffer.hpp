@@ -78,7 +78,7 @@ namespace engine::gl::buffer {
 		friend detail::indexed;
 	public:
 		explicit multiple(size_t count);
-		~multiple();
+		virtual ~multiple();
 
 		multiple(multiple const &other) = delete;
 		multiple(multiple &&other) noexcept
@@ -159,3 +159,6 @@ namespace engine::gl::detail::convert {
 	GLenum to_gl(engine::gl::buffer::usage v);
 	engine::gl::buffer::usage to_usage(GLenum v);
 }
+
+#include <ostream>
+std::ostream &operator<<(std::ostream &stream, engine::gl::buffer::target target);

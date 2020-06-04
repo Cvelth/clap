@@ -45,7 +45,7 @@
     <ClInclude Include="include\gl\vertex_array.hpp">
       <Filter>include\gl</Filter>
     </ClInclude>
-    <ClInclude Include="include\error.hpp">
+    <ClInclude Include="include\log.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\gl.hpp">
@@ -74,7 +74,7 @@
     <ClCompile Include="source\gl\vertex_array.cpp">
       <Filter>source\gl</Filter>
     </ClCompile>
-    <ClCompile Include="source\error.cpp">
+    <ClCompile Include="source\log.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\window_interface.cpp">

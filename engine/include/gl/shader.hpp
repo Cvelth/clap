@@ -53,35 +53,57 @@ namespace engine::gl::shader {
 	detail::object from_file(type type, std::string_view filename);
 	detail::object from_file(type type, char const *filename);
 
-	class variable {
+	namespace detail {
+		class variable {
+			friend program;
+			friend vertex_array::detail::indexed;
+		public:
+			enum class storage_type {
+				attribute, uniform
+			};
+			enum class datatype_t {
+				_float, _double, _int, _unsigned, _bool
+			};
+			struct dimentions_t {
+				size_t x, y;
+			};
+
+			std::string const name;
+
+			bool operator<(variable const &other) const { return location < other.location; }
+			size_t size() const;
+
+		private:
+			explicit variable(std::string const &name, storage_type const &storage,
+							  uint32_t location, datatype_t const &datatype_name,
+							  dimentions_t const &dimentions);
+
+		private:
+			storage_type const type;
+			uint32_t const location;
+			datatype_t const datatype;
+			dimentions_t dimentions;
+		};
+	}
+
+	class variables : private std::map<std::string, detail::variable> {
 		friend program;
-		friend vertex_array::detail::indexed;
 	public:
-		enum class storage_type {
-			attribute, uniform
-		};
-		enum class datatype_t {
-			_float, _double, _int, _unsigned, _bool
-		};
-		struct dimentions_t {
-			size_t x, y;
-		};
+		detail::variable const &operator[](std::string name);
 
-		std::string const name;
+		using std::map<std::string, detail::variable>::begin;
+		using std::map<std::string, detail::variable>::end;
+		using std::map<std::string, detail::variable>::rbegin;
+		using std::map<std::string, detail::variable>::rend;
 
-		bool operator<(variable const &other) const { return location < other.location; }
-		size_t size() const;
-
+		using std::map<std::string, detail::variable>::cbegin;
+		using std::map<std::string, detail::variable>::cend;
+		using std::map<std::string, detail::variable>::crbegin;
+		using std::map<std::string, detail::variable>::crend;
 	private:
-		explicit variable(std::string const &name, storage_type const &storage,
-						  uint32_t location, datatype_t const &datatype_name,
-						  dimentions_t const &dimentions);
-
-	private:
-		storage_type const type;
-		uint32_t const location;
-		datatype_t const datatype;
-		dimentions_t dimentions;
+		variables() = default;
+		variables(variables const &) = default;
+		variables(variables&&) noexcept = default;
 	};
 
 	class program {
@@ -115,9 +137,9 @@ namespace engine::gl::shader {
 
 		void use();
 
-		std::map<std::string, variable> getUniforms();
-		std::map<std::string, variable> getAttributes();
-		std::map<std::string, variable> getVariables();
+		variables getUniforms();
+		variables getAttributes();
+		variables getVariables();
 
 	private:
 		program(uint32_t id);
@@ -132,10 +154,14 @@ namespace engine::gl::detail::convert {
 	GLenum to_gl(engine::gl::shader::type v);
 	engine::gl::shader::type to_shader_type(GLenum v);
 
-	GLenum to_gl(shader::variable::datatype_t datatype, shader::variable::dimentions_t dimentions);
-	std::pair<shader::variable::datatype_t, shader::variable::dimentions_t>
+	GLenum to_gl(shader::detail::variable::datatype_t datatype, 
+				 shader::detail::variable::dimentions_t dimentions);
+	std::pair<shader::detail::variable::datatype_t, shader::detail::variable::dimentions_t>
 		to_variable_datatype_pair(GLenum v);
 
-	GLenum to_gl(shader::variable::datatype_t datatype);
-	size_t to_size(shader::variable::datatype_t datatype);
+	GLenum to_gl(shader::detail::variable::datatype_t datatype);
+	size_t to_size(shader::detail::variable::datatype_t datatype);
 }
+
+#include <ostream>
+std::ostream &operator<<(std::ostream &stream, engine::gl::shader::type target);

@@ -11,8 +11,11 @@ namespace engine::gl::detail {
 namespace engine::gl::buffer::detail {
 	class indexed;
 }
-namespace engine::gl::shader {
+namespace engine::gl::shader::detail {
 	class variable;
+}
+namespace engine::gl::shader {
+	class variables;
 }
 namespace engine::gl::vertex_array {
 	enum class connection {
@@ -45,14 +48,14 @@ namespace engine::gl::vertex_array {
 
 			void bind();
 			void attribute_pointer(buffer::detail::indexed &&buffer,
-								   shader::variable const &variable,
+								   shader::detail::variable const &variable,
 								   size_t stride, size_t shift);
-			void attribute_divisor(shader::variable const &variable, size_t divisor);
+			void attribute_divisor(shader::detail::variable const &variable, size_t divisor);
 			void attribute_pointer(buffer::detail::indexed &&buffer,
-								   shader::variable const &variable,
+								   shader::detail::variable const &variable,
 								   size_t stride, size_t shift, size_t divisor);
 			void attribute_pointer(buffer::detail::indexed &&buffer,
-								   std::set<shader::variable> const &variables);
+								   shader::variables const &variables);
 
 			void draw(connection connection, size_t count, size_t first = 0);
 			void draw_indexed(connection connection, size_t count, size_t first = 0,
@@ -100,7 +103,7 @@ namespace engine::gl::vertex_array {
 		friend detail::indexed;
 	public:
 		explicit multiple(size_t count);
-		~multiple();
+		virtual ~multiple();
 
 		multiple(multiple const &other) = delete;
 		multiple(multiple &&other) noexcept
@@ -136,22 +139,22 @@ namespace engine::gl::vertex_array {
 			return detail::indexed(this, 0u).bind();
 		}
 		inline void attribute_pointer(buffer::detail::indexed &&buffer,
-									  shader::variable const &variable,
+									  shader::detail::variable const &variable,
 									  size_t stride, size_t shift) {
 			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer),
 															   variable, stride, shift);
 		}
-		inline void attribute_divisor(shader::variable const &variable, size_t divisor) {
+		inline void attribute_divisor(shader::detail::variable const &variable, size_t divisor) {
 			return detail::indexed(this, 0u).attribute_divisor(variable, divisor);
 		}
 		inline void attribute_pointer(buffer::detail::indexed &&buffer,
-									  shader::variable const &variable,
+									  shader::detail::variable const &variable,
 									  size_t stride, size_t shift, size_t divisor) {
 			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer),
 															   variable, stride, shift, divisor);
 		}
 		inline void attribute_pointer(buffer::detail::indexed &&buffer,
-									  std::set<shader::variable> const &variables) {
+									  shader::variables const &variables) {
 			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer), variables);
 		}
 

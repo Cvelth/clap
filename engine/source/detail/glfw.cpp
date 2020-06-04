@@ -2,20 +2,25 @@
 
 #include "glfw/glfw3.h"
 
-#include "error.hpp"
+#include "log.hpp"
 
 bool engine::detail::glfw::is_initialized = false;
 bool engine::detail::glfw::is_context_selected = false;
 
 void engine::detail::glfw::initialize_implicitly() {
-	error::info(std::string("Initializing glfw. Version: ") + glfwGetVersionString());
 	if (!glfwInit())
-		error::critical("GLFW initialization error.");
-	is_initialized = true;
+		log::warning::critical << "GLFW initialization error.";
+	else {
+		log::message::major << "GLFW was initialized.";
+		log::info::critical << "Version: " << glfwGetVersionString();
+
+		is_initialized = true;
+	}
 }
 
 void engine::detail::glfw::terminate_implicitly() {
 	glfwTerminate();
+	log::message::major << "GLFW was terminated.";
 	is_initialized = false;
 }
 
@@ -23,14 +28,14 @@ void engine::detail::glfw::initialize() {
 	if (!is_initialized)
 		initialize_implicitly();
 	else
-		error::warn("GLFW is already initialized.");
+		log::warning::minor << "Attempt to initialized GLFW more than once.";
 }
 
 void engine::detail::glfw::terminate() {
 	if (is_initialized)
 		terminate_implicitly();
 	else
-		error::warn("GLFW wasn't initialized, no need to terminate.");
+		log::warning::minor << "Attempt to terminate GLFW when it isn't initialied.";
 }
 
 engine::detail::glfw_window engine::detail::glfw::create_window(size_t width, size_t height,
@@ -41,13 +46,18 @@ engine::detail::glfw_window engine::detail::glfw::create_window(size_t width, si
 
 	int signed_width = int(width);
 	int signed_height = int(height);
-	if (width != size_t(signed_width) || height != size_t(signed_height))
-		error::warn("Value overflow. Window dimentions are too large.");
+	if (width != size_t(signed_width) || height != size_t(signed_height)) {
+		log::warning::critical << "Window dimention value overflow. They are too large.";
+		log::info::major << "Dimentions are: (" << width << ", " << height << ").";
+	}
 
-	if (auto out = glfwCreateWindow(signed_width, signed_height, title.c_str(), monitor, share); out)
+	if (auto out = glfwCreateWindow(signed_width, signed_height, title.c_str(), monitor, share); out) {
+		log::message::major << "New window was created with dimentions (" << width << ", " << height << ").";
 		return engine::detail::detail::glfw_window_handle(out);
-	else
-		error::critical("Unable to initialize GLFWwindow. glfwCreateWindow returns a nullptr.");
+	} else {
+		log::error::major << "Unable to initialize GLFWwindow.";
+		log::info::major << "glfwCreateWindow returns a nullptr.";
+	}
 }
 engine::detail::glfw_window engine::detail::glfw::create_window_windowed(size_t width, size_t height,
 																		 std::string title,
@@ -95,7 +105,7 @@ engine::detail::detail::glfw_monitor_handle engine::detail::glfw::primary_monito
 	if (auto out = glfwGetPrimaryMonitor(); out)
 		return out;
 	else
-		error::critical("Unable to access monitor data.");
+		log::error::minor << "Unable to access monitor data.";
 }
 
 engine::detail::glfw_video_mode const engine::detail::glfw::video_mode(detail::glfw_monitor_handle monitor) {
@@ -104,16 +114,18 @@ engine::detail::glfw_video_mode const engine::detail::glfw::video_mode(detail::g
 	if (auto out = glfwGetVideoMode(monitor); out)
 		return detail::glfw_const_video_mode_handle(out);
 	else
-		error::critical("Unable to obtain video data from a monitor.");
+		log::error::minor << "Unable to obtain video data from a monitor.";
 }
 
 void engine::detail::glfw_window::destroy() {
 	glfw::ensure_initialization();
 	glfwDestroyWindow(handle);
+	log::message::major << "A window was destroyed.";
 }
 void engine::detail::glfw_window::update() {
 	glfw::ensure_initialization();
 	glfwSwapBuffers(handle);
+	log::message::negligible << "A window was updated.";
 }
 bool engine::detail::glfw_window::should_close() {
 	glfw::ensure_initialization();
@@ -123,6 +135,7 @@ void engine::detail::glfw_window::make_current() {
 	glfw::ensure_initialization();
 	glfwMakeContextCurrent(handle);
 	glfw::is_context_selected = true;
+	log::message::minor << "The GL context of this window was make current.";
 }
 
 size_t engine::detail::glfw_window::width() {
