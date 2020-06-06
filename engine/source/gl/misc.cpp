@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iomanip>
 
-#include "glad/glad.h"
+#include "glad/gl.h"
 
 #include "log.hpp"
 

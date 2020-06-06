@@ -7,13 +7,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "engine", "engine\engine.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "entry", "entry\entry.vcxproj", "{3C6ED91D-C8B3-45B7-B32E-EEE780A2093B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gl_bindings", "gl_bindings\gl_bindings.vcxproj", "{D50D7EB1-233B-4F10-A18C-971D6B75FED2}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shaders", "shaders", "{4F48B281-86AD-4772-93E7-AFBA16C9D0A6}"
 	ProjectSection(SolutionItems) = preProject
 		shaders\fragment.glsl = shaders\fragment.glsl
 		shaders\vertex.glsl = shaders\vertex.glsl
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{98E04523-0283-4D01-90A5-094068E80316}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "dependencies\project\glad\glad.vcxproj", "{1C048066-0573-4FE0-81EA-4B6F3A59807B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "dependencies\project\glfw\glfw.vcxproj", "{01A82DA8-D913-487F-9C24-2BC3EDA7D299}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,17 +43,29 @@ Global
 		{3C6ED91D-C8B3-45B7-B32E-EEE780A2093B}.Release|x64.Build.0 = Release|x64
 		{3C6ED91D-C8B3-45B7-B32E-EEE780A2093B}.Release|x86.ActiveCfg = Release|Win32
 		{3C6ED91D-C8B3-45B7-B32E-EEE780A2093B}.Release|x86.Build.0 = Release|Win32
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Debug|x64.ActiveCfg = Debug|x64
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Debug|x64.Build.0 = Debug|x64
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Debug|x86.ActiveCfg = Debug|Win32
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Debug|x86.Build.0 = Debug|Win32
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Release|x64.ActiveCfg = Release|x64
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Release|x64.Build.0 = Release|x64
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Release|x86.ActiveCfg = Release|Win32
-		{D50D7EB1-233B-4F10-A18C-971D6B75FED2}.Release|x86.Build.0 = Release|Win32
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Debug|x64.ActiveCfg = Debug|x64
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Debug|x64.Build.0 = Debug|x64
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Debug|x86.ActiveCfg = Debug|Win32
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Debug|x86.Build.0 = Debug|Win32
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Release|x64.ActiveCfg = Release|x64
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Release|x64.Build.0 = Release|x64
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Release|x86.ActiveCfg = Release|Win32
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B}.Release|x86.Build.0 = Release|Win32
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Debug|x64.ActiveCfg = Debug|x64
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Debug|x64.Build.0 = Debug|x64
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Debug|x86.ActiveCfg = Debug|Win32
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Debug|x86.Build.0 = Debug|Win32
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Release|x64.ActiveCfg = Release|x64
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Release|x64.Build.0 = Release|x64
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Release|x86.ActiveCfg = Release|Win32
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1C048066-0573-4FE0-81EA-4B6F3A59807B} = {98E04523-0283-4D01-90A5-094068E80316}
+		{01A82DA8-D913-487F-9C24-2BC3EDA7D299} = {98E04523-0283-4D01-90A5-094068E80316}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7DCB255-658F-40B2-BCAE-F6DC596B49C2}

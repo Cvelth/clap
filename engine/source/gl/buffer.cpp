@@ -3,7 +3,7 @@
 #include "gl/detail/state.hpp"
 #include "log.hpp"
 
-#include "glad/glad.h"
+#include "glad/gl.h"
 
 GLenum engine::gl::detail::convert::to_gl(engine::gl::buffer::target v) {
 	switch (v) {

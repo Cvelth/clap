@@ -1,6 +1,6 @@
 #include "gl/vertex_array.hpp"
 
-#include "glad/glad.h"
+#include "glad/gl.h"
 
 #include "gl/detail/state.hpp"
 #include "gl/buffer.hpp"

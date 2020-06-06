@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "glad/glad.h"
+#include "glad/gl.h"
 
 #include "gl/detail/state.hpp"
 #include "log.hpp"
