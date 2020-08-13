@@ -12,8 +12,8 @@ void window::initialize() {
 	using namespace engine::gl;
 	clear::set_color(0.4f, 0.0f, 0.5f, 1.0f);
 
-	program.add(shader::from_file(shader::type::vertex, "../shaders/vertex.glsl"));
-	program.add(shader::from_file(shader::type::fragment, "../shaders/fragment.glsl"));
+	program.add(shader::from_file(shader::type::vertex, "../../resource/shader/vertex/simple_position_color.glsl"));
+	program.add(shader::from_file(shader::type::fragment, "../../resource/shader/fragment/simple_color.glsl"));
 	program.link();
 
 	//auto uniforms = program.getUniforms();
