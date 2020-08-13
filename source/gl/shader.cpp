@@ -7,7 +7,7 @@
 #include "glad/gl.h"
 
 #include "gl/detail/state.hpp"
-#include "log.hpp"
+#include "essential/log.hpp"
 
 engine::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
 	gl::detail::state::ensure_loaded();

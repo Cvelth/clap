@@ -1,7 +1,7 @@
 #include "gl/buffer.hpp"
 
 #include "gl/detail/state.hpp"
-#include "log.hpp"
+#include "essential/log.hpp"
 
 #include "glad/gl.h"
 

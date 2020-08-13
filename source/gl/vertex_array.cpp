@@ -5,7 +5,7 @@
 #include "gl/detail/state.hpp"
 #include "gl/buffer.hpp"
 #include "gl/shader.hpp"
-#include "log.hpp"
+#include "essential/log.hpp"
 
 engine::gl::vertex_array::multiple::multiple(size_t count)
 	: count(count) {

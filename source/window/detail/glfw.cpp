@@ -1,8 +1,8 @@
-#include "detail/glfw.hpp"
+#include "window/detail/glfw.hpp"
 
 #include "glfw/glfw3.h"
 
-#include "log.hpp"
+#include "essential/log.hpp"
 
 bool engine::detail::glfw::is_initialized = false;
 bool engine::detail::glfw::is_context_selected = false;

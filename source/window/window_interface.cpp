@@ -1,7 +1,7 @@
-#include "window_interface.hpp"
+#include "window/window_interface.hpp"
 
-#include "detail/glfw.hpp"
-#include "log.hpp"
+#include "window/detail/glfw.hpp"
+#include "essential/log.hpp"
 #include "gl/detail/state.hpp"
 
 engine::window_interface::window_interface(std::string const &title, window_mode mode, 

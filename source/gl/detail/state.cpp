@@ -3,11 +3,11 @@
 #include "glad/gl.h"
 #include "glfw/glfw3.h"
 
-#include "detail/glfw.hpp"
+#include "window/detail/glfw.hpp"
 #include "gl/buffer.hpp"
 #include "gl/shader.hpp"
 #include "gl/vertex_array.hpp"
-#include "log.hpp"
+#include "essential/log.hpp"
 
 bool engine::gl::detail::state::load() {
 	static bool was_loaded = false;

@@ -1,5 +1,5 @@
 #include "window.hpp"
-#include "log.hpp"
+#include "essential/log.hpp"
 #include <iostream>
 
 int main() {

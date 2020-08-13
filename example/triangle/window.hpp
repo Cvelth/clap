@@ -1,6 +1,6 @@
 #pragma once
-#include "window_interface.hpp"
-#include "gl.hpp"
+#include "window/window_interface.hpp"
+#include "gl/gl.hpp"
 
 using engine::window_mode;
 

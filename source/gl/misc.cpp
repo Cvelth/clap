@@ -5,7 +5,7 @@
 
 #include "glad/gl.h"
 
-#include "log.hpp"
+#include "essential/log.hpp"
 
 void engine::gl::clear::set_color(float r, float g, float b, float a) {
 	glClearColor(r, g, b, a);
