@@ -1,4 +1,5 @@
 #include "window.hpp"
+#include "resource/resource.hpp"
 
 #include <chrono>
 #include <thread>
@@ -9,11 +10,14 @@
 //FORCE_NVIDIA_GPU_ON_OPTIMUS;
 
 void window::initialize() {
+	clap::resource::load();
+
 	using namespace clap::gl;
 	clear::set_color(0.4f, 0.0f, 0.5f, 1.0f);
 
-	program.add(shader::from_file(shader::type::vertex, "../../resource/shader/vertex/simple_position_color.glsl"));
-	program.add(shader::from_file(shader::type::fragment, "../../resource/shader/fragment/simple_color.glsl"));
+	
+	program.add(clap::resource::shader::fragment["simple_color"], 
+				clap::resource::shader::vertex["simple_position_color"]);
 	program.link();
 
 	//auto uniforms = program.getUniforms();
@@ -53,4 +57,6 @@ void window::render() {
 
 void window::cleanup() {
 	using namespace clap::gl;
+
+	clap::resource::clear();
 }
