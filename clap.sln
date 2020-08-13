@@ -17,7 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gl", "project\gl\gl.vcxproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "essential", "project\essential\essential.vcxproj", "{CCC41C95-0F48-4B27-9B42-F3EF8BAB60AC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "window", "projects\window\window.vcxproj", "{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "window", "project\window\window.vcxproj", "{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
