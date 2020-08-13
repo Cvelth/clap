@@ -121,6 +121,12 @@ clap::gl::shader::program::~program() {
 	log::message::minor << "A shader program was destroyed.";
 }
 
+void clap::gl::shader::program::add(detail::object const &object) {
+	glAttachShader(id, object.id);
+	log::message::negligible << "A shader object was attached to a program.";
+	needs_linking = true;
+}
+
 void clap::gl::shader::program::add(detail::object &&object) {
 	glAttachShader(id, object.id);
 	log::message::negligible << "A shader object was attached to a program.";	
@@ -232,6 +238,23 @@ clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
 		case GL_TESS_CONTROL_SHADER:	return clap::gl::shader::type::tesselation_control;
 		case GL_TESS_EVALUATION_SHADER: return clap::gl::shader::type::tesselation_evaluation;
 	}
+	log::error::critical << "Unsupported enum value.";
+}
+
+clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std::string const &v) {
+	if (v == "fragment")
+		return clap::gl::shader::type::fragment;
+	else if (v == "vertex")
+		return clap::gl::shader::type::vertex;
+	else if (v == "geometry")
+		return clap::gl::shader::type::geometry;
+	else if (v == "compute")
+		return clap::gl::shader::type::compute;
+	else if (v == "tesselation_control")
+		return clap::gl::shader::type::tesselation_control;
+	else if (v == "tesselation_evaluation")
+		return clap::gl::shader::type::tesselation_evaluation;
+
 	log::error::critical << "Unsupported enum value.";
 }
 
