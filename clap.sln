@@ -13,11 +13,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shaders", "shaders", "{4F48
 		shaders\vertex.glsl = shaders\vertex.glsl
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{98E04523-0283-4D01-90A5-094068E80316}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependency", "dependency", "{98E04523-0283-4D01-90A5-094068E80316}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "dependencies\project\glad\glad.vcxproj", "{1C048066-0573-4FE0-81EA-4B6F3A59807B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "dependency\project\glad\glad.vcxproj", "{1C048066-0573-4FE0-81EA-4B6F3A59807B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "dependencies\project\glfw\glfw.vcxproj", "{01A82DA8-D913-487F-9C24-2BC3EDA7D299}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "dependency\project\glfw\glfw.vcxproj", "{01A82DA8-D913-487F-9C24-2BC3EDA7D299}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
