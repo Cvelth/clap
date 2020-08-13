@@ -3,7 +3,7 @@
 #include "gl/buffer.hpp"
 #include "gl/vertex_array.hpp"
 
-namespace engine::gl {
+namespace clap::gl {
 	namespace buffer {
 		enum class target;
 		namespace detail {
@@ -20,7 +20,7 @@ namespace engine::gl {
 	}
 }
 
-namespace engine::gl::detail {
+namespace clap::gl::detail {
 	class state {
 	public:
 		static bool load();

@@ -9,7 +9,7 @@
 //FORCE_NVIDIA_GPU_ON_OPTIMUS;
 
 void window::initialize() {
-	using namespace engine::gl;
+	using namespace clap::gl;
 	clear::set_color(0.4f, 0.0f, 0.5f, 1.0f);
 
 	program.add(shader::from_file(shader::type::vertex, "../../resource/shader/vertex/simple_position_color.glsl"));
@@ -41,7 +41,7 @@ void window::initialize() {
 }
 
 void window::render() {
-	using namespace engine::gl;
+	using namespace clap::gl;
 	auto time = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100);
 
 	poll_events();
@@ -52,5 +52,5 @@ void window::render() {
 }
 
 void window::cleanup() {
-	using namespace engine::gl;
+	using namespace clap::gl;
 }

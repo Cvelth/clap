@@ -5,13 +5,13 @@
 
 typedef unsigned int GLenum;
 
-namespace engine::gl::detail {
+namespace clap::gl::detail {
 	class state;
 }
-namespace engine::gl::vertex_array::detail {
+namespace clap::gl::vertex_array::detail {
 	class indexed;
 }
-namespace engine::gl::shader {
+namespace clap::gl::shader {
 	enum class type {
 		fragment, vertex, geometry, compute, tesselation_control, tesselation_evaluation
 	};
@@ -150,9 +150,9 @@ namespace engine::gl::shader {
 	};
 }
 
-namespace engine::gl::detail::convert {
-	GLenum to_gl(engine::gl::shader::type v);
-	engine::gl::shader::type to_shader_type(GLenum v);
+namespace clap::gl::detail::convert {
+	GLenum to_gl(clap::gl::shader::type v);
+	clap::gl::shader::type to_shader_type(GLenum v);
 
 	GLenum to_gl(shader::detail::variable::datatype_t datatype, 
 				 shader::detail::variable::dimentions_t dimentions);
@@ -164,4 +164,4 @@ namespace engine::gl::detail::convert {
 }
 
 #include <ostream>
-std::ostream &operator<<(std::ostream &stream, engine::gl::shader::type target);
+std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type target);

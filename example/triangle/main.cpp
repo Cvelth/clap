@@ -3,25 +3,25 @@
 #include <iostream>
 
 int main() {
-	engine::logger().add_stream(std::cerr,
-								engine::logger_mask::error_every |
-								engine::logger_mask::warning_minor |
-								engine::logger_mask::message_major |
-								engine::logger_mask::info_minor
+	clap::logger().add_stream(std::cerr,
+								clap::logger_mask::error_every |
+								clap::logger_mask::warning_minor |
+								clap::logger_mask::message_major |
+								clap::logger_mask::info_minor
 	);
-	engine::logger().add_file("",
-							  engine::logger_mask::error_every |
-							  engine::logger_mask::warning_minor |
-							  engine::logger_mask::message_minor |
-							  engine::logger_mask::info_minor
+	clap::logger().add_file("",
+							  clap::logger_mask::error_every |
+							  clap::logger_mask::warning_minor |
+							  clap::logger_mask::message_minor |
+							  clap::logger_mask::info_minor
 	);
 
-	engine::logger().add_file("full/", engine::logger_mask::every);
-	engine::logger().add_file("short/",
-							  engine::logger_mask::error_every |
-							  engine::logger_mask::warning_major |
-							  engine::logger_mask::message_major |
-							  engine::logger_mask::info_major
+	clap::logger().add_file("full/", clap::logger_mask::every);
+	clap::logger().add_file("short/",
+							  clap::logger_mask::error_every |
+							  clap::logger_mask::warning_major |
+							  clap::logger_mask::message_major |
+							  clap::logger_mask::info_major
 	);
 
 	window w("rrl", window_mode::windowed, 1280, 720);

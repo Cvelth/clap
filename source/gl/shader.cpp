@@ -9,7 +9,7 @@
 #include "gl/detail/state.hpp"
 #include "essential/log.hpp"
 
-engine::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
+clap::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
 	gl::detail::state::ensure_loaded();
 
 	id = glCreateShader(gl::detail::convert::to_gl(type));
@@ -19,12 +19,12 @@ engine::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
 		log::message::minor << "A " << type << " shader object was created.";
 }
 
-engine::gl::shader::detail::object::~object() {
+clap::gl::shader::detail::object::~object() {
 	glDeleteShader(id);
 	log::message::minor << "A shader object was destroyed.";
 }
 
-engine::gl::shader::detail::object::object(type type, std::string source) : object(type) {
+clap::gl::shader::detail::object::object(type type, std::string source) : object(type) {
 	if (source == "") {
 		log::warning::critical << "Shader source is empty.";
 		return;
@@ -49,7 +49,7 @@ engine::gl::shader::detail::object::object(type type, std::string source) : obje
 		log::message::minor << "A shader was compiled successfully.";
 }
 
-engine::gl::shader::detail::object::object(uint32_t id) : id(id) {
+clap::gl::shader::detail::object::object(uint32_t id) : id(id) {
 	gl::detail::state::ensure_loaded();
 
 	if (id == 0 || !glIsShader(id))
@@ -59,18 +59,18 @@ engine::gl::shader::detail::object::object(uint32_t id) : id(id) {
 		log::message::negligible << "A shader object was moved.";
 }
 
-engine::gl::shader::detail::object engine::gl::shader::from_source(type type, std::string source) {
+clap::gl::shader::detail::object clap::gl::shader::from_source(type type, std::string source) {
 	return detail::object(type, source);
 }
-engine::gl::shader::detail::object engine::gl::shader::from_source(type type, std::string_view source) {
+clap::gl::shader::detail::object clap::gl::shader::from_source(type type, std::string_view source) {
 	return from_source(type, std::string(source));
 }
 
-engine::gl::shader::detail::object engine::gl::shader::from_source(type type, char const *source) {
+clap::gl::shader::detail::object clap::gl::shader::from_source(type type, char const *source) {
 	return from_source(type, std::string(source));
 }
 
-engine::gl::shader::detail::object engine::gl::shader::from_file(type type, std::string filename) {
+clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string filename) {
 	std::ifstream filestream;
 	filestream.open(filename);
 	if (!filestream) {
@@ -85,19 +85,19 @@ engine::gl::shader::detail::object engine::gl::shader::from_file(type type, std:
 
 	return from_source(type, source);
 }
-engine::gl::shader::detail::object engine::gl::shader::from_file(type type, std::string_view filename) {
+clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string_view filename) {
 	return from_file(type, std::string(filename));
 }
 
-engine::gl::shader::detail::object engine::gl::shader::from_file(type type, char const *filename) {
+clap::gl::shader::detail::object clap::gl::shader::from_file(type type, char const *filename) {
 	return from_file(type, std::string(filename));
 }
 
-size_t engine::gl::shader::detail::variable::size() const {
+size_t clap::gl::shader::detail::variable::size() const {
 	return dimentions.x * dimentions.y * gl::detail::convert::to_size(datatype);
 }
 
-engine::gl::shader::detail::variable::variable(std::string const &name, storage_type const &storage,
+clap::gl::shader::detail::variable::variable(std::string const &name, storage_type const &storage,
 											   uint32_t location, datatype_t const &datatype_name,
 											   dimentions_t const &dimentions)
 	: name(name), type(storage), location(location), datatype(datatype_name), dimentions(dimentions) {
@@ -107,7 +107,7 @@ engine::gl::shader::detail::variable::variable(std::string const &name, storage_
 		log::warning::critical << "Matrix variables can only be 'float's or 'double's.";
 }
 
-engine::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
+clap::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
 	gl::detail::state::ensure_loaded();
 
 	id = glCreateProgram();
@@ -116,18 +116,18 @@ engine::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
 	else
 		log::message::minor << "A shader program was created.";
 }
-engine::gl::shader::program::~program() {
+clap::gl::shader::program::~program() {
 	glDeleteProgram(id);
 	log::message::minor << "A shader program was destroyed.";
 }
 
-void engine::gl::shader::program::add(detail::object &&object) {
+void clap::gl::shader::program::add(detail::object &&object) {
 	glAttachShader(id, object.id);
 	log::message::negligible << "A shader object was attached to a program.";	
 	needs_linking = true;
 }
 
-void engine::gl::shader::program::link() {
+void clap::gl::shader::program::link() {
 	if (needs_linking) {
 		glLinkProgram(id);
 
@@ -148,7 +148,7 @@ void engine::gl::shader::program::link() {
 		log::warning::negligible << "Program is already linked. Repeated linkage is not needed.";
 }
 
-void engine::gl::shader::program::use() {
+void clap::gl::shader::program::use() {
 	if (!needs_linking)
 		gl::detail::state::use(this);
 	else
@@ -168,8 +168,8 @@ void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_lengt
 		create_variable_lambda(name.data(), glGetAttribLocation(program_id, name.data()), type);
 	}
 }
-engine::gl::shader::variables engine::gl::shader::program::getUniforms() {
-	engine::gl::shader::variables out;
+clap::gl::shader::variables clap::gl::shader::program::getUniforms() {
+	clap::gl::shader::variables out;
 	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH,
 			  glGetActiveUniform, [&out](auto name, auto location, auto datatype) {
 				  auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
@@ -182,8 +182,8 @@ engine::gl::shader::variables engine::gl::shader::program::getUniforms() {
 	log::message::minor << "Uniforms (" << out.size() << ") were requested from the shader program.";
 	return out;
 }
-engine::gl::shader::variables engine::gl::shader::program::getAttributes() {
-	engine::gl::shader::variables out;
+clap::gl::shader::variables clap::gl::shader::program::getAttributes() {
+	clap::gl::shader::variables out;
 	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
 			  glGetActiveAttrib, [&out](auto name, auto location, auto datatype) {
 				  auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
@@ -196,13 +196,13 @@ engine::gl::shader::variables engine::gl::shader::program::getAttributes() {
 	log::message::minor << "Attributes (" << out.size() << ") were requested from the shader program.";
 	return out;
 }
-engine::gl::shader::variables engine::gl::shader::program::getVariables() {
+clap::gl::shader::variables clap::gl::shader::program::getVariables() {
 	auto out = getUniforms();
 	out.merge(getAttributes());
 	return out;
 }
 
-engine::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
+clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
 	gl::detail::state::ensure_loaded();
 
 	if (id == 0 || !glIsProgram(id))
@@ -212,33 +212,33 @@ engine::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) 
 		log::message::negligible << "A shader program was moved.";
 }
 
-GLenum engine::gl::detail::convert::to_gl(engine::gl::shader::type v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::shader::type v) {
 	switch (v) {
-		case engine::gl::shader::type::fragment:				return GL_FRAGMENT_SHADER;
-		case engine::gl::shader::type::vertex:					return GL_VERTEX_SHADER;
-		case engine::gl::shader::type::geometry:				return GL_GEOMETRY_SHADER;
-		case engine::gl::shader::type::compute:					return GL_COMPUTE_SHADER;
-		case engine::gl::shader::type::tesselation_control:		return GL_TESS_CONTROL_SHADER;
-		case engine::gl::shader::type::tesselation_evaluation:	return GL_TESS_EVALUATION_SHADER;
+		case clap::gl::shader::type::fragment:				return GL_FRAGMENT_SHADER;
+		case clap::gl::shader::type::vertex:					return GL_VERTEX_SHADER;
+		case clap::gl::shader::type::geometry:				return GL_GEOMETRY_SHADER;
+		case clap::gl::shader::type::compute:					return GL_COMPUTE_SHADER;
+		case clap::gl::shader::type::tesselation_control:		return GL_TESS_CONTROL_SHADER;
+		case clap::gl::shader::type::tesselation_evaluation:	return GL_TESS_EVALUATION_SHADER;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
-engine::gl::shader::type engine::gl::detail::convert::to_shader_type(GLenum v) {
+clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
 	switch (v) {
-		case GL_FRAGMENT_SHADER:		return engine::gl::shader::type::fragment;
-		case GL_VERTEX_SHADER:			return engine::gl::shader::type::vertex;
-		case GL_GEOMETRY_SHADER:		return engine::gl::shader::type::geometry;
-		case GL_COMPUTE_SHADER:			return engine::gl::shader::type::compute;
-		case GL_TESS_CONTROL_SHADER:	return engine::gl::shader::type::tesselation_control;
-		case GL_TESS_EVALUATION_SHADER: return engine::gl::shader::type::tesselation_evaluation;
+		case GL_FRAGMENT_SHADER:		return clap::gl::shader::type::fragment;
+		case GL_VERTEX_SHADER:			return clap::gl::shader::type::vertex;
+		case GL_GEOMETRY_SHADER:		return clap::gl::shader::type::geometry;
+		case GL_COMPUTE_SHADER:			return clap::gl::shader::type::compute;
+		case GL_TESS_CONTROL_SHADER:	return clap::gl::shader::type::tesselation_control;
+		case GL_TESS_EVALUATION_SHADER: return clap::gl::shader::type::tesselation_evaluation;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype,
+GLenum clap::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype,
 										  shader::detail::variable::dimentions_t dimentions) {
 	switch (datatype) {
-		case engine::gl::shader::detail::variable::datatype_t::_float:
+		case clap::gl::shader::detail::variable::datatype_t::_float:
 			switch (dimentions.x) {
 				case 1:
 					switch (dimentions.y) {
@@ -266,7 +266,7 @@ GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t d
 						case 4: return GL_FLOAT_MAT4;
 					}
 			}
-		case engine::gl::shader::detail::variable::datatype_t::_double:
+		case clap::gl::shader::detail::variable::datatype_t::_double:
 			switch (dimentions.x) {
 				case 1:
 					switch (dimentions.y) {
@@ -294,7 +294,7 @@ GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t d
 						case 4: return GL_DOUBLE_MAT4;
 					}
 			}
-		case engine::gl::shader::detail::variable::datatype_t::_int:
+		case clap::gl::shader::detail::variable::datatype_t::_int:
 			switch (dimentions.x) {
 				case 1:
 					switch (dimentions.y) {
@@ -304,7 +304,7 @@ GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t d
 						case 4: return GL_INT_VEC4;
 					}
 			}
-		case engine::gl::shader::detail::variable::datatype_t::_unsigned:
+		case clap::gl::shader::detail::variable::datatype_t::_unsigned:
 			switch (dimentions.x) {
 				case 1:
 					switch (dimentions.y) {
@@ -314,7 +314,7 @@ GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t d
 						case 4: return GL_UNSIGNED_INT_VEC4;
 					}
 			}
-		case engine::gl::shader::detail::variable::datatype_t::_bool:
+		case clap::gl::shader::detail::variable::datatype_t::_bool:
 			switch (dimentions.x) {
 				case 1:
 					switch (dimentions.y) {
@@ -328,9 +328,9 @@ GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t d
 	log::error::critical << "Unsupported enum value.";
 }
 
-std::pair<engine::gl::shader::detail::variable::datatype_t,
-	engine::gl::shader::detail::variable::dimentions_t>
-	engine::gl::detail::convert::to_variable_datatype_pair(GLenum v) {
+std::pair<clap::gl::shader::detail::variable::datatype_t,
+	clap::gl::shader::detail::variable::dimentions_t>
+	clap::gl::detail::convert::to_variable_datatype_pair(GLenum v) {
 	auto make_pair = [](shader::detail::variable::datatype_t datatype, size_t x, size_t y) {
 		return std::make_pair(datatype, shader::detail::variable::dimentions_t{ x, y });
 	};
@@ -387,44 +387,44 @@ std::pair<engine::gl::shader::detail::variable::datatype_t,
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum engine::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype) {
+GLenum clap::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype) {
 	switch (datatype) {
-		case engine::gl::shader::detail::variable::datatype_t::_float: return GL_FLOAT;
-		case engine::gl::shader::detail::variable::datatype_t::_double: return GL_DOUBLE;
-		case engine::gl::shader::detail::variable::datatype_t::_int: return GL_INT;
-		case engine::gl::shader::detail::variable::datatype_t::_unsigned: return GL_UNSIGNED_INT;
-		case engine::gl::shader::detail::variable::datatype_t::_bool: return GL_BOOL;
+		case clap::gl::shader::detail::variable::datatype_t::_float: return GL_FLOAT;
+		case clap::gl::shader::detail::variable::datatype_t::_double: return GL_DOUBLE;
+		case clap::gl::shader::detail::variable::datatype_t::_int: return GL_INT;
+		case clap::gl::shader::detail::variable::datatype_t::_unsigned: return GL_UNSIGNED_INT;
+		case clap::gl::shader::detail::variable::datatype_t::_bool: return GL_BOOL;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-size_t engine::gl::detail::convert::to_size(shader::detail::variable::datatype_t datatype) {
+size_t clap::gl::detail::convert::to_size(shader::detail::variable::datatype_t datatype) {
 	switch (datatype) {
-		case engine::gl::shader::detail::variable::datatype_t::_float: return sizeof(float);
-		case engine::gl::shader::detail::variable::datatype_t::_double: return sizeof(double);
-		case engine::gl::shader::detail::variable::datatype_t::_int: return sizeof(int);
-		case engine::gl::shader::detail::variable::datatype_t::_unsigned: return sizeof(unsigned);
-		case engine::gl::shader::detail::variable::datatype_t::_bool: return sizeof(bool);
+		case clap::gl::shader::detail::variable::datatype_t::_float: return sizeof(float);
+		case clap::gl::shader::detail::variable::datatype_t::_double: return sizeof(double);
+		case clap::gl::shader::detail::variable::datatype_t::_int: return sizeof(int);
+		case clap::gl::shader::detail::variable::datatype_t::_unsigned: return sizeof(unsigned);
+		case clap::gl::shader::detail::variable::datatype_t::_bool: return sizeof(bool);
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-std::ostream &operator<<(std::ostream &stream, engine::gl::shader::type type) {
+std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
 	switch (type) {
-		case engine::gl::shader::type::fragment:				stream << "fragment"; break;
-		case engine::gl::shader::type::vertex:					stream << "vertex"; break;
-		case engine::gl::shader::type::geometry:				stream << "geometry"; break;
-		case engine::gl::shader::type::compute:					stream << "compute"; break;
-		case engine::gl::shader::type::tesselation_control:		stream << "tesselation control"; break;
-		case engine::gl::shader::type::tesselation_evaluation:	stream << "tesselation evaluation"; break;
+		case clap::gl::shader::type::fragment:				stream << "fragment"; break;
+		case clap::gl::shader::type::vertex:					stream << "vertex"; break;
+		case clap::gl::shader::type::geometry:				stream << "geometry"; break;
+		case clap::gl::shader::type::compute:					stream << "compute"; break;
+		case clap::gl::shader::type::tesselation_control:		stream << "tesselation control"; break;
+		case clap::gl::shader::type::tesselation_evaluation:	stream << "tesselation evaluation"; break;
 		default: 
-			engine::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Unsupported enum value.";
 	}
 	return stream;
 }
 
 
-engine::gl::shader::detail::variable const &engine::gl::shader::variables::operator[](std::string name) {
+clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) {
 	auto found = find(name);
 	if (found != end())
 		return found->second;

@@ -1,5 +1,5 @@
 #pragma once
-namespace engine::gl::clear {
+namespace clap::gl::clear {
 	void set_color(float r, float g, float b, float a);
 	void set_depth(double d);
 	void set_stencil(int s);

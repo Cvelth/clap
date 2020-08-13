@@ -4,10 +4,10 @@
 
 typedef unsigned int GLenum;
 
-namespace engine::gl::detail {
+namespace clap::gl::detail {
 	class state;
 }
-namespace engine::gl::buffer {
+namespace clap::gl::buffer {
 	enum class target {
 		array, atomic_counter, copy_read, copy_write,
 		indirect_dispatch, indirect_draw, element_array,
@@ -149,16 +149,16 @@ namespace engine::gl::buffer {
 	};
 
 }
-namespace engine::gl::detail::convert {
-	GLenum to_gl(engine::gl::buffer::target v);
-	engine::gl::buffer::target to_target(GLenum v);
+namespace clap::gl::detail::convert {
+	GLenum to_gl(clap::gl::buffer::target v);
+	clap::gl::buffer::target to_target(GLenum v);
 
-	GLenum to_gl(engine::gl::buffer::access v);
-	engine::gl::buffer::access to_access(GLenum v);
+	GLenum to_gl(clap::gl::buffer::access v);
+	clap::gl::buffer::access to_access(GLenum v);
 
-	GLenum to_gl(engine::gl::buffer::usage v);
-	engine::gl::buffer::usage to_usage(GLenum v);
+	GLenum to_gl(clap::gl::buffer::usage v);
+	clap::gl::buffer::usage to_usage(GLenum v);
 }
 
 #include <ostream>
-std::ostream &operator<<(std::ostream &stream, engine::gl::buffer::target target);
+std::ostream &operator<<(std::ostream &stream, clap::gl::buffer::target target);

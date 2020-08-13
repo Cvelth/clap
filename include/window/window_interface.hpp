@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace engine {
+namespace clap {
 	enum class window_mode {
 		fullscreen,
 		windowed,

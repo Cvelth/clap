@@ -4,7 +4,7 @@
 #include "essential/log.hpp"
 #include "gl/detail/state.hpp"
 
-engine::window_interface::window_interface(std::string const &title, window_mode mode, 
+clap::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
 										: aspect_ratio(double(width) / height), handle(nullptr) {
 	switch (mode) {
@@ -29,45 +29,45 @@ engine::window_interface::window_interface(std::string const &title, window_mode
 	gl::detail::state::load();
 }
 
-engine::window_interface::window_interface(std::string const &title, window_mode mode) 
+clap::window_interface::window_interface(std::string const &title, window_mode mode) 
 	: window_interface(title, mode, detail::glfw::primary_monitor_video_mode().width(),
 					   detail::glfw::primary_monitor_video_mode().height()) {
 	if (mode == window_mode::windowed)
 		log::warning::minor << "It's recommended to implicitly set width and height when starting in windowed mode.";
 }
 
-engine::window_interface::~window_interface() {
+clap::window_interface::~window_interface() {
 	if (handle) {
 		handle->destroy();
 		delete handle;
 	}
 }
 
-void engine::window_interface::update() {
+void clap::window_interface::update() {
 	handle->update();
 }
 
-void engine::window_interface::poll_events() {
+void clap::window_interface::poll_events() {
 	detail::glfw::poll_events();
 }
 
-void engine::window_interface::wait_events() {
+void clap::window_interface::wait_events() {
 	detail::glfw::wait_events();
 }
 
-size_t engine::window_interface::width() {
+size_t clap::window_interface::width() {
 	return handle->width();
 }
 
-size_t engine::window_interface::height() {
+size_t clap::window_interface::height() {
 	return handle->height();
 }
 
-bool engine::window_interface::should_close() {
+bool clap::window_interface::should_close() {
 	return handle->should_close();
 }
 
-int engine::window_interface::loop() {
+int clap::window_interface::loop() {
 	log::message::critical << "Window loop initialization has started.";
 	initialize();
 	log::message::critical << "Window loop initialization is complete. Starting the loop...";

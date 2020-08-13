@@ -4,7 +4,7 @@
 #include <ostream>
 #include <string>
 
-namespace engine::log::detail {
+namespace clap::log::detail {
 	enum class mask {
 		none = 0x0000,
 
@@ -76,7 +76,7 @@ namespace engine::log::detail {
 	};
 	class stream;
 
-	template <engine::log::detail::mask level>
+	template <clap::log::detail::mask level>
 	class log_t {
 		template <typename T>
 		friend inline stream operator<<(log_t const &log_object, T const &t) {
@@ -87,11 +87,11 @@ namespace engine::log::detail {
 		stream to_stream(T const &t) const;
 	};
 }
-namespace engine::detail {
+namespace clap::detail {
 	class logger_t;
 }
 
-namespace engine::log {
+namespace clap::log {
 	namespace error {
 		inline detail::log_t<detail::mask::error_1> critical;
 		inline detail::log_t<detail::mask::error_2> major;
@@ -118,16 +118,16 @@ namespace engine::log {
 	}
 }
 
-namespace engine::log::detail {
+namespace clap::log::detail {
 	class stream {
-		template <engine::log::detail::mask level> friend class log_t;
+		template <clap::log::detail::mask level> friend class log_t;
 
 	public:
 		~stream() { finish_writing(); }
 
 	private:
 		template <typename T>
-		stream(engine::detail::logger_t &logger_ref, mask mask, T const &t) : logger_ref(logger_ref), mask(mask) {
+		stream(clap::detail::logger_t &logger_ref, mask mask, T const &t) : logger_ref(logger_ref), mask(mask) {
 			initialize_writing();
 			write(t);
 		}
@@ -145,19 +145,19 @@ namespace engine::log::detail {
 		}
 
 	private:
-		engine::detail::logger_t &logger_ref;
+		clap::detail::logger_t &logger_ref;
 		log::detail::mask mask;
 	};
 }
 
-namespace engine {
+namespace clap {
 	detail::logger_t &logger();
 }
 
-namespace engine::detail {
+namespace clap::detail {
 	class logger_t {
-		friend engine::log::detail::stream;
-		friend logger_t &engine::logger();
+		friend clap::log::detail::stream;
+		friend logger_t &clap::logger();
 	public:
 		~logger_t();
 
@@ -191,31 +191,31 @@ namespace engine::detail {
 	};
 }
 
-namespace engine {
+namespace clap {
 	using logger_mask = log::detail::mask;
 }
 
-inline engine::log::detail::mask operator|(engine::log::detail::mask const lhs, engine::log::detail::mask const rhs) {
-	return static_cast<engine::log::detail::mask>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
+inline clap::log::detail::mask operator|(clap::log::detail::mask const lhs, clap::log::detail::mask const rhs) {
+	return static_cast<clap::log::detail::mask>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
 }
-inline engine::log::detail::mask operator&(engine::log::detail::mask const lhs, engine::log::detail::mask const rhs) {
-	return static_cast<engine::log::detail::mask>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
+inline clap::log::detail::mask operator&(clap::log::detail::mask const lhs, clap::log::detail::mask const rhs) {
+	return static_cast<clap::log::detail::mask>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
 }
-inline engine::log::detail::mask operator^(engine::log::detail::mask const lhs, engine::log::detail::mask const rhs) {
-	return static_cast<engine::log::detail::mask>(static_cast<unsigned>(lhs) ^ static_cast<unsigned>(rhs));
+inline clap::log::detail::mask operator^(clap::log::detail::mask const lhs, clap::log::detail::mask const rhs) {
+	return static_cast<clap::log::detail::mask>(static_cast<unsigned>(lhs) ^ static_cast<unsigned>(rhs));
 }
-inline engine::log::detail::mask operator~(engine::log::detail::mask const lhs) {
-	return static_cast<engine::log::detail::mask>(~static_cast<unsigned>(lhs));
-}
-
-template<engine::log::detail::mask level>
-template<typename T>
-inline engine::log::detail::stream engine::log::detail::log_t<level>::to_stream(T const &t) const {
-	return engine::log::detail::stream(engine::logger(), level, t);
+inline clap::log::detail::mask operator~(clap::log::detail::mask const lhs) {
+	return static_cast<clap::log::detail::mask>(~static_cast<unsigned>(lhs));
 }
 
+template<clap::log::detail::mask level>
 template<typename T>
-inline void engine::log::detail::stream::write(T const &t) {
+inline clap::log::detail::stream clap::log::detail::log_t<level>::to_stream(T const &t) const {
+	return clap::log::detail::stream(clap::logger(), level, t);
+}
+
+template<typename T>
+inline void clap::log::detail::stream::write(T const &t) {
 	auto lambda = [&t, this](auto &stream_pair) {
 		if (stream_pair.first) { // is stream healthy?
 			if (static_cast<bool>(mask & mask::info_every)) { // is this an info-entry?

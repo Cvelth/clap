@@ -9,10 +9,10 @@
 #include "gl/vertex_array.hpp"
 #include "essential/log.hpp"
 
-bool engine::gl::detail::state::load() {
+bool clap::gl::detail::state::load() {
 	static bool was_loaded = false;
 	if (!was_loaded) {
-		if (!engine::detail::glfw::is_context_selected) {
+		if (!clap::detail::glfw::is_context_selected) {
 			log::error::critical << "An attempt to load GL before a context was created. "
 				"Call 'make_current' on a window handle first.";
 			return false;
@@ -34,10 +34,10 @@ bool engine::gl::detail::state::load() {
 		return true;
 }
 
-void engine::gl::detail::state::ensure_loaded() { load(); }
+void clap::gl::detail::state::ensure_loaded() { load(); }
 
-std::optional<engine::gl::buffer::detail::indexed> engine::gl::detail::state::bound_buffers[buffer_target_count];
-void engine::gl::detail::state::bind(buffer::target const &target, buffer::detail::indexed &&buffer) {
+std::optional<clap::gl::buffer::detail::indexed> clap::gl::detail::state::bound_buffers[buffer_target_count];
+void clap::gl::detail::state::bind(buffer::target const &target, buffer::detail::indexed &&buffer) {
 	if (!bound_buffers[size_t(target)] || **bound_buffers[size_t(target)] != *buffer)
 		if (*buffer) {
 			log::message::minor << "A new buffer is bound to '" << target << "'.";
@@ -46,25 +46,25 @@ void engine::gl::detail::state::bind(buffer::target const &target, buffer::detai
 		} else
 			log::warning::critical << "Buffer passed to 'gl::state::bind' is corrupted.";
 }
-std::optional<engine::gl::buffer::detail::indexed> const engine::gl::detail::state::unbind(buffer::target const &target) {
+std::optional<clap::gl::buffer::detail::indexed> const clap::gl::detail::state::unbind(buffer::target const &target) {
 	glBindBuffer(detail::convert::to_gl(target), 0);
 	auto out = std::move(bound_buffers[size_t(target)]);
 	bound_buffers[size_t(target)] = std::nullopt;
 	log::message::minor << "A buffer is no longer bound to '" << target << "'.";
 	return std::move(out);
 }
-std::optional<engine::gl::buffer::detail::indexed> const &engine::gl::detail::state::bound(buffer::target const &target) {
+std::optional<clap::gl::buffer::detail::indexed> const &clap::gl::detail::state::bound(buffer::target const &target) {
 	return bound_buffers[size_t(target)];
 }
-std::optional<engine::gl::buffer::target> engine::gl::detail::state::is_bound(engine::gl::buffer::detail::indexed const &buffer) {
+std::optional<clap::gl::buffer::target> clap::gl::detail::state::is_bound(clap::gl::buffer::detail::indexed const &buffer) {
 	for (size_t i = 0; i < buffer_target_count; i++)
 		if (bound_buffers[i] && **bound_buffers[i] == *buffer)
-			return engine::gl::buffer::target(i);
+			return clap::gl::buffer::target(i);
 	return std::nullopt;
 }
 
-std::optional<engine::gl::vertex_array::detail::indexed> engine::gl::detail::state::bound_vertex_array;
-void engine::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_array) {
+std::optional<clap::gl::vertex_array::detail::indexed> clap::gl::detail::state::bound_vertex_array;
+void clap::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_array) {
 	if (!bound_vertex_array || **bound_vertex_array != *vertex_array)
 		if (*vertex_array) {
 			log::message::minor << "A new vertex array is bound.";
@@ -72,22 +72,22 @@ void engine::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_arra
 		} else
 			log::warning::critical << "Vertex Array passed to 'gl::state::bind' is corrupted.";
 }
-std::optional<engine::gl::vertex_array::detail::indexed> const engine::gl::detail::state::unbind() {
+std::optional<clap::gl::vertex_array::detail::indexed> const clap::gl::detail::state::unbind() {
 	glBindVertexArray(0);
 	auto out = std::move(bound_vertex_array);
 	bound_vertex_array = std::nullopt;
 	log::message::minor << "A vertex_array is no longer bound.";
 	return std::move(out);
 }
-std::optional<engine::gl::vertex_array::detail::indexed> const &engine::gl::detail::state::bound() {
+std::optional<clap::gl::vertex_array::detail::indexed> const &clap::gl::detail::state::bound() {
 	return bound_vertex_array;
 }
-bool engine::gl::detail::state::is_bound(vertex_array::detail::indexed const &vertex_array) {
+bool clap::gl::detail::state::is_bound(vertex_array::detail::indexed const &vertex_array) {
 	return bound_vertex_array && **bound_vertex_array == *vertex_array;
 }
 
-engine::gl::shader::program *engine::gl::detail::state::program_used = nullptr;
-void engine::gl::detail::state::use(shader::program *program) {
+clap::gl::shader::program *clap::gl::detail::state::program_used = nullptr;
+void clap::gl::detail::state::use(shader::program *program) {
 	if (!program) {
 		glUseProgram(0);
 		program_used = nullptr;
@@ -98,9 +98,9 @@ void engine::gl::detail::state::use(shader::program *program) {
 		log::message::minor << "A new shader::program is used.";
 	} 
 }
-engine::gl::shader::program *engine::gl::detail::state::being_used() {
+clap::gl::shader::program *clap::gl::detail::state::being_used() {
 	return program_used;
 }
-bool engine::gl::detail::state::is_used(shader::program *program) {
+bool clap::gl::detail::state::is_used(shader::program *program) {
 	return program_used && program_used->id == program->id;
 }

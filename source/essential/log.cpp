@@ -25,7 +25,7 @@ std::string filename_time_stamp() {
 	return current_time_stamp("%Y-%m-%d %H-%M-%S");
 }
 
-void engine::log::detail::stream::initialize_writing() {
+void clap::log::detail::stream::initialize_writing() {
 	static size_t message_count = 0;
 	if (static_cast<bool>(mask & ~detail::mask::info_every)) {
 		std::move(*this) << "\n > "; 
@@ -42,12 +42,12 @@ void engine::log::detail::stream::initialize_writing() {
 	}
 }
 
-void engine::log::detail::stream::finish_writing() {
+void clap::log::detail::stream::finish_writing() {
 	std::move(*this) << '\n';
 
 	if (static_cast<bool>(mask & logger_ref.exception_mask)) {
 		std::move(*this) << "\nBecause of the error a 'logger_exception' is raised.\n";
-		throw engine::detail::logger_exception();
+		throw clap::detail::logger_exception();
 	}
 
 	if (static_cast<bool>(mask & logger_ref.termination_mask)) {
@@ -56,12 +56,12 @@ void engine::log::detail::stream::finish_writing() {
 	}
 }
 
-engine::detail::logger_t &engine::logger() {
+clap::detail::logger_t &clap::logger() {
 	static detail::logger_t object;
 	return object;
 }
 
-engine::detail::logger_t::~logger_t() {
+clap::detail::logger_t::~logger_t() {
 	log::message::minor << "Logging is over. Logger destructor was called.";
 	log::info::major << other_streams.size() + owned_streams.size() << " streams were used.";
 	log::info::major << owned_streams.size() << " streams were owned.";
@@ -70,9 +70,9 @@ engine::detail::logger_t::~logger_t() {
 		delete stream_ptr.first;
 }
 
-void engine::detail::logger_t::add_stream(std::ostream &stream, logger_mask mask) {
+void clap::detail::logger_t::add_stream(std::ostream &stream, logger_mask mask) {
 	if (!stream) {
-		log::warning::major << "'engine::detail::logger' cannot use the stream passed into 'add_stream'.";
+		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
 		return;
 	}
 	other_streams.insert(std::make_pair(&stream, std::make_pair(mask, false)));
@@ -88,11 +88,11 @@ void engine::detail::logger_t::add_stream(std::ostream &stream, logger_mask mask
 	}
 }
 
-void engine::detail::logger_t::add_file(std::string const &filename, logger_mask mask) {
+void clap::detail::logger_t::add_file(std::string const &filename, logger_mask mask) {
 	add_file_wo_timestamp(filename + filename_time_stamp(), mask);
 }
 
-void engine::detail::logger_t::add_file_wo_timestamp(std::string const &filename, logger_mask mask) {
+void clap::detail::logger_t::add_file_wo_timestamp(std::string const &filename, logger_mask mask) {
 	auto full_filename = "log/" + filename + ".log";
 	auto directory_path = full_filename.substr(0, full_filename.find_last_of('/'));
 	
@@ -105,7 +105,7 @@ void engine::detail::logger_t::add_file_wo_timestamp(std::string const &filename
 	ptr->open(full_filename);
 	if (ptr->fail()) {
 		delete ptr;
-		log::warning::major << "'engine::detail::logger' cannot open file '" << full_filename << "'.";
+		log::warning::major << "'clap::detail::logger' cannot open file '" << full_filename << "'.";
 		return;
 	}
 
@@ -114,6 +114,6 @@ void engine::detail::logger_t::add_file_wo_timestamp(std::string const &filename
 	log::message::minor << "Logging to '" << full_filename << "' was initialized.";
 }
 
-engine::logger_mask mask_from_level(size_t level) {
-	return engine::logger_mask(level);
+clap::logger_mask mask_from_level(size_t level) {
+	return clap::logger_mask(level);
 }

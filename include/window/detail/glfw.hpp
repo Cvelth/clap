@@ -5,11 +5,11 @@ struct GLFWwindow;
 struct GLFWmonitor;
 struct GLFWvidmode;
 
-namespace engine::gl::detail {
+namespace clap::gl::detail {
 	class state;
 }
 
-namespace engine::detail {
+namespace clap::detail {
 	namespace detail {
 		template <typename glfw_struct>
 		class glfw_struct_handle {

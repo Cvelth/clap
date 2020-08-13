@@ -4,10 +4,10 @@
 
 #include "essential/log.hpp"
 
-bool engine::detail::glfw::is_initialized = false;
-bool engine::detail::glfw::is_context_selected = false;
+bool clap::detail::glfw::is_initialized = false;
+bool clap::detail::glfw::is_context_selected = false;
 
-void engine::detail::glfw::initialize_implicitly() {
+void clap::detail::glfw::initialize_implicitly() {
 	if (!glfwInit())
 		log::warning::critical << "GLFW initialization error.";
 	else {
@@ -18,27 +18,27 @@ void engine::detail::glfw::initialize_implicitly() {
 	}
 }
 
-void engine::detail::glfw::terminate_implicitly() {
+void clap::detail::glfw::terminate_implicitly() {
 	glfwTerminate();
 	log::message::major << "GLFW was terminated.";
 	is_initialized = false;
 }
 
-void engine::detail::glfw::initialize() {
+void clap::detail::glfw::initialize() {
 	if (!is_initialized)
 		initialize_implicitly();
 	else
 		log::warning::minor << "Attempt to initialized GLFW more than once.";
 }
 
-void engine::detail::glfw::terminate() {
+void clap::detail::glfw::terminate() {
 	if (is_initialized)
 		terminate_implicitly();
 	else
 		log::warning::minor << "Attempt to terminate GLFW when it isn't initialied.";
 }
 
-engine::detail::glfw_window engine::detail::glfw::create_window(size_t width, size_t height,
+clap::detail::glfw_window clap::detail::glfw::create_window(size_t width, size_t height,
 																std::string title,
 																detail::glfw_monitor_handle monitor,
 																detail::glfw_window_handle share) {
@@ -53,30 +53,30 @@ engine::detail::glfw_window engine::detail::glfw::create_window(size_t width, si
 
 	if (auto out = glfwCreateWindow(signed_width, signed_height, title.c_str(), monitor, share); out) {
 		log::message::major << "New window was created with dimentions (" << width << ", " << height << ").";
-		return engine::detail::detail::glfw_window_handle(out);
+		return clap::detail::detail::glfw_window_handle(out);
 	} else {
 		log::error::major << "Unable to initialize GLFWwindow.";
 		log::info::major << "glfwCreateWindow returns a nullptr.";
 	}
 }
-engine::detail::glfw_window engine::detail::glfw::create_window_windowed(size_t width, size_t height,
+clap::detail::glfw_window clap::detail::glfw::create_window_windowed(size_t width, size_t height,
 																		 std::string title,
 																		 detail::glfw_window_handle share) {
 	return create_window(width, height, title, nullptr, share);
 }
-engine::detail::glfw_window engine::detail::glfw::create_window_fullscreen(size_t width, size_t height,
+clap::detail::glfw_window clap::detail::glfw::create_window_fullscreen(size_t width, size_t height,
 																		   std::string title,
 																		   detail::glfw_window_handle share) {
 	return create_window(width, height, title, primary_monitor(), share);
 }
-engine::detail::glfw_window engine::detail::glfw::create_window_fullscreen(std::string title,
+clap::detail::glfw_window clap::detail::glfw::create_window_fullscreen(std::string title,
 																		   detail::glfw_window_handle share) {
 	ensure_initialization();
 
 	auto video_mode = primary_monitor_video_mode();
 	return create_window_fullscreen(size_t(video_mode->width), size_t(video_mode->height), title, share);
 }
-engine::detail::glfw_window engine::detail::glfw::create_window_borderless(std::string title,
+clap::detail::glfw_window clap::detail::glfw::create_window_borderless(std::string title,
 																		   detail::glfw_window_handle share) {
 	auto video_mode = glfw::primary_monitor_video_mode();
 
@@ -89,17 +89,17 @@ engine::detail::glfw_window engine::detail::glfw::create_window_borderless(std::
 							   title.c_str(), primary_monitor(), share);
 }
 
-void engine::detail::glfw::poll_events() {
+void clap::detail::glfw::poll_events() {
 	ensure_initialization();
 	glfwPollEvents();
 }
 
-void engine::detail::glfw::wait_events() {
+void clap::detail::glfw::wait_events() {
 	ensure_initialization();
 	glfwWaitEvents();
 }
 
-engine::detail::detail::glfw_monitor_handle engine::detail::glfw::primary_monitor() {
+clap::detail::detail::glfw_monitor_handle clap::detail::glfw::primary_monitor() {
 	ensure_initialization();
 
 	if (auto out = glfwGetPrimaryMonitor(); out)
@@ -108,7 +108,7 @@ engine::detail::detail::glfw_monitor_handle engine::detail::glfw::primary_monito
 		log::error::minor << "Unable to access monitor data.";
 }
 
-engine::detail::glfw_video_mode const engine::detail::glfw::video_mode(detail::glfw_monitor_handle monitor) {
+clap::detail::glfw_video_mode const clap::detail::glfw::video_mode(detail::glfw_monitor_handle monitor) {
 	ensure_initialization();
 
 	if (auto out = glfwGetVideoMode(monitor); out)
@@ -117,43 +117,43 @@ engine::detail::glfw_video_mode const engine::detail::glfw::video_mode(detail::g
 		log::error::minor << "Unable to obtain video data from a monitor.";
 }
 
-void engine::detail::glfw_window::destroy() {
+void clap::detail::glfw_window::destroy() {
 	glfw::ensure_initialization();
 	glfwDestroyWindow(handle);
 	log::message::major << "A window was destroyed.";
 }
-void engine::detail::glfw_window::update() {
+void clap::detail::glfw_window::update() {
 	glfw::ensure_initialization();
 	glfwSwapBuffers(handle);
 	log::message::negligible << "A window was updated.";
 }
-bool engine::detail::glfw_window::should_close() {
+bool clap::detail::glfw_window::should_close() {
 	glfw::ensure_initialization();
 	return glfwWindowShouldClose(handle);
 }
-void engine::detail::glfw_window::make_current() {
+void clap::detail::glfw_window::make_current() {
 	glfw::ensure_initialization();
 	glfwMakeContextCurrent(handle);
 	glfw::is_context_selected = true;
 	log::message::minor << "The GL context of this window was make current.";
 }
 
-size_t engine::detail::glfw_window::width() {
+size_t clap::detail::glfw_window::width() {
 	glfw::ensure_initialization();
 	int out;
 	glfwGetFramebufferSize(handle, &out, nullptr);
 	return size_t(out);
 }
-size_t engine::detail::glfw_window::height() {
+size_t clap::detail::glfw_window::height() {
 	glfw::ensure_initialization();
 	int out;
 	glfwGetFramebufferSize(handle, nullptr, &out);
 	return size_t(out);
 }
 
-size_t engine::detail::glfw_video_mode::width() const { return handle->width; }
-size_t engine::detail::glfw_video_mode::height() const { return handle->height; }
-int engine::detail::glfw_video_mode::red_bits() const { return handle->redBits; }
-int engine::detail::glfw_video_mode::green_bits() const { return handle->greenBits; }
-int engine::detail::glfw_video_mode::blue_bits() const { return handle->blueBits; }
-int engine::detail::glfw_video_mode::refresh_rate() const { return handle->refreshRate; }
+size_t clap::detail::glfw_video_mode::width() const { return handle->width; }
+size_t clap::detail::glfw_video_mode::height() const { return handle->height; }
+int clap::detail::glfw_video_mode::red_bits() const { return handle->redBits; }
+int clap::detail::glfw_video_mode::green_bits() const { return handle->greenBits; }
+int clap::detail::glfw_video_mode::blue_bits() const { return handle->blueBits; }
+int clap::detail::glfw_video_mode::refresh_rate() const { return handle->refreshRate; }

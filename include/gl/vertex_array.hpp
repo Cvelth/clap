@@ -5,19 +5,19 @@
 
 typedef unsigned int GLenum;
 
-namespace engine::gl::detail {
+namespace clap::gl::detail {
 	class state;
 }
-namespace engine::gl::buffer::detail {
+namespace clap::gl::buffer::detail {
 	class indexed;
 }
-namespace engine::gl::shader::detail {
+namespace clap::gl::shader::detail {
 	class variable;
 }
-namespace engine::gl::shader {
+namespace clap::gl::shader {
 	class variables;
 }
-namespace engine::gl::vertex_array {
+namespace clap::gl::vertex_array {
 	enum class connection {
 		points,
 		lines, lines_w_adjacency, line_strip, line_strip_w_adjacency, line_loop,
@@ -221,10 +221,10 @@ namespace engine::gl::vertex_array {
 		}
 	};
 }
-namespace engine::gl::detail::convert {
-	GLenum to_gl(engine::gl::vertex_array::connection v);
-	engine::gl::vertex_array::connection to_connection_type(GLenum v);
+namespace clap::gl::detail::convert {
+	GLenum to_gl(clap::gl::vertex_array::connection v);
+	clap::gl::vertex_array::connection to_connection_type(GLenum v);
 
-	GLenum to_gl(engine::gl::vertex_array::index_type v);
-	engine::gl::vertex_array::index_type to_index_type(GLenum v);
+	GLenum to_gl(clap::gl::vertex_array::index_type v);
+	clap::gl::vertex_array::index_type to_index_type(GLenum v);
 }
