@@ -158,6 +158,9 @@
     <ClInclude Include="window.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\project\resource\resource.vcxproj">
+      <Project>{31d0519b-362b-481c-9408-a9635e955737}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\project\window\window.vcxproj">
       <Project>{7ad5ae88-bf73-4e51-ba1b-fb624659b69f}</Project>
     </ProjectReference>
