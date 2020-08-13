@@ -120,6 +120,13 @@ namespace clap::gl::shader {
 		program(program const &other) = delete;
 		program(program &&other) noexcept : program(other.id) {}
 
+		void add(detail::object const &object);
+		template <typename ...Ts>
+		void add(detail::object const &object, Ts const &...ts) {
+			add(std::move(object));
+			add(std::move(ts)...);
+		}
+
 		void add(detail::object &&object);
 		template <typename ...Ts>
 		void add(detail::object &&object, Ts &&...ts) {
@@ -153,6 +160,7 @@ namespace clap::gl::shader {
 namespace clap::gl::detail::convert {
 	GLenum to_gl(clap::gl::shader::type v);
 	clap::gl::shader::type to_shader_type(GLenum v);
+	clap::gl::shader::type to_shader_type_from_string(std::string const &v);
 
 	GLenum to_gl(shader::detail::variable::datatype_t datatype, 
 				 shader::detail::variable::dimentions_t dimentions);

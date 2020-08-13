@@ -24,6 +24,6 @@ int main() {
 							  clap::logger_mask::info_major
 	);
 
-	window w("rrl", window_mode::windowed, 1280, 720);
+	window w("triangle example", window_mode::windowed, 1280, 720);
 	return w.loop();
 }
