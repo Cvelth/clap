@@ -16,8 +16,8 @@ void window::initialize() {
 	clear::set_color(0.4f, 0.0f, 0.5f, 1.0f);
 
 	
-	program.add(clap::resource::shader::fragment["simple_color"], 
-				clap::resource::shader::vertex["simple_position_color"]);
+	program.add(clap::resource::shader::fragment["attribute_color"], 
+				clap::resource::shader::vertex["position_color"]);
 	program.link();
 
 	//auto uniforms = program.getUniforms();
