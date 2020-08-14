@@ -3,6 +3,7 @@
 #include "gl/shader.hpp"
 
 #include <filesystem>
+#include <set>
 
 static bool was_loaded = false;
 
@@ -78,7 +79,25 @@ void load_others(std::filesystem::directory_entry const &path) {
 }
 
 void clap::resource::load() {
-	const auto paths = { "resource", "../resource", "../../resource" };
+	const std::set<std::filesystem::path> paths = { 
+		std::filesystem::absolute("resource"), 
+		std::filesystem::absolute("../resource"), 
+		std::filesystem::absolute("../../resource"), 
+		std::filesystem::absolute("../../../resource"),
+		std::filesystem::absolute("../../../../resource"),
+
+		std::filesystem::absolute("clap/resource"), 
+		std::filesystem::absolute("../clap/resource"), 
+		std::filesystem::absolute("../../clap/resource"), 
+		std::filesystem::absolute("../../../clap/resource"),
+		std::filesystem::absolute("../../../../clap/resource"),
+
+		std::filesystem::absolute("engine/resource"), 
+		std::filesystem::absolute("../engine/resource"), 
+		std::filesystem::absolute("../../engine/resource"), 
+		std::filesystem::absolute("../../../engine/resource"),
+		std::filesystem::absolute("../../../../engine/resource"),
+	};
 	for (auto &path : paths)
 		if (std::filesystem::exists(path)) {
 			log::message::major << "Loading resources from '" << path << "'.";
