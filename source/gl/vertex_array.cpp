@@ -49,20 +49,25 @@ void clap::gl::vertex_array::detail::indexed::bind() {
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
 																  shader::detail::variable const &variable,
 																  size_t stride, size_t shift) {
-	if (variable.type != shader::detail::variable::storage_type::attribute) {
+	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_pointer'";
+		return;
+	}
+	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
+		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_pointer'";
 		return;
 	}
 
 	this->bind();
 	buffer.bind();
-	for (size_t i = 0; i < variable.dimentions.x; i++) {
-		glVertexAttribPointer(GLuint(variable.location + i), GLint(variable.dimentions.x * variable.dimentions.y),
-							  gl::detail::convert::to_gl(variable.datatype),
+	for (size_t i = 0; i < variable.type.dimentions.x; i++) {
+		glVertexAttribPointer(GLuint(variable.location + i), 
+							  GLint(variable.type.dimentions.x * variable.type.dimentions.y),
+							  gl::detail::convert::to_gl(variable.type.datatype),
 							  GL_FALSE, GLsizei(stride), (const void *) shift);
 		glEnableVertexAttribArray(GLuint(variable.location + i));
 
-		std::string index_string = variable.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
+		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
 		log::message::minor << "Variable '" << variable.name << index_string
 			<< "' uses data stored in buffer currently bound to '"
 			<< buffer::target::array << "'.";
@@ -71,16 +76,20 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::
 
 void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::detail::variable const &variable,
 																  size_t divisor) {
-	if (variable.type != shader::detail::variable::storage_type::attribute) {
+	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_divisor'";
+		return;
+	}
+	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
+		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_divisor'";
 		return;
 	}
 
 	this->bind();
-	for (int i = 0; i < variable.dimentions.x; i++) {
+	for (int i = 0; i < variable.type.dimentions.x; i++) {
 		glVertexAttribDivisor(variable.location, GLuint(divisor));
 
-		std::string index_string = variable.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
+		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
 		log::message::minor << "Variable '" << variable.name << index_string << "' uses a divisor: "
 			<< divisor << ".";
 	}

@@ -54,19 +54,42 @@ namespace clap::gl::shader {
 	detail::object from_file(type type, char const *filename);
 
 	namespace detail {
+		namespace variable_type_t {
+			enum class storage {
+				attribute, uniform
+			};
+			enum class structure {
+				data, sampler, shadow_sampler, image
+			};
+			enum class datatype {
+				_float, _double, _int, _unsigned, _bool
+			};
+			enum class specific {
+				none, cube, rect, array, buffer, multisample, multisample_array,
+			};
+			struct dimentions {
+				size_t x, y;
+			};
+		}
+
+		struct variable_type {
+			variable_type_t::structure const structure;
+			variable_type_t::datatype const datatype;
+			variable_type_t::specific const specific;
+			variable_type_t::dimentions const dimentions;
+
+			explicit variable_type(variable_type_t::structure const structure,
+								   variable_type_t::datatype const datatype,
+								   variable_type_t::specific const specific,
+								   variable_type_t::dimentions const dimentions) :
+				structure(structure), datatype(datatype),
+				specific(specific), dimentions(dimentions) {}
+		};
+
 		class variable {
 			friend program;
 			friend vertex_array::detail::indexed;
 		public:
-			enum class storage_type {
-				attribute, uniform
-			};
-			enum class datatype_t {
-				_float, _double, _int, _unsigned, _bool
-			};
-			struct dimentions_t {
-				size_t x, y;
-			};
 
 			std::string const name;
 
@@ -74,15 +97,13 @@ namespace clap::gl::shader {
 			size_t size() const;
 
 		private:
-			explicit variable(std::string const &name, storage_type const &storage,
-							  uint32_t location, datatype_t const &datatype_name,
-							  dimentions_t const &dimentions);
+			explicit variable(std::string const &name, uint32_t const &location,
+							  variable_type_t::storage const storage, variable_type const &type);
 
 		private:
-			storage_type const type;
 			uint32_t const location;
-			datatype_t const datatype;
-			dimentions_t dimentions;
+			variable_type_t::storage const storage;
+			variable_type const type;
 		};
 	}
 
@@ -103,7 +124,7 @@ namespace clap::gl::shader {
 	private:
 		variables() = default;
 		variables(variables const &) = default;
-		variables(variables&&) noexcept = default;
+		variables(variables &&) noexcept = default;
 	};
 
 	class program {
@@ -158,17 +179,15 @@ namespace clap::gl::shader {
 }
 
 namespace clap::gl::detail::convert {
-	GLenum to_gl(clap::gl::shader::type v);
-	clap::gl::shader::type to_shader_type(GLenum v);
-	clap::gl::shader::type to_shader_type_from_string(std::string const &v);
+	GLenum to_gl(shader::type v);
+	shader::type to_shader_type(GLenum v);
+	shader::type to_shader_type_from_string(std::string const &v);
 
-	GLenum to_gl(shader::detail::variable::datatype_t datatype, 
-				 shader::detail::variable::dimentions_t dimentions);
-	std::pair<shader::detail::variable::datatype_t, shader::detail::variable::dimentions_t>
-		to_variable_datatype_pair(GLenum v);
+	GLenum to_gl(shader::detail::variable_type const &type);
+	shader::detail::variable_type to_variable_type(GLenum v);
 
-	GLenum to_gl(shader::detail::variable::datatype_t datatype);
-	size_t to_size(shader::detail::variable::datatype_t datatype);
+	GLenum to_gl(shader::detail::variable_type_t::datatype datatype);
+	size_t to_size(shader::detail::variable_type_t::datatype datatype);
 }
 
 #include <ostream>
