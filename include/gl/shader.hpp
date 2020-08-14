@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <initializer_list>
 #include <map>
 #include <string>
+#include <vector>
 
 typedef unsigned int GLenum;
 
@@ -69,6 +71,13 @@ namespace clap::gl::shader {
 			};
 			struct dimentions {
 				size_t x, y;
+
+				bool operator==(dimentions const &other) const {
+					return x == other.x && y == other.y;
+				}
+				bool operator!=(dimentions const &other) const {
+					return !operator==(other);
+				}
 			};
 		}
 
@@ -94,6 +103,7 @@ namespace clap::gl::shader {
 			std::string const name;
 
 			bool operator<(variable const &other) const { return location < other.location; }
+			size_t count() const;
 			size_t size() const;
 
 		private:
@@ -169,6 +179,38 @@ namespace clap::gl::shader {
 		variables getAttributes();
 		variables getVariables();
 
+		void set(detail::variable const &variable, std::vector<float> const &values);
+		void set(detail::variable const &variable, std::vector<double> const &values);
+		void set(detail::variable const &variable, std::vector<int> const &values);
+		void set(detail::variable const &variable, std::vector<unsigned> const &values);
+
+		void set(detail::variable const &variable, std::initializer_list<float> const &values);
+		void set(detail::variable const &variable, std::initializer_list<double> const &values);
+		void set(detail::variable const &variable, std::initializer_list<int> const &values);
+		void set(detail::variable const &variable, std::initializer_list<unsigned> const &values);
+
+		template <size_t N>
+		void set(detail::variable const &variable, const float(&values)[N]) {
+			set(variable, N, values);
+		}
+		template <size_t N>
+		void set(detail::variable const &variable, const double(&values)[N]) {
+			set(variable, N, values);
+		}
+		template <size_t N>
+		void set(detail::variable const &variable, const int(&values)[N]) {
+			set(variable, N, values);
+		}
+		template <size_t N>
+		void set(detail::variable const &variable, const unsigned(&values)[N]) {
+			set(variable, N, values);
+		}
+
+	protected:
+		void set(detail::variable const &variable, size_t n, const float *values);
+		void set(detail::variable const &variable, size_t n, const double *values);
+		void set(detail::variable const &variable, size_t n, const int *values);
+		void set(detail::variable const &variable, size_t n, const unsigned *values);
 	private:
 		program(uint32_t id);
 

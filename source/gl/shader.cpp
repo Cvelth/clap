@@ -93,9 +93,13 @@ clap::gl::shader::detail::object clap::gl::shader::from_file(type type, char con
 	return from_file(type, std::string(filename));
 }
 
+size_t clap::gl::shader::detail::variable::count() const {
+	return type.dimentions.x * type.dimentions.y;
+}
+
 size_t clap::gl::shader::detail::variable::size() const {
 	if (type.structure == variable_type_t::structure::data)
-		return type.dimentions.x * type.dimentions.y * gl::detail::convert::to_size(type.datatype);
+		return count() * gl::detail::convert::to_size(type.datatype);
 	else
 		log::warning::critical << "Size can only be obtained for data variables.";
 }
@@ -206,9 +210,10 @@ void clap::gl::shader::program::use() {
 		log::warning::major << "Attempting to use an unlinked program.";
 }
 
-template<typename gl_get_lambda_t, typename create_variable_lambda_t>
+template<typename gl_get_lambda_t, typename gl_get_location_lambda_t, typename create_variable_lambda_t>
 void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_length,
-			   gl_get_lambda_t gl_get_lambda, create_variable_lambda_t create_variable_lambda) {
+			   gl_get_lambda_t gl_get_lambda, gl_get_location_lambda_t gl_get_location_lambda,
+			   create_variable_lambda_t create_variable_lambda) {
 	GLint number, max_length, name_length, size;
 	GLenum type;
 	glGetProgramiv(program_id, active_type, &number);
@@ -216,13 +221,13 @@ void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_lengt
 	for (int i = 0; i < number; i++) {
 		std::vector<GLchar> name(max_length);
 		gl_get_lambda(program_id, i, max_length, &name_length, &size, &type, name.data());
-		create_variable_lambda(name.data(), glGetAttribLocation(program_id, name.data()), type);
+		create_variable_lambda(name.data(), gl_get_location_lambda(program_id, name.data()), type);
 	}
 }
 clap::gl::shader::variables clap::gl::shader::program::getUniforms() {
 	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH,
-			  glGetActiveUniform, [&out](auto name, auto location, auto datatype) {
+	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform, 
+			  glad_glGetUniformLocation, [&out](auto name, auto location, auto datatype) {
 				  out.insert(std::make_pair(
 					  name,
 					  detail::variable(name,
@@ -236,8 +241,8 @@ clap::gl::shader::variables clap::gl::shader::program::getUniforms() {
 }
 clap::gl::shader::variables clap::gl::shader::program::getAttributes() {
 	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-			  glGetActiveAttrib, [&out](auto name, auto location, auto datatype) {
+	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib, 
+			  glGetAttribLocation, [&out](auto name, auto location, auto datatype) {
 				  out.insert(std::make_pair(
 					  name,
 					  detail::variable(name,
@@ -253,6 +258,184 @@ clap::gl::shader::variables clap::gl::shader::program::getVariables() {
 	auto out = getUniforms();
 	out.merge(getAttributes());
 	return out;
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<float> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<float> const &values) {
+	set(variable, std::vector<float>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<double> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<double> const &values) {
+	set(variable, std::vector<double>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<int> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<int> const &values) {
+	set(variable, std::vector<int>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<unsigned> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<unsigned> const &values) {
+	set(variable, std::vector<unsigned>(values));
+}
+
+bool check_uniform_variable(uint32_t const &location,
+							clap::gl::shader::detail::variable_type_t::storage const &storage,
+							clap::gl::shader::detail::variable_type const &type,
+							clap::gl::shader::detail::variable_type_t::datatype expected_datatype) {
+	if (location == -1) {
+		clap::log::warning::major << "Uniform variable is silently ignored by OpenGL. It's location value is '-1'.";
+		return false;
+	}
+
+	if (storage != clap::gl::shader::detail::variable_type_t::storage::uniform
+		|| type.structure != clap::gl::shader::detail::variable_type_t::structure::data) {
+
+		clap::log::warning::major << "Only data uniform variables can be directly set.";
+		return false;
+	}
+
+	if (type.datatype != expected_datatype && type.datatype != clap::gl::shader::detail::variable_type_t::datatype::_bool) {
+		clap::log::warning::major << "Cannot set value to a variable of a different type.";
+		return false;
+	}
+
+	return true;
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const float *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_float))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1fv(variable.location, 1, values); return;
+				case 2: glUniform2fv(variable.location, 1, values); return;
+				case 3: glUniform3fv(variable.location, 1, values); return;
+				case 4: glUniform4fv(variable.location, 1, values); return;
+			} break;
+		case 2:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix2x3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix2x4fv(variable.location, 1, false, values); return;
+			} break;
+		case 3:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix3x2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix3x4fv(variable.location, 1, false, values); return;
+			} break;
+		case 4:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix4x2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix4x3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix4fv(variable.location, 1, false, values); return;
+			}
+			break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const double *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_double))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1dv(variable.location, 1, values); return;
+				case 2: glUniform2dv(variable.location, 1, values); return;
+				case 3: glUniform3dv(variable.location, 1, values); return;
+				case 4: glUniform4dv(variable.location, 1, values); return;
+			} break;
+		case 2:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix2x3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix2x4dv(variable.location, 1, false, values); return;
+			} break;
+		case 3:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix3x2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix3x4dv(variable.location, 1, false, values); return;
+			} break;
+		case 4:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix4x2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix4x3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix4dv(variable.location, 1, false, values); return;
+			}
+			break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const int *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_int))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1iv(variable.location, 1, values); return;
+				case 2: glUniform2iv(variable.location, 1, values); return;
+				case 3: glUniform3iv(variable.location, 1, values); return;
+				case 4: glUniform4iv(variable.location, 1, values); return;
+			} break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const unsigned *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_unsigned))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1uiv(variable.location, 1, values); return;
+				case 2: glUniform2uiv(variable.location, 1, values); return;
+				case 3: glUniform3uiv(variable.location, 1, values); return;
+				case 4: glUniform4uiv(variable.location, 1, values); return;
+			} break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
 }
 
 clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
