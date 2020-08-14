@@ -115,6 +115,3 @@ void clap::resource::clear() {
 void clap::resource::detail::load_shader(shaders_t &storage, std::string const &name, gl::shader::detail::object *object) {
 	storage.insert(std::pair(name, object));
 }
-void clap::resource::detail::load_texture(std::string const &filename) {
-	log::warning::minor << "Texture loading is currently unsupported.";
-}
