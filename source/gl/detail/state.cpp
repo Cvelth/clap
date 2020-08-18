@@ -4,9 +4,7 @@
 #include "glfw/glfw3.h"
 
 #include "window/detail/glfw.hpp"
-#include "gl/buffer.hpp"
 #include "gl/shader.hpp"
-#include "gl/vertex_array.hpp"
 #include "essential/log.hpp"
 
 bool clap::gl::detail::state::load() {
@@ -44,13 +42,14 @@ void clap::gl::detail::state::bind(buffer::target const &target, buffer::detail:
 			glBindBuffer(detail::convert::to_gl(target),
 						 **(bound_buffers[size_t(target)] = std::move(buffer)));
 		} else
-			log::warning::critical << "Buffer passed to 'gl::state::bind' is corrupted.";
+			log::warning::critical << "Buffer passed to 'gl::state::bind' is not a valid OpenGL vbo.";
 }
 std::optional<clap::gl::buffer::detail::indexed> const clap::gl::detail::state::unbind(buffer::target const &target) {
 	glBindBuffer(detail::convert::to_gl(target), 0);
 	auto out = std::move(bound_buffers[size_t(target)]);
 	bound_buffers[size_t(target)] = std::nullopt;
-	log::message::minor << "A buffer is no longer bound to '" << target << "'.";
+	if (out)
+		log::message::minor << "\"" << target << "\" was unbound.";
 	return std::move(out);
 }
 std::optional<clap::gl::buffer::detail::indexed> const &clap::gl::detail::state::bound(buffer::target const &target) {
@@ -70,13 +69,14 @@ void clap::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_array)
 			log::message::minor << "A new vertex array is bound.";
 			glBindVertexArray(**(bound_vertex_array = std::move(vertex_array)));
 		} else
-			log::warning::critical << "Vertex Array passed to 'gl::state::bind' is corrupted.";
+			log::warning::critical << "Vertex Array passed to 'gl::state::bind' is not a valid OpenGL vao.";
 }
 std::optional<clap::gl::vertex_array::detail::indexed> const clap::gl::detail::state::unbind() {
 	glBindVertexArray(0);
 	auto out = std::move(bound_vertex_array);
 	bound_vertex_array = std::nullopt;
-	log::message::minor << "A vertex_array is no longer bound.";
+	if (out)
+		log::message::minor << "A vertex_array was unbound.";
 	return std::move(out);
 }
 std::optional<clap::gl::vertex_array::detail::indexed> const &clap::gl::detail::state::bound() {
@@ -103,4 +103,32 @@ clap::gl::shader::program *clap::gl::detail::state::being_used() {
 }
 bool clap::gl::detail::state::is_used(shader::program *program) {
 	return program_used && program_used->id == program->id;
+}
+
+clap::gl::texture::detail::interface *clap::gl::detail::state::bound_textures[texture_target_count]{ nullptr };
+void clap::gl::detail::state::bind(texture::target const &target, texture::detail::interface *texture) {
+	if (!bound_textures[size_t(target)] || bound_textures[size_t(target)] != texture)
+		if (texture) {
+			log::message::minor << "A new texture is bound to '" << target << "'.";
+			glBindTexture(detail::convert::to_gl(target),
+						 **(bound_textures[size_t(target)] = std::move(texture)));
+		} else
+			log::warning::critical << "A texture passed to 'gl::state::bind' is not a valid OpenGL texture object.";
+}
+clap::gl::texture::detail::interface *clap::gl::detail::state::unbind(texture::target const &target) {
+	glBindTexture(detail::convert::to_gl(target), 0);
+	auto out = std::move(bound_textures[size_t(target)]);
+	bound_textures[size_t(target)] = nullptr;
+	if (out)
+		log::message::minor << "\"" << target << "\" was unbound.";
+	return std::move(out);
+}
+clap::gl::texture::detail::interface const*const clap::gl::detail::state::bound(texture::target const &target) {
+	return bound_textures[size_t(target)];
+}
+std::optional<clap::gl::texture::target> clap::gl::detail::state::is_bound(clap::gl::texture::detail::interface const *const texture) {
+	for (size_t i = 0; i < texture_target_count; i++)
+		if (bound_textures[i] && bound_textures[i] == texture)
+			return clap::gl::texture::target(i);
+	return std::nullopt;
 }

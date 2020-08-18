@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{31d0519b-362b-481c-9408-a9635e955737}</ProjectGuid>
-    <RootNamespace>resource</RootNamespace>
+    <ProjectGuid>{5da57c7e-a961-48c5-8d9c-b9f4fdad24b3}</ProjectGuid>
+    <RootNamespace>lodepng</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -88,8 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../../include;../../dependency/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\lodepng</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -104,8 +103,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../../include;../../dependency/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\lodepng</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,8 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../../include;../../dependency/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\lodepng</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,8 +133,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../../include;../../dependency/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\lodepng</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,18 +143,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\resource\resource.hpp" />
+    <ClInclude Include="..\..\include\lodepng\lodepng.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\resource\resource.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\dependency\project\lodepng\lodepng.vcxproj">
-      <Project>{5da57c7e-a961-48c5-8d9c-b9f4fdad24b3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\gl\gl.vcxproj">
-      <Project>{d377c27b-a289-4be4-9c82-f1fc300aabfc}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\..\source\lodepng\lodepng.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

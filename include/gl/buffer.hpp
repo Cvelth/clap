@@ -151,7 +151,7 @@ namespace clap::gl::buffer {
 }
 namespace clap::gl::detail::convert {
 	GLenum to_gl(clap::gl::buffer::target v);
-	clap::gl::buffer::target to_target(GLenum v);
+	clap::gl::buffer::target to_buffer_target(GLenum v);
 
 	GLenum to_gl(clap::gl::buffer::access v);
 	clap::gl::buffer::access to_access(GLenum v);

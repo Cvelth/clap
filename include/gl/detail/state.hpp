@@ -1,23 +1,11 @@
 #pragma once
 #include <optional>
 #include "gl/buffer.hpp"
+#include "gl/texture.hpp"
 #include "gl/vertex_array.hpp"
 
-namespace clap::gl {
-	namespace buffer {
-		enum class target;
-		namespace detail {
-			class indexed;
-		}
-	}
-	namespace vertex_array {
-		namespace detail {
-			class indexed;
-		}
-	}
-	namespace shader {
-		class program;
-	}
+namespace clap::gl::shader {
+	class program;
 }
 
 namespace clap::gl::detail {
@@ -40,6 +28,11 @@ namespace clap::gl::detail {
 		static shader::program *being_used();
 		static bool is_used(shader::program *program);
 
+		static void bind(texture::target const &target, texture::detail::interface *texture);
+		static texture::detail::interface* unbind(texture::target const &target);
+		static texture::detail::interface const*const bound(texture::target const &target);
+		static std::optional<texture::target> is_bound(texture::detail::interface const*const texture);
+
 		state() = delete;
 		state(state const &other) = delete;
 		state(state &&other) = delete;
@@ -49,6 +42,9 @@ namespace clap::gl::detail {
 		static std::optional<buffer::detail::indexed> bound_buffers[buffer_target_count];
 		static std::optional<vertex_array::detail::indexed> bound_vertex_array;
 		static shader::program *program_used;
+
+		static constexpr size_t texture_target_count = 11;
+		static texture::detail::interface *bound_textures[texture_target_count];
 	};
 }
 

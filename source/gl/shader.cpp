@@ -41,7 +41,7 @@ clap::gl::shader::detail::object::object(type type, std::string source) : object
 		GLsizei len;
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
 
-		GLchar *log = new GLchar[len + GLsizei(1)];
+		GLchar *log = new GLchar[size_t(len) + 1];
 		glGetShaderInfoLog(id, len, &len, log);
 		log::warning::critical << "During shader compilation: " << std::string(log);
 		delete[] log;
@@ -93,18 +93,67 @@ clap::gl::shader::detail::object clap::gl::shader::from_file(type type, char con
 	return from_file(type, std::string(filename));
 }
 
-size_t clap::gl::shader::detail::variable::size() const {
-	return dimentions.x * dimentions.y * gl::detail::convert::to_size(datatype);
+size_t clap::gl::shader::detail::variable::count() const {
+	return type.dimentions.x * type.dimentions.y;
 }
 
-clap::gl::shader::detail::variable::variable(std::string const &name, storage_type const &storage,
-											   uint32_t location, datatype_t const &datatype_name,
-											   dimentions_t const &dimentions)
-	: name(name), type(storage), location(location), datatype(datatype_name), dimentions(dimentions) {
-	if (dimentions.x < 1 || dimentions.x > 4 || dimentions.y < 1 || dimentions.y > 4)
-		log::warning::critical << "Variable dimentions must be in [1; 4] range.";
-	if (dimentions.x > 1 && !(datatype_name == datatype_t::_float || datatype_name == datatype_t::_double))
-		log::warning::critical << "Matrix variables can only be 'float's or 'double's.";
+size_t clap::gl::shader::detail::variable::size() const {
+	if (type.structure == variable_type_t::structure::data)
+		return count() * gl::detail::convert::to_size(type.datatype);
+	else
+		log::warning::critical << "Size can only be obtained for data variables.";
+}
+
+clap::gl::shader::detail::variable::variable(std::string const &name, uint32_t const &location,
+											 variable_type_t::storage const storage,
+											 variable_type const &type)
+	: name(name), location(location), storage(storage), type(type) {
+
+	if (type.structure == variable_type_t::structure::data) {
+		if (type.dimentions.x < 1 || type.dimentions.x > 4 || type.dimentions.y < 1 || type.dimentions.y > 4)
+			log::warning::critical << "Variable dimentions must be in [1; 4] range.";
+		if (type.dimentions.x > 1 && !(type.datatype == variable_type_t::datatype::_float || type.datatype == variable_type_t::datatype::_double))
+			log::warning::critical << "Matrix variables can only be 'float's or 'double's.";
+		if (type.dimentions.y == 1 && type.dimentions.x != 1)
+			log::warning::critical << "Variable dimentions are impossible. It's possible it has been corrupted.";
+		if (type.specific != variable_type_t::specific::none)
+			log::warning::critical << "Data variables must not have any specifics applied.";
+	} else {
+		if (type.dimentions.y != 0)
+			log::warning::critical << "'y' dimention must always be '0' for non-data variables.";
+		if (type.dimentions.x == 0 && !(type.specific == variable_type_t::specific::cube || type.specific == variable_type_t::specific::buffer))
+			log::warning::critical << "'x' dimention must not be '0' unless 'cube' or 'buffer' specific is applied.";
+		if ((type.specific == variable_type_t::specific::multisample ||
+			 type.specific == variable_type_t::specific::multisample_array ||
+			 type.specific == variable_type_t::specific::rect) && type.dimentions.x != 2)
+			log::warning::critical << "'x' dimention must always be '2' if 'multisample', 'multisample_array' or 'rect' specific is applied.";
+		if (type.specific == variable_type_t::specific::array && type.dimentions.x > 2)
+			log::warning::critical << "'x' dimention must not be bigger than '2' if 'array' specific is applied.";
+		if (type.dimentions.x > 3)
+			log::warning::critical << "'x' dimention must not be bigger than '3' for non-data variables.";
+
+		if (type.structure == variable_type_t::structure::shadow_sampler) {
+			if (type.dimentions.x > 2)
+				log::warning::critical << "'x' dimention must always be '2' or less for 'shadow_sampler' variables.";
+			if (type.datatype != variable_type_t::datatype::_float)
+				log::warning::critical << "'shadow_sampler' variables must always have 'float' type.";
+			if (type.specific == variable_type_t::specific::buffer
+				|| type.specific == variable_type_t::specific::multisample
+				|| type.specific == variable_type_t::specific::multisample_array) {
+
+				log::warning::critical << "'shadow_sampler' variables must not have 'buffer', 'multisample' or 'multisample_array' specifics applied.";
+			}
+		}
+		if (type.datatype != variable_type_t::datatype::_float &&
+			type.datatype != variable_type_t::datatype::_int &&
+			type.datatype != variable_type_t::datatype::_unsigned) {
+
+			if (type.structure == variable_type_t::structure::sampler)
+				log::warning::critical << "'sampler' variables can only have 'float', 'int' or 'unsigned' type.";
+			if (type.structure == variable_type_t::structure::image)
+				log::warning::critical << "'image' variables can only have 'float', 'int' or 'unsigned' type.";
+		}
+	}
 }
 
 clap::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
@@ -129,7 +178,7 @@ void clap::gl::shader::program::add(detail::object const &object) {
 
 void clap::gl::shader::program::add(detail::object &&object) {
 	glAttachShader(id, object.id);
-	log::message::negligible << "A shader object was attached to a program.";	
+	log::message::negligible << "A shader object was attached to a program.";
 	needs_linking = true;
 }
 
@@ -143,7 +192,7 @@ void clap::gl::shader::program::link() {
 			GLsizei len;
 			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &len);
 
-			GLchar *log = new GLchar[len + GLsizei(1)];
+			GLchar *log = new GLchar[size_t(len) + 1];
 			glGetProgramInfoLog(id, len, &len, log);
 			log::warning::critical << "During program linking: " << std::string(log);
 			delete[] log;
@@ -161,9 +210,10 @@ void clap::gl::shader::program::use() {
 		log::warning::major << "Attempting to use an unlinked program.";
 }
 
-template<typename gl_get_lambda_t, typename create_variable_lambda_t>
+template<typename gl_get_lambda_t, typename gl_get_location_lambda_t, typename create_variable_lambda_t>
 void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_length,
-			   gl_get_lambda_t gl_get_lambda, create_variable_lambda_t create_variable_lambda) {
+			   gl_get_lambda_t gl_get_lambda, gl_get_location_lambda_t gl_get_location_lambda,
+			   create_variable_lambda_t create_variable_lambda) {
 	GLint number, max_length, name_length, size;
 	GLenum type;
 	glGetProgramiv(program_id, active_type, &number);
@@ -171,33 +221,35 @@ void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_lengt
 	for (int i = 0; i < number; i++) {
 		std::vector<GLchar> name(max_length);
 		gl_get_lambda(program_id, i, max_length, &name_length, &size, &type, name.data());
-		create_variable_lambda(name.data(), glGetAttribLocation(program_id, name.data()), type);
+		create_variable_lambda(name.data(), gl_get_location_lambda(program_id, name.data()), type);
 	}
 }
 clap::gl::shader::variables clap::gl::shader::program::getUniforms() {
 	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH,
-			  glGetActiveUniform, [&out](auto name, auto location, auto datatype) {
-				  auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
-				  out.insert(std::make_pair(name, detail::variable(name,
-																   detail::variable::storage_type::uniform,
-																   location,
-																   datatype_pair.first,
-																   datatype_pair.second)));
+	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform, 
+			  glad_glGetUniformLocation, [&out](auto name, auto location, auto datatype) {
+				  out.insert(std::make_pair(
+					  name,
+					  detail::variable(name,
+									   location,
+									   detail::variable_type_t::storage::uniform,
+									   gl::detail::convert::to_variable_type(datatype))
+				  ));
 			  });
 	log::message::minor << "Uniforms (" << out.size() << ") were requested from the shader program.";
 	return out;
 }
 clap::gl::shader::variables clap::gl::shader::program::getAttributes() {
 	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-			  glGetActiveAttrib, [&out](auto name, auto location, auto datatype) {
-				  auto datatype_pair = gl::detail::convert::to_variable_datatype_pair(datatype);
-				  out.insert(std::make_pair(name, detail::variable(name,
-																   detail::variable::storage_type::attribute,
-																   location,
-																   datatype_pair.first,
-																   datatype_pair.second)));
+	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib, 
+			  glGetAttribLocation, [&out](auto name, auto location, auto datatype) {
+				  out.insert(std::make_pair(
+					  name,
+					  detail::variable(name,
+									   location,
+									   detail::variable_type_t::storage::attribute,
+									   gl::detail::convert::to_variable_type(datatype))
+				  ));
 			  });
 	log::message::minor << "Attributes (" << out.size() << ") were requested from the shader program.";
 	return out;
@@ -208,244 +260,193 @@ clap::gl::shader::variables clap::gl::shader::program::getVariables() {
 	return out;
 }
 
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<float> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<float> const &values) {
+	set(variable, std::vector<float>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<double> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<double> const &values) {
+	set(variable, std::vector<double>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<int> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<int> const &values) {
+	set(variable, std::vector<int>(values));
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, std::vector<unsigned> const &values) {
+	set(variable, values.size(), values.data());
+}
+void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<unsigned> const &values) {
+	set(variable, std::vector<unsigned>(values));
+}
+
+bool check_uniform_variable(uint32_t const &location,
+							clap::gl::shader::detail::variable_type_t::storage const &storage,
+							clap::gl::shader::detail::variable_type const &type,
+							clap::gl::shader::detail::variable_type_t::datatype expected_datatype) {
+	if (location == -1) {
+		clap::log::warning::major << "Uniform variable is silently ignored by OpenGL. It's location value is '-1'.";
+		return false;
+	}
+
+	if (storage != clap::gl::shader::detail::variable_type_t::storage::uniform
+		|| type.structure != clap::gl::shader::detail::variable_type_t::structure::data) {
+
+		clap::log::warning::major << "Only data uniform variables can be directly set.";
+		return false;
+	}
+
+	if (type.datatype != expected_datatype && type.datatype != clap::gl::shader::detail::variable_type_t::datatype::_bool) {
+		clap::log::warning::major << "Cannot set value to a variable of a different type.";
+		return false;
+	}
+
+	return true;
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const float *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_float))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1fv(variable.location, 1, values); return;
+				case 2: glUniform2fv(variable.location, 1, values); return;
+				case 3: glUniform3fv(variable.location, 1, values); return;
+				case 4: glUniform4fv(variable.location, 1, values); return;
+			} break;
+		case 2:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix2x3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix2x4fv(variable.location, 1, false, values); return;
+			} break;
+		case 3:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix3x2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix3x4fv(variable.location, 1, false, values); return;
+			} break;
+		case 4:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix4x2fv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix4x3fv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix4fv(variable.location, 1, false, values); return;
+			}
+			break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const double *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_double))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1dv(variable.location, 1, values); return;
+				case 2: glUniform2dv(variable.location, 1, values); return;
+				case 3: glUniform3dv(variable.location, 1, values); return;
+				case 4: glUniform4dv(variable.location, 1, values); return;
+			} break;
+		case 2:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix2x3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix2x4dv(variable.location, 1, false, values); return;
+			} break;
+		case 3:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix3x2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix3x4dv(variable.location, 1, false, values); return;
+			} break;
+		case 4:
+			switch (variable.type.dimentions.y) {
+				case 2: glUniformMatrix4x2dv(variable.location, 1, false, values); return;
+				case 3: glUniformMatrix4x3dv(variable.location, 1, false, values); return;
+				case 4: glUniformMatrix4dv(variable.location, 1, false, values); return;
+			}
+			break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const int *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_int))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1iv(variable.location, 1, values); return;
+				case 2: glUniform2iv(variable.location, 1, values); return;
+				case 3: glUniform3iv(variable.location, 1, values); return;
+				case 4: glUniform4iv(variable.location, 1, values); return;
+			} break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
+void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const unsigned *values) {
+	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
+								clap::gl::shader::detail::variable_type_t::datatype::_unsigned))
+		return;
+	if (variable.count() != n) {
+		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
+		return;
+	}
+
+	use();
+	switch (variable.type.dimentions.x) {
+		case 1:
+			switch (variable.type.dimentions.y) {
+				case 1: glUniform1uiv(variable.location, 1, values); return;
+				case 2: glUniform2uiv(variable.location, 1, values); return;
+				case 3: glUniform3uiv(variable.location, 1, values); return;
+				case 4: glUniform4uiv(variable.location, 1, values); return;
+			} break;
+	}
+	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
+}
+
 clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
 	gl::detail::state::ensure_loaded();
 
 	if (id == 0 || !glIsProgram(id))
 		log::warning::critical << "Unable to perform a shader program move operation. "
-			"Passed shader program seems to be corrupted.";
+		"Passed shader program seems to be corrupted.";
 	else
 		log::message::negligible << "A shader program was moved.";
 }
-
-GLenum clap::gl::detail::convert::to_gl(clap::gl::shader::type v) {
-	switch (v) {
-		case clap::gl::shader::type::fragment:				return GL_FRAGMENT_SHADER;
-		case clap::gl::shader::type::vertex:					return GL_VERTEX_SHADER;
-		case clap::gl::shader::type::geometry:				return GL_GEOMETRY_SHADER;
-		case clap::gl::shader::type::compute:					return GL_COMPUTE_SHADER;
-		case clap::gl::shader::type::tesselation_control:		return GL_TESS_CONTROL_SHADER;
-		case clap::gl::shader::type::tesselation_evaluation:	return GL_TESS_EVALUATION_SHADER;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
-	switch (v) {
-		case GL_FRAGMENT_SHADER:		return clap::gl::shader::type::fragment;
-		case GL_VERTEX_SHADER:			return clap::gl::shader::type::vertex;
-		case GL_GEOMETRY_SHADER:		return clap::gl::shader::type::geometry;
-		case GL_COMPUTE_SHADER:			return clap::gl::shader::type::compute;
-		case GL_TESS_CONTROL_SHADER:	return clap::gl::shader::type::tesselation_control;
-		case GL_TESS_EVALUATION_SHADER: return clap::gl::shader::type::tesselation_evaluation;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std::string const &v) {
-	if (v == "fragment")
-		return clap::gl::shader::type::fragment;
-	else if (v == "vertex")
-		return clap::gl::shader::type::vertex;
-	else if (v == "geometry")
-		return clap::gl::shader::type::geometry;
-	else if (v == "compute")
-		return clap::gl::shader::type::compute;
-	else if (v == "tesselation_control")
-		return clap::gl::shader::type::tesselation_control;
-	else if (v == "tesselation_evaluation")
-		return clap::gl::shader::type::tesselation_evaluation;
-
-	log::error::critical << "Unsupported enum value.";
-}
-
-GLenum clap::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype,
-										  shader::detail::variable::dimentions_t dimentions) {
-	switch (datatype) {
-		case clap::gl::shader::detail::variable::datatype_t::_float:
-			switch (dimentions.x) {
-				case 1:
-					switch (dimentions.y) {
-						case 1: return GL_FLOAT;
-						case 2: return GL_FLOAT_VEC2;
-						case 3: return GL_FLOAT_VEC3;
-						case 4: return GL_FLOAT_VEC4;
-					}
-				case 2:
-					switch (dimentions.y) {
-						case 2: return GL_FLOAT_MAT2;
-						case 3: return GL_FLOAT_MAT2x3;
-						case 4: return GL_FLOAT_MAT2x4;
-					}
-				case 3:
-					switch (dimentions.y) {
-						case 2: return GL_FLOAT_MAT3x2;
-						case 3: return GL_FLOAT_MAT3;
-						case 4: return GL_FLOAT_MAT3x4;
-					}
-				case 4:
-					switch (dimentions.y) {
-						case 2: return GL_FLOAT_MAT4x2;
-						case 3: return GL_FLOAT_MAT4x3;
-						case 4: return GL_FLOAT_MAT4;
-					}
-			}
-		case clap::gl::shader::detail::variable::datatype_t::_double:
-			switch (dimentions.x) {
-				case 1:
-					switch (dimentions.y) {
-						case 1: return GL_DOUBLE;
-						case 2: return GL_DOUBLE_VEC2;
-						case 3: return GL_DOUBLE_VEC3;
-						case 4: return GL_DOUBLE_VEC4;
-					}
-				case 2:
-					switch (dimentions.y) {
-						case 2: return GL_DOUBLE_MAT2;
-						case 3: return GL_DOUBLE_MAT2x3;
-						case 4: return GL_DOUBLE_MAT2x4;
-					}
-				case 3:
-					switch (dimentions.y) {
-						case 2: return GL_DOUBLE_MAT3x2;
-						case 3: return GL_DOUBLE_MAT3;
-						case 4: return GL_DOUBLE_MAT3x4;
-					}
-				case 4:
-					switch (dimentions.y) {
-						case 2: return GL_DOUBLE_MAT4x2;
-						case 3: return GL_DOUBLE_MAT4x3;
-						case 4: return GL_DOUBLE_MAT4;
-					}
-			}
-		case clap::gl::shader::detail::variable::datatype_t::_int:
-			switch (dimentions.x) {
-				case 1:
-					switch (dimentions.y) {
-						case 1: return GL_INT;
-						case 2: return GL_INT_VEC2;
-						case 3: return GL_INT_VEC3;
-						case 4: return GL_INT_VEC4;
-					}
-			}
-		case clap::gl::shader::detail::variable::datatype_t::_unsigned:
-			switch (dimentions.x) {
-				case 1:
-					switch (dimentions.y) {
-						case 1: return GL_UNSIGNED_INT;
-						case 2: return GL_UNSIGNED_INT_VEC2;
-						case 3: return GL_UNSIGNED_INT_VEC3;
-						case 4: return GL_UNSIGNED_INT_VEC4;
-					}
-			}
-		case clap::gl::shader::detail::variable::datatype_t::_bool:
-			switch (dimentions.x) {
-				case 1:
-					switch (dimentions.y) {
-						case 1: return GL_BOOL;
-						case 2: return GL_BOOL_VEC2;
-						case 3: return GL_BOOL_VEC3;
-						case 4: return GL_BOOL_VEC4;
-					}
-			}
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-std::pair<clap::gl::shader::detail::variable::datatype_t,
-	clap::gl::shader::detail::variable::dimentions_t>
-	clap::gl::detail::convert::to_variable_datatype_pair(GLenum v) {
-	auto make_pair = [](shader::detail::variable::datatype_t datatype, size_t x, size_t y) {
-		return std::make_pair(datatype, shader::detail::variable::dimentions_t{ x, y });
-	};
-	switch (v) {
-		case GL_FLOAT: return make_pair(shader::detail::variable::datatype_t::_float, 1, 1);
-		case GL_FLOAT_VEC2: return make_pair(shader::detail::variable::datatype_t::_float, 1, 2);
-		case GL_FLOAT_VEC3: return make_pair(shader::detail::variable::datatype_t::_float, 1, 3);
-		case GL_FLOAT_VEC4: return make_pair(shader::detail::variable::datatype_t::_float, 1, 4);
-
-		case GL_DOUBLE: return make_pair(shader::detail::variable::datatype_t::_double, 1, 1);
-		case GL_DOUBLE_VEC2: return make_pair(shader::detail::variable::datatype_t::_double, 1, 2);
-		case GL_DOUBLE_VEC3: return make_pair(shader::detail::variable::datatype_t::_double, 1, 3);
-		case GL_DOUBLE_VEC4: return make_pair(shader::detail::variable::datatype_t::_double, 1, 4);
-
-		case GL_INT: return make_pair(shader::detail::variable::datatype_t::_int, 1, 1);
-		case GL_INT_VEC2: return make_pair(shader::detail::variable::datatype_t::_int, 1, 2);
-		case GL_INT_VEC3: return make_pair(shader::detail::variable::datatype_t::_int, 1, 3);
-		case GL_INT_VEC4: return make_pair(shader::detail::variable::datatype_t::_int, 1, 4);
-
-		case GL_UNSIGNED_INT: return make_pair(shader::detail::variable::datatype_t::_unsigned, 1, 1);
-		case GL_UNSIGNED_INT_VEC2: return make_pair(shader::detail::variable::datatype_t::_unsigned, 1, 2);
-		case GL_UNSIGNED_INT_VEC3: return make_pair(shader::detail::variable::datatype_t::_unsigned, 1, 3);
-		case GL_UNSIGNED_INT_VEC4: return make_pair(shader::detail::variable::datatype_t::_unsigned, 1, 4);
-
-		case GL_BOOL: return make_pair(shader::detail::variable::datatype_t::_bool, 1, 1);
-		case GL_BOOL_VEC2: return make_pair(shader::detail::variable::datatype_t::_bool, 1, 2);
-		case GL_BOOL_VEC3: return make_pair(shader::detail::variable::datatype_t::_bool, 1, 3);
-		case GL_BOOL_VEC4: return make_pair(shader::detail::variable::datatype_t::_bool, 1, 4);
-
-		case GL_FLOAT_MAT2: return make_pair(shader::detail::variable::datatype_t::_float, 2, 2);
-		case GL_FLOAT_MAT3: return make_pair(shader::detail::variable::datatype_t::_float, 3, 3);
-		case GL_FLOAT_MAT4: return make_pair(shader::detail::variable::datatype_t::_float, 4, 4);
-
-		case GL_FLOAT_MAT2x3: return make_pair(shader::detail::variable::datatype_t::_float, 2, 3);
-		case GL_FLOAT_MAT3x2: return make_pair(shader::detail::variable::datatype_t::_float, 3, 2);
-		case GL_FLOAT_MAT4x2: return make_pair(shader::detail::variable::datatype_t::_float, 4, 2);
-
-		case GL_FLOAT_MAT2x4: return make_pair(shader::detail::variable::datatype_t::_float, 2, 4);
-		case GL_FLOAT_MAT3x4: return make_pair(shader::detail::variable::datatype_t::_float, 3, 4);
-		case GL_FLOAT_MAT4x3: return make_pair(shader::detail::variable::datatype_t::_float, 4, 3);
-
-		case GL_DOUBLE_MAT2: return make_pair(shader::detail::variable::datatype_t::_double, 2, 2);
-		case GL_DOUBLE_MAT3: return make_pair(shader::detail::variable::datatype_t::_double, 3, 3);
-		case GL_DOUBLE_MAT4: return make_pair(shader::detail::variable::datatype_t::_double, 4, 4);
-
-		case GL_DOUBLE_MAT2x3: return make_pair(shader::detail::variable::datatype_t::_double, 2, 3);
-		case GL_DOUBLE_MAT3x2: return make_pair(shader::detail::variable::datatype_t::_double, 3, 2);
-		case GL_DOUBLE_MAT4x2: return make_pair(shader::detail::variable::datatype_t::_double, 4, 2);
-
-		case GL_DOUBLE_MAT2x4: return make_pair(shader::detail::variable::datatype_t::_double, 2, 4);
-		case GL_DOUBLE_MAT3x4: return make_pair(shader::detail::variable::datatype_t::_double, 3, 4);
-		case GL_DOUBLE_MAT4x3: return make_pair(shader::detail::variable::datatype_t::_double, 4, 3);
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-GLenum clap::gl::detail::convert::to_gl(shader::detail::variable::datatype_t datatype) {
-	switch (datatype) {
-		case clap::gl::shader::detail::variable::datatype_t::_float: return GL_FLOAT;
-		case clap::gl::shader::detail::variable::datatype_t::_double: return GL_DOUBLE;
-		case clap::gl::shader::detail::variable::datatype_t::_int: return GL_INT;
-		case clap::gl::shader::detail::variable::datatype_t::_unsigned: return GL_UNSIGNED_INT;
-		case clap::gl::shader::detail::variable::datatype_t::_bool: return GL_BOOL;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-size_t clap::gl::detail::convert::to_size(shader::detail::variable::datatype_t datatype) {
-	switch (datatype) {
-		case clap::gl::shader::detail::variable::datatype_t::_float: return sizeof(float);
-		case clap::gl::shader::detail::variable::datatype_t::_double: return sizeof(double);
-		case clap::gl::shader::detail::variable::datatype_t::_int: return sizeof(int);
-		case clap::gl::shader::detail::variable::datatype_t::_unsigned: return sizeof(unsigned);
-		case clap::gl::shader::detail::variable::datatype_t::_bool: return sizeof(bool);
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
-	switch (type) {
-		case clap::gl::shader::type::fragment:				stream << "fragment"; break;
-		case clap::gl::shader::type::vertex:					stream << "vertex"; break;
-		case clap::gl::shader::type::geometry:				stream << "geometry"; break;
-		case clap::gl::shader::type::compute:					stream << "compute"; break;
-		case clap::gl::shader::type::tesselation_control:		stream << "tesselation control"; break;
-		case clap::gl::shader::type::tesselation_evaluation:	stream << "tesselation evaluation"; break;
-		default: 
-			clap::log::warning::major << "Unsupported enum value.";
-	}
-	return stream;
-}
-
 
 clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) {
 	auto found = find(name);

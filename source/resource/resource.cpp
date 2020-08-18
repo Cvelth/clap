@@ -1,32 +1,34 @@
 #include "resource/resource.hpp"
 #include "essential/log.hpp"
 #include "gl/shader.hpp"
+#include "gl/texture.hpp"
 
 #include <filesystem>
+#include <set>
 
 static bool was_loaded = false;
 
-clap::gl::shader::detail::object &clap::resource::detail::shaders_t::operator[](std::string const &identificator) {
+void clap::resource::detail::unloaded_resource_check() {
 	if (!was_loaded) {
-		log::warning::major << "An attempt to access resource before it was loaded.";
-		log::info::major << "Call 'clap::resource::load()' before accessing them.";
-	}
-
-	auto found = find(identificator);
-	if (found != end())
-		return *found->second;
-	else {
-		log::error::major << "Attempting to access a non-existent shader file.";
-		log::info::major << "Requested name is '" << identificator << "'.";
+		clap::log::warning::major << "An attempt to access resource before it was loaded.";
+		clap::log::info::major << "Call 'clap::resource::load()' before accessing them.";
 	}
 }
-
-void clap::resource::detail::shaders_t::clear() {
-	for (auto pair : *this)
-		if (pair.second)
-			delete pair.second;
-	this->shader_storage_t::clear();
+void clap::resource::detail::non_existent_file_error(std::string const &identificator) {
+	clap::log::error::major << "Attempting to access a non-existent resource.";
+	clap::log::info::major << "Requested name is '" << identificator << "'.";
 }
+
+template<typename T> void clap::resource::detail::call_destructor(T *ptr) { delete ptr; }
+template void clap::resource::detail::call_destructor<clap::gl::shader::detail::object>(clap::gl::shader::detail::object *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_1d>(clap::gl::texture::_1d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_2d>(clap::gl::texture::_2d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_3d>(clap::gl::texture::_3d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_1d_array>(clap::gl::texture::_1d_array *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_2d_array>(clap::gl::texture::_2d_array *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::rectangle>(clap::gl::texture::rectangle *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::multisample>(clap::gl::texture::multisample *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::multisample_array>(clap::gl::texture::multisample_array *);
 
 void load_shaders(std::filesystem::directory_entry const &path) {
 	for (auto folder : std::filesystem::directory_iterator(path)) {
@@ -34,7 +36,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 			auto type = clap::gl::detail::convert::to_shader_type_from_string(folder.path().filename().string());
 			for (auto entry : std::filesystem::recursive_directory_iterator(folder))
 				if (!entry.is_directory()) {
-					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string())); 
+					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
 					switch (type) {
 						case clap::gl::shader::type::fragment:
@@ -55,7 +57,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 						case clap::gl::shader::type::tesselation_evaluation:
 							clap::resource::detail::load_shader(clap::resource::shader::tesselation_evaluation, identificator, object);
 							break;
-						default: 
+						default:
 							clap::log::warning::critical << "Unsupported enum value.";
 					}
 				}
@@ -69,7 +71,10 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 void load_textures(std::filesystem::directory_entry const &path) {
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
 		if (!subpath.is_directory())
-			clap::resource::detail::load_texture(subpath.path().string());
+			clap::resource::detail::load_texture(
+				subpath.path().string(), 
+				subpath.path().lexically_relative(path).replace_extension().string()
+			);
 }
 
 void load_others(std::filesystem::directory_entry const &path) {
@@ -78,7 +83,25 @@ void load_others(std::filesystem::directory_entry const &path) {
 }
 
 void clap::resource::load() {
-	const auto paths = { "resource", "../resource", "../../resource" };
+	const std::set<std::filesystem::path> paths = {
+		std::filesystem::absolute("resource"),
+		std::filesystem::absolute("../resource"),
+		std::filesystem::absolute("../../resource"),
+		std::filesystem::absolute("../../../resource"),
+		std::filesystem::absolute("../../../../resource"),
+
+		std::filesystem::absolute("clap/resource"),
+		std::filesystem::absolute("../clap/resource"),
+		std::filesystem::absolute("../../clap/resource"),
+		std::filesystem::absolute("../../../clap/resource"),
+		std::filesystem::absolute("../../../../clap/resource"),
+
+		std::filesystem::absolute("engine/resource"),
+		std::filesystem::absolute("../engine/resource"),
+		std::filesystem::absolute("../../engine/resource"),
+		std::filesystem::absolute("../../../engine/resource"),
+		std::filesystem::absolute("../../../../engine/resource"),
+	};
 	for (auto &path : paths)
 		if (std::filesystem::exists(path)) {
 			log::message::major << "Loading resources from '" << path << "'.";
@@ -109,12 +132,36 @@ void clap::resource::clear() {
 	shader::tesselation_control.clear();
 	shader::tesselation_evaluation.clear();
 
+	texture::_1d.clear();
+	texture::_2d.clear();
+	texture::_3d.clear();
+	texture::_1d_array.clear();
+	texture::_2d_array.clear();
+	texture::rectangle.clear();
+	texture::multisample.clear();
+	texture::multisample_array.clear();
+
 	was_loaded = false;
 }
 
 void clap::resource::detail::load_shader(shaders_t &storage, std::string const &name, gl::shader::detail::object *object) {
 	storage.insert(std::pair(name, object));
 }
-void clap::resource::detail::load_texture(std::string const &filename) {
-	log::warning::minor << "Texture loading is currently unsupported.";
+
+#include "lodepng/lodepng.h"
+void clap::resource::detail::load_texture(std::string const &filename, std::string const &texture_name) {
+	std::vector<unsigned char> image_data;
+	unsigned width, height;
+	unsigned error_code = lodepng::decode(image_data, width, height, filename);
+	if (error_code != 0) {
+		log::warning::major << "Error while trying to decode a texture file.";
+		log::info::critical << "Error code: " << error_code << '.';
+		log::info::critical << lodepng_error_text(error_code);
+		return;
+	} else {
+		log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded successfully.";
+		log::info::major << "Path: '" << filename << "'.";
+	}
+
+	texture::_2d.insert(std::pair(texture_name, new gl::texture::_2d(image_data.data(), width, height)));
 }

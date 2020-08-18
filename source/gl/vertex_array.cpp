@@ -49,20 +49,25 @@ void clap::gl::vertex_array::detail::indexed::bind() {
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
 																  shader::detail::variable const &variable,
 																  size_t stride, size_t shift) {
-	if (variable.type != shader::detail::variable::storage_type::attribute) {
+	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_pointer'";
+		return;
+	}
+	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
+		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_pointer'";
 		return;
 	}
 
 	this->bind();
 	buffer.bind();
-	for (size_t i = 0; i < variable.dimentions.x; i++) {
-		glVertexAttribPointer(GLuint(variable.location + i), GLint(variable.dimentions.x * variable.dimentions.y),
-							  gl::detail::convert::to_gl(variable.datatype),
+	for (size_t i = 0; i < variable.type.dimentions.x; i++) {
+		glVertexAttribPointer(GLuint(variable.location + i), 
+							  GLint(variable.type.dimentions.x * variable.type.dimentions.y),
+							  gl::detail::convert::to_gl(variable.type.datatype),
 							  GL_FALSE, GLsizei(stride), (const void *) shift);
 		glEnableVertexAttribArray(GLuint(variable.location + i));
 
-		std::string index_string = variable.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
+		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
 		log::message::minor << "Variable '" << variable.name << index_string
 			<< "' uses data stored in buffer currently bound to '"
 			<< buffer::target::array << "'.";
@@ -71,16 +76,20 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::
 
 void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::detail::variable const &variable,
 																  size_t divisor) {
-	if (variable.type != shader::detail::variable::storage_type::attribute) {
+	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_divisor'";
+		return;
+	}
+	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
+		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_divisor'";
 		return;
 	}
 
 	this->bind();
-	for (int i = 0; i < variable.dimentions.x; i++) {
+	for (int i = 0; i < variable.type.dimentions.x; i++) {
 		glVertexAttribDivisor(variable.location, GLuint(divisor));
 
-		std::string index_string = variable.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
+		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
 		log::message::minor << "Variable '" << variable.name << index_string << "' uses a divisor: "
 			<< divisor << ".";
 	}
@@ -307,60 +316,6 @@ void clap::gl::vertex_array::detail::indexed::draw_instanced_indexed(connection 
 									gl::detail::convert::to_gl(type),
 									(void *) (first * size_t(type)), GLsizei(draw_count));
 	log::message::negligible << "Draw operation on currently bound Vertex Array.";
-}
-
-GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex_array::connection v) {
-	switch (v) {
-		case clap::gl::vertex_array::connection::points: return GL_POINTS;
-		case clap::gl::vertex_array::connection::lines: return GL_LINES;
-		case clap::gl::vertex_array::connection::lines_w_adjacency: return GL_LINES_ADJACENCY;
-		case clap::gl::vertex_array::connection::line_strip: return GL_LINE_STRIP;
-		case clap::gl::vertex_array::connection::line_strip_w_adjacency: return GL_LINE_STRIP_ADJACENCY;
-		case clap::gl::vertex_array::connection::line_loop: return GL_LINE_LOOP;
-		case clap::gl::vertex_array::connection::triangles: return GL_TRIANGLES;
-		case clap::gl::vertex_array::connection::triangles_w_adjacency: return GL_TRIANGLES_ADJACENCY;
-		case clap::gl::vertex_array::connection::triangle_strip: return GL_TRIANGLE_STRIP;
-		case clap::gl::vertex_array::connection::triangle_strip_w_adjacency: return GL_TRIANGLE_STRIP_ADJACENCY;;
-		case clap::gl::vertex_array::connection::triangle_fan: return GL_TRIANGLE_FAN;
-		case clap::gl::vertex_array::connection::patches: return GL_PATCHES;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-clap::gl::vertex_array::connection clap::gl::detail::convert::to_connection_type(GLenum v) {
-	switch (v) {
-		case GL_POINTS:						  return clap::gl::vertex_array::connection::points;
-		case GL_LINES:						  return clap::gl::vertex_array::connection::lines;
-		case GL_LINES_ADJACENCY:			  return clap::gl::vertex_array::connection::lines_w_adjacency;
-		case GL_LINE_STRIP:					  return clap::gl::vertex_array::connection::line_strip;
-		case GL_LINE_STRIP_ADJACENCY:		  return clap::gl::vertex_array::connection::line_strip_w_adjacency;
-		case GL_LINE_LOOP:					  return clap::gl::vertex_array::connection::line_loop;
-		case GL_TRIANGLES:					  return clap::gl::vertex_array::connection::triangles;
-		case GL_TRIANGLES_ADJACENCY:		  return clap::gl::vertex_array::connection::triangles_w_adjacency;
-		case GL_TRIANGLE_STRIP:				  return clap::gl::vertex_array::connection::triangle_strip;
-		case GL_TRIANGLE_STRIP_ADJACENCY:	  return clap::gl::vertex_array::connection::triangle_strip_w_adjacency;
-		case GL_TRIANGLE_FAN:				  return clap::gl::vertex_array::connection::triangle_fan;
-		case GL_PATCHES:					  return clap::gl::vertex_array::connection::patches;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex_array::index_type v) {
-	switch (v) {
-		case clap::gl::vertex_array::index_type::unsigned_byte: return GL_UNSIGNED_BYTE;
-		case clap::gl::vertex_array::index_type::unsigned_short: return GL_UNSIGNED_SHORT;
-		case clap::gl::vertex_array::index_type::unsigned_int: return GL_UNSIGNED_INT;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-clap::gl::vertex_array::index_type clap::gl::detail::convert::to_index_type(GLenum v) {
-	switch (v) {
-		case GL_UNSIGNED_BYTE: return clap::gl::vertex_array::index_type::unsigned_byte;
-		case GL_UNSIGNED_SHORT: return clap::gl::vertex_array::index_type::unsigned_short;
-		case GL_UNSIGNED_INT: return clap::gl::vertex_array::index_type::unsigned_int;
-	}
-	log::error::critical << "Unsupported enum value.";
 }
 
 clap::gl::vertex_array::detail::indexed::operator bool() const {
