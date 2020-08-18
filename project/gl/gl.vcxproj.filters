@@ -58,5 +58,8 @@
     <ClCompile Include="..\..\source\gl\texture.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\gl\detail\convert.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

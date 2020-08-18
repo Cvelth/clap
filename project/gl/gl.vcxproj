@@ -169,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\buffer.cpp" />
+    <ClCompile Include="..\..\source\gl\detail\convert.cpp" />
     <ClCompile Include="..\..\source\gl\detail\state.cpp" />
     <ClCompile Include="..\..\source\gl\misc.cpp" />
     <ClCompile Include="..\..\source\gl\shader.cpp" />
