@@ -35,6 +35,9 @@
     <ClInclude Include="..\..\include\gl\gl.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\gl\texture.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\buffer.cpp">
@@ -51,6 +54,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\gl\detail\state.cpp">
       <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\texture.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -4,9 +4,7 @@
 #include "glfw/glfw3.h"
 
 #include "window/detail/glfw.hpp"
-#include "gl/buffer.hpp"
 #include "gl/shader.hpp"
-#include "gl/vertex_array.hpp"
 #include "essential/log.hpp"
 
 bool clap::gl::detail::state::load() {
@@ -103,4 +101,31 @@ clap::gl::shader::program *clap::gl::detail::state::being_used() {
 }
 bool clap::gl::detail::state::is_used(shader::program *program) {
 	return program_used && program_used->id == program->id;
+}
+
+std::optional<clap::gl::texture::detail::indexed> clap::gl::detail::state::bound_textures[texture_target_count];
+void clap::gl::detail::state::bind(texture::target const &target, texture::detail::indexed &&texture) {
+	if (!bound_textures[size_t(target)] || **bound_textures[size_t(target)] != *texture)
+		if (*texture) {
+			log::message::minor << "A new texture is bound to '" << target << "'.";
+			glBindTexture(detail::convert::to_gl(target),
+						 **(bound_textures[size_t(target)] = std::move(texture)));
+		} else
+			log::warning::critical << "A texture object passed to 'gl::state::bind' is corrupted.";
+}
+std::optional<clap::gl::texture::detail::indexed> const clap::gl::detail::state::unbind(texture::target const &target) {
+	glBindTexture(detail::convert::to_gl(target), 0);
+	auto out = std::move(bound_textures[size_t(target)]);
+	bound_textures[size_t(target)] = std::nullopt;
+	log::message::minor << "A texture objec is no longer bound to '" << target << "'.";
+	return std::move(out);
+}
+std::optional<clap::gl::texture::detail::indexed> const &clap::gl::detail::state::bound(texture::target const &target) {
+	return bound_textures[size_t(target)];
+}
+std::optional<clap::gl::texture::target> clap::gl::detail::state::is_bound(clap::gl::texture::detail::indexed const &texture) {
+	for (size_t i = 0; i < texture_target_count; i++)
+		if (bound_textures[i] && **bound_textures[i] == *texture)
+			return clap::gl::texture::target(i);
+	return std::nullopt;
 }
