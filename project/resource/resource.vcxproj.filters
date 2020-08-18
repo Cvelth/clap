@@ -19,8 +19,5 @@
     <ClCompile Include="..\..\source\resource\resource.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\resource\load_texture.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

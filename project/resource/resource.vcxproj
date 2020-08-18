@@ -150,7 +150,6 @@
     <ClInclude Include="..\..\include\resource\resource.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\resource\load_texture.cpp" />
     <ClCompile Include="..\..\source\resource\resource.cpp" />
   </ItemGroup>
   <ItemGroup>
