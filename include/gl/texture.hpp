@@ -62,7 +62,8 @@ namespace clap::gl::texture {
 	};
 	enum class type {
 		unsigned_byte, byte, unsigned_short, _short, unsinged_int, _int, 
-		half_float, _float, //half_double, _double,
+
+		half_float, _float, 
 
 		unsigned_byte_3_3_2, unsigned_byte_2_3_3_r,
 
@@ -166,6 +167,15 @@ namespace clap::gl::texture {
 namespace clap::gl::detail::convert {
 	GLenum to_gl(clap::gl::texture::target v);
 	clap::gl::texture::target to_texture_target(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::internal_format v);
+	clap::gl::texture::internal_format to_internal_format(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::external_format v);
+	clap::gl::texture::external_format to_external_format(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::type v);
+	clap::gl::texture::type to_texture_type(GLenum v);
 }
 
 #include <ostream>
