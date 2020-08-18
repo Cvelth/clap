@@ -24,7 +24,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::target v) {
 	}
 	log::error::critical << "Unsupported enum value.";
 }
-clap::gl::buffer::target clap::gl::detail::convert::to_target(GLenum v) {
+clap::gl::buffer::target clap::gl::detail::convert::to_buffer_target(GLenum v) {
 	switch (v) {
 		case GL_ARRAY_BUFFER: return clap::gl::buffer::target::array;
 		case GL_ATOMIC_COUNTER_BUFFER: return clap::gl::buffer::target::atomic_counter;
