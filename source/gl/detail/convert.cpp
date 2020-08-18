@@ -961,53 +961,53 @@ clap::gl::texture::external_format clap::gl::detail::convert::to_external_format
 	clap::log::error::critical << "Unsupported enum value.";
 }
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::type v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::external_type v) {
 	switch (v) {
-		case texture::type::unsigned_byte: return GL_UNSIGNED_BYTE;
-		case texture::type::byte: return GL_BYTE;
-		case texture::type::unsigned_short: return GL_UNSIGNED_SHORT;
-		case texture::type::_short: return GL_SHORT;
-		case texture::type::unsinged_int: return GL_UNSIGNED_INT;
-		case texture::type::_int: return GL_INT;
-		case texture::type::half_float: return GL_HALF_FLOAT;
-		case texture::type::_float: return GL_FLOAT;
-		case texture::type::unsigned_byte_3_3_2: return GL_UNSIGNED_BYTE_3_3_2;
-		case texture::type::unsigned_byte_2_3_3_r: return GL_UNSIGNED_BYTE_2_3_3_REV;
-		case texture::type::unsigned_short_5_6_5: return GL_UNSIGNED_SHORT_5_6_5;
-		case texture::type::unsigned_short_5_6_5_r: return GL_UNSIGNED_SHORT_5_6_5_REV;
-		case texture::type::unsigned_short_4_4_4_4: return GL_UNSIGNED_SHORT_4_4_4_4;
-		case texture::type::unsigned_short_4_4_4_4_r: return GL_UNSIGNED_SHORT_4_4_4_4_REV;
-		case texture::type::unsigned_short_5_5_5_1: return GL_UNSIGNED_SHORT_5_5_5_1;
-		case texture::type::unsigned_short_1_5_5_5_r: return GL_UNSIGNED_SHORT_1_5_5_5_REV;
-		case texture::type::unsigned_int_8_8_8_8: return GL_UNSIGNED_INT_8_8_8_8;
-		case texture::type::unsigned_int_8_8_8_8_r: return GL_UNSIGNED_INT_8_8_8_8_REV;
-		case texture::type::unsigned_int_10_10_10_2: return GL_UNSIGNED_INT_10_10_10_2;
-		case texture::type::unsigned_int_2_10_10_10_r: return GL_UNSIGNED_INT_2_10_10_10_REV;
+		case texture::external_type::unsigned_byte: return GL_UNSIGNED_BYTE;
+		case texture::external_type::byte: return GL_BYTE;
+		case texture::external_type::unsigned_short: return GL_UNSIGNED_SHORT;
+		case texture::external_type::_short: return GL_SHORT;
+		case texture::external_type::unsinged_int: return GL_UNSIGNED_INT;
+		case texture::external_type::_int: return GL_INT;
+		case texture::external_type::half_float: return GL_HALF_FLOAT;
+		case texture::external_type::_float: return GL_FLOAT;
+		case texture::external_type::unsigned_byte_3_3_2: return GL_UNSIGNED_BYTE_3_3_2;
+		case texture::external_type::unsigned_byte_2_3_3_r: return GL_UNSIGNED_BYTE_2_3_3_REV;
+		case texture::external_type::unsigned_short_5_6_5: return GL_UNSIGNED_SHORT_5_6_5;
+		case texture::external_type::unsigned_short_5_6_5_r: return GL_UNSIGNED_SHORT_5_6_5_REV;
+		case texture::external_type::unsigned_short_4_4_4_4: return GL_UNSIGNED_SHORT_4_4_4_4;
+		case texture::external_type::unsigned_short_4_4_4_4_r: return GL_UNSIGNED_SHORT_4_4_4_4_REV;
+		case texture::external_type::unsigned_short_5_5_5_1: return GL_UNSIGNED_SHORT_5_5_5_1;
+		case texture::external_type::unsigned_short_1_5_5_5_r: return GL_UNSIGNED_SHORT_1_5_5_5_REV;
+		case texture::external_type::unsigned_int_8_8_8_8: return GL_UNSIGNED_INT_8_8_8_8;
+		case texture::external_type::unsigned_int_8_8_8_8_r: return GL_UNSIGNED_INT_8_8_8_8_REV;
+		case texture::external_type::unsigned_int_10_10_10_2: return GL_UNSIGNED_INT_10_10_10_2;
+		case texture::external_type::unsigned_int_2_10_10_10_r: return GL_UNSIGNED_INT_2_10_10_10_REV;
 	}
 	clap::log::error::critical << "Unsupported enum value.";
 }
-clap::gl::texture::type clap::gl::detail::convert::to_texture_type(GLenum v) {
+clap::gl::texture::external_type clap::gl::detail::convert::to_texture_type(GLenum v) {
 	switch (v) {
-		case GL_UNSIGNED_BYTE: return texture::type::unsigned_byte;
-		case GL_BYTE: return texture::type::byte;
-		case GL_UNSIGNED_SHORT: return texture::type::unsigned_short;
-		case GL_SHORT: return texture::type::_short;
-		case GL_UNSIGNED_INT: return texture::type::unsinged_int;
-		case GL_INT: return texture::type::_int;
-		case GL_HALF_FLOAT: return texture::type::half_float;
-		case GL_FLOAT: return texture::type::_float;
-		case GL_UNSIGNED_BYTE_3_3_2: return texture::type::unsigned_byte_3_3_2;
-		case GL_UNSIGNED_BYTE_2_3_3_REV: return texture::type::unsigned_byte_2_3_3_r;
-		case GL_UNSIGNED_SHORT_5_6_5: return texture::type::unsigned_short_5_6_5;
-		case GL_UNSIGNED_SHORT_5_6_5_REV: return texture::type::unsigned_short_5_6_5_r;
-		case GL_UNSIGNED_SHORT_4_4_4_4: return texture::type::unsigned_short_4_4_4_4;
-		case GL_UNSIGNED_SHORT_4_4_4_4_REV: return texture::type::unsigned_short_4_4_4_4_r;
-		case GL_UNSIGNED_SHORT_5_5_5_1: return texture::type::unsigned_short_5_5_5_1;
-		case GL_UNSIGNED_SHORT_1_5_5_5_REV: return texture::type::unsigned_short_1_5_5_5_r;
-		case GL_UNSIGNED_INT_8_8_8_8: return texture::type::unsigned_int_8_8_8_8;
-		case GL_UNSIGNED_INT_8_8_8_8_REV: return texture::type::unsigned_int_8_8_8_8_r;
-		case GL_UNSIGNED_INT_10_10_10_2: return texture::type::unsigned_int_10_10_10_2;
-		case GL_UNSIGNED_INT_2_10_10_10_REV: return texture::type::unsigned_int_2_10_10_10_r;
+		case GL_UNSIGNED_BYTE: return texture::external_type::unsigned_byte;
+		case GL_BYTE: return texture::external_type::byte;
+		case GL_UNSIGNED_SHORT: return texture::external_type::unsigned_short;
+		case GL_SHORT: return texture::external_type::_short;
+		case GL_UNSIGNED_INT: return texture::external_type::unsinged_int;
+		case GL_INT: return texture::external_type::_int;
+		case GL_HALF_FLOAT: return texture::external_type::half_float;
+		case GL_FLOAT: return texture::external_type::_float;
+		case GL_UNSIGNED_BYTE_3_3_2: return texture::external_type::unsigned_byte_3_3_2;
+		case GL_UNSIGNED_BYTE_2_3_3_REV: return texture::external_type::unsigned_byte_2_3_3_r;
+		case GL_UNSIGNED_SHORT_5_6_5: return texture::external_type::unsigned_short_5_6_5;
+		case GL_UNSIGNED_SHORT_5_6_5_REV: return texture::external_type::unsigned_short_5_6_5_r;
+		case GL_UNSIGNED_SHORT_4_4_4_4: return texture::external_type::unsigned_short_4_4_4_4;
+		case GL_UNSIGNED_SHORT_4_4_4_4_REV: return texture::external_type::unsigned_short_4_4_4_4_r;
+		case GL_UNSIGNED_SHORT_5_5_5_1: return texture::external_type::unsigned_short_5_5_5_1;
+		case GL_UNSIGNED_SHORT_1_5_5_5_REV: return texture::external_type::unsigned_short_1_5_5_5_r;
+		case GL_UNSIGNED_INT_8_8_8_8: return texture::external_type::unsigned_int_8_8_8_8;
+		case GL_UNSIGNED_INT_8_8_8_8_REV: return texture::external_type::unsigned_int_8_8_8_8_r;
+		case GL_UNSIGNED_INT_10_10_10_2: return texture::external_type::unsigned_int_10_10_10_2;
+		case GL_UNSIGNED_INT_2_10_10_10_REV: return texture::external_type::unsigned_int_2_10_10_10_r;
 	}
 	clap::log::error::critical << "Unsupported enum value.";
 }

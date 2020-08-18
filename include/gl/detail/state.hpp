@@ -28,10 +28,10 @@ namespace clap::gl::detail {
 		static shader::program *being_used();
 		static bool is_used(shader::program *program);
 
-		static void bind(texture::target const &target, texture::detail::indexed &&texture);
-		static std::optional<texture::detail::indexed> const unbind(texture::target const &target);
-		static std::optional<texture::detail::indexed> const &bound(texture::target const &target);
-		static std::optional<texture::target> is_bound(texture::detail::indexed const &texture);
+		static void bind(texture::target const &target, texture::detail::interface *texture);
+		static texture::detail::interface* unbind(texture::target const &target);
+		static texture::detail::interface const*const bound(texture::target const &target);
+		static std::optional<texture::target> is_bound(texture::detail::interface const*const texture);
 
 		state() = delete;
 		state(state const &other) = delete;
@@ -44,7 +44,7 @@ namespace clap::gl::detail {
 		static shader::program *program_used;
 
 		static constexpr size_t texture_target_count = 11;
-		static std::optional<texture::detail::indexed> bound_textures[texture_target_count];
+		static texture::detail::interface *bound_textures[texture_target_count];
 	};
 }
 

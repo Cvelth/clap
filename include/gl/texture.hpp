@@ -9,8 +9,8 @@ namespace clap::gl::detail {
 
 namespace clap::gl::texture {
 	enum class target {
-		_1d, _2d, _3d, _1d_array, _2d_array, 
-		rectangle, cube_map, cube_map_array, buffer, 
+		_1d, _2d, _3d, _1d_array, _2d_array,
+		rectangle, cube_map, cube_map_array, buffer,
 		multisample, multisample_array
 	};
 	enum class internal_format {
@@ -20,7 +20,7 @@ namespace clap::gl::texture {
 
 		r8, r8_snorm, r16, r16_snorm,
 		rg8, rg8_snorm, rg16, rg16_snorm,
-		r3g3b2, 
+		r3g3b2,
 		rgb4, rgb5, rgb8, rgb8_snorm,
 		rgb10, rgb12, rgb16_snorm,
 		rgba2, rgba4, rgb5a1, rgba8, rgba8_snorm,
@@ -28,17 +28,17 @@ namespace clap::gl::texture {
 		srgb8, srgba8,
 
 		r16f, rg16f, rgb16f, rgba16f,
-		r32f, rg32f, rgb32f, rgba32f, 
+		r32f, rg32f, rgb32f, rgba32f,
 		r11fg1fb10f, rgb9e5,
 
-		r8i, r8ui, r16i, r16ui, r32i, r32ui, 
-		rg8i, rg8ui, rg16i, rg16ui, rg32i, rg32ui, 
-		rgb8i, rgb8ui, rgb16i, rgb16ui, rgb32i, rgb32ui, 
-		rgba8i, rgba8ui, rgba16i, rgba16ui, rgba32i, rgba32ui, 
+		r8i, r8ui, r16i, r16ui, r32i, r32ui,
+		rg8i, rg8ui, rg16i, rg16ui, rg32i, rg32ui,
+		rgb8i, rgb8ui, rgb16i, rgb16ui, rgb32i, rgb32ui,
+		rgba8i, rgba8ui, rgba16i, rgba16ui, rgba32i, rgba32ui,
 	};
 	enum class external_format {
-		r, rg, rgb, bgr, rgba, bgra, 
-		
+		r, rg, rgb, bgr, rgba, bgra,
+
 		ri, rgi, rgbi, bgri, rgbai, bgrai,
 
 		stencil_index, depth_component, depth_stencil,
@@ -46,8 +46,8 @@ namespace clap::gl::texture {
 		red = r,
 		red_green = rg,
 		red_green_blue = rgb,
-		blue_green_red = bgr, 
-		red_green_blue_alpha = rgba, 
+		blue_green_red = bgr,
+		red_green_blue_alpha = rgba,
 		blue_green_red_alpha = bgra,
 
 		red_int = ri,
@@ -57,13 +57,13 @@ namespace clap::gl::texture {
 		red_green_blue_alpha_int = rgbai,
 		blue_green_red_alpha_int = bgrai,
 
-		r_int = ri, rg_int = rgi, rgb_int = rgbi, 
+		r_int = ri, rg_int = rgi, rgb_int = rgbi,
 		brg_int = bgri, rgba_int = rgbai, bgra_int = bgrai
 	};
-	enum class type {
-		unsigned_byte, byte, unsigned_short, _short, unsinged_int, _int, 
+	enum class external_type {
+		unsigned_byte, byte, unsigned_short, _short, unsinged_int, _int,
 
-		half_float, _float, 
+		half_float, _float,
 
 		unsigned_byte_3_3_2, unsigned_byte_2_3_3_r,
 
@@ -75,93 +75,206 @@ namespace clap::gl::texture {
 		unsigned_int_10_10_10_2, unsigned_int_2_10_10_10_r
 	};
 
-	class multiple;
-	class single;
 	namespace detail {
-		class indexed {
-			friend multiple;
-			friend single;
+		class interface {
 			friend gl::detail::state;
+
 		public:
-			indexed(indexed const &other) = delete;
-			indexed(indexed &&other) noexcept : indexed(other.pointer, other.index) {}
-
-			indexed &operator=(indexed const &other) = delete;
-			inline indexed &operator=(indexed &&other) noexcept {
-				pointer = other.pointer;
-				index = other.index;
-				return *this;
-			}
-			void bind(target target);
-
-			void data(void *data, unsigned width, unsigned height, target target, 
-					  bool should_compress = false,
-					  internal_format internal_format = internal_format::rgba,
-					  external_format external_format = external_format::rgba, 
-					  type external_type = type::unsigned_byte, int level = 0);
-
-			operator bool() const;
+			void bind();
 
 		protected:
-			explicit indexed(multiple *pointer = nullptr, size_t index = -1);
-			uint32_t operator *() const;
+			interface(target target, internal_format internal_format = internal_format::rgba);
+			virtual ~interface();
+
+			uint32_t operator*() const { return id; }
+
+		protected:
+			target target;
+			internal_format internal_format;
 
 		private:
-			multiple *pointer;
-			size_t index;
+			uint32_t id;
 		};
-	};
+	}
 
-	class multiple {
-		friend detail::indexed;
+	class _1d : public detail::interface {
 	public:
-		explicit multiple(size_t count);
-		virtual ~multiple();
+		_1d(void *data, size_t width,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte)
+			: _1d(target::_1d, data, width, internal_format, external_format, external_type) {}
+		inline virtual ~_1d() {}
 
-		multiple(multiple const &other) = delete;
-		multiple(multiple &&other) noexcept
-			: multiple(other.count, other.ids) {}
-
-		detail::indexed id(size_t index);
-		inline detail::indexed operator[](size_t index) {
-			return id(index);
+		void data(void *data, size_t offset, size_t width, int level = 0,
+				  external_format external_format = external_format::rgba,
+				  external_type external_type = external_type::unsigned_byte);
+		inline void data(void *data,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, width, 0, external_format, external_type);
 		}
+	protected:
+		_1d(texture::target target, void *data, size_t width,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte);
 
 	protected:
-		multiple(size_t count, uint32_t *ids);
-
-	private:
-		size_t const count;
-		uint32_t *ids;
+		const size_t width;
 	};
 
-	class single : private multiple {
+	class _2d : public detail::interface {
 	public:
-		inline single() : multiple(1) {}
-		inline virtual ~single() {}
+		_2d(void *data, size_t width, size_t height,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte)
+			: _2d(target::_2d, data, width, height, internal_format, external_format, external_type) {}
+		inline virtual ~_2d() {}
 
-		single(single const &other) = delete;
-		single(single &&other) noexcept
-			: multiple(std::move(other)) {}
-
-		inline operator detail::indexed() {
-			return detail::indexed(this, 0u);
-		}
-
-		inline void bind(target target) {
-			return detail::indexed(this, 0u).bind(target);
-		}
-
-		inline void data(void *data, unsigned width, unsigned height, target target,
-						 bool should_compress = false,
-						 internal_format internal_format = internal_format::rgba,
+		void data(void *data, size_t offset_x, size_t offset_y,
+				  size_t width, size_t height, int level = 0,
+				  external_format external_format = external_format::rgba,
+				  external_type external_type = external_type::unsigned_byte);
+		inline void data(void *data,
 						 external_format external_format = external_format::rgba,
-						 type external_type = type::unsigned_byte, int level = 0) {
-			return detail::indexed(this, 0u).data(data, width, height, target, should_compress,
-												  internal_format, external_format, external_type,
-												  level);
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, 0, width, height, 0, external_format, external_type);
+		}
+	protected:
+		_2d(texture::target target, void *data, size_t width, size_t height,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte);
+
+	protected:
+		const size_t width;
+		const size_t height;
+	};
+
+	class _3d : public detail::interface {
+	public:
+		_3d(void *data, size_t width, size_t height, size_t depth,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte)
+			: _3d(target::_3d, data, width, height, depth, internal_format, external_format, external_type) {}
+		inline virtual ~_3d() {}
+
+		void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
+				  size_t width, size_t height, size_t depth, int level = 0,
+				  external_format external_format = external_format::rgba,
+				  external_type external_type = external_type::unsigned_byte);
+		inline void data(void *data,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, 0, 0, width, height, depth, 0, external_format, external_type);
+		}
+	protected:
+		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
+			texture::internal_format internal_format = internal_format::rgba,
+			external_format external_format = external_format::rgba,
+			external_type external_type = external_type::unsigned_byte);
+
+	protected:
+		const size_t width;
+		const size_t height;
+		const size_t depth;
+	};
+
+	class _1d_array : public _2d {
+	public:
+		inline _1d_array(void *data, size_t width, size_t count,
+						 texture::internal_format internal_format = internal_format::rgba,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte)
+			: _2d(target::_1d_array, data, width, count, internal_format, external_format, external_type) {}
+		inline virtual ~_1d_array() {}
+
+		inline void data(void *data, size_t offset_x, size_t offset_c,
+						 size_t _width, size_t count, int level = 0,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			_2d::data(data, offset_x, offset_c, _width, count, level, external_format, external_type);
+		}
+		inline void data(void *data,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, 0, width, height, 0, external_format, external_type);
 		}
 	};
+
+	class _2d_array : public _3d {
+	public:
+		inline _2d_array(void *data, size_t width, size_t height, size_t count,
+						 texture::internal_format internal_format = internal_format::rgba,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte)
+			: _3d(target::_2d_array, data, width, height, count, internal_format, external_format, external_type) {}
+		inline virtual ~_2d_array() {}
+
+		inline void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
+						 size_t _width, size_t _height, size_t count, int level = 0,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			_3d::data(data, offset_x, offset_y, offset_c, _width, _height, count,
+					  level, external_format, external_type);
+		}
+		inline void data(void *data,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, 0, 0, width, height, depth, 0, external_format, external_type);
+		}
+	};
+
+	class rectangle : public _2d {
+	public:
+		inline rectangle(void *data, size_t width, size_t height,
+						 texture::internal_format internal_format = internal_format::rgba,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte)
+			: _2d(target::rectangle, data, width, height, internal_format, external_format, external_type) {}
+		inline virtual ~rectangle() {}
+
+		inline void data(void *data, size_t offset_x, size_t offset_y,
+						 size_t _width, size_t _height, int level = 0,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			_2d::data(data, offset_x, offset_y, _width, _height, level, external_format, external_type);
+		}
+		inline void data(void *data,
+						 external_format external_format = external_format::rgba,
+						 external_type external_type = external_type::unsigned_byte) {
+			this->data(data, 0, 0, width, height, 0, external_format, external_type);
+		}
+	};
+
+	class multisample : public detail::interface {
+	public:
+		multisample(void *data, size_t sample_count, size_t width, size_t height,
+					bool are_samples_fixed = false,
+					texture::internal_format internal_format = internal_format::rgba);
+
+	protected:
+		const size_t width;
+		const size_t height;
+	};
+	class multisample_array : public detail::interface {
+		multisample_array(void *data, size_t sample_count, size_t width, size_t height, size_t depth,
+						  bool are_samples_fixed = false,
+						  texture::internal_format internal_format = internal_format::rgba);
+
+	protected:
+		const size_t width;
+		const size_t height;
+		const size_t depth;
+	};
+
+	//Unimplemented.
+	class cube_map : public detail::interface {};
+	class cube_map_array : public detail::interface {};
+	class buffer : public detail::interface {};
 }
 
 namespace clap::gl::detail::convert {
@@ -174,8 +287,8 @@ namespace clap::gl::detail::convert {
 	GLenum to_gl(clap::gl::texture::external_format v);
 	clap::gl::texture::external_format to_external_format(GLenum v);
 
-	GLenum to_gl(clap::gl::texture::type v);
-	clap::gl::texture::type to_texture_type(GLenum v);
+	GLenum to_gl(clap::gl::texture::external_type v);
+	clap::gl::texture::external_type to_texture_type(GLenum v);
 }
 
 #include <ostream>
