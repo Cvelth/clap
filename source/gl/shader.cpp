@@ -41,7 +41,7 @@ clap::gl::shader::detail::object::object(type type, std::string source) : object
 		GLsizei len;
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
 
-		GLchar *log = new GLchar[len + GLsizei(1)];
+		GLchar *log = new GLchar[size_t(len) + 1];
 		glGetShaderInfoLog(id, len, &len, log);
 		log::warning::critical << "During shader compilation: " << std::string(log);
 		delete[] log;
@@ -192,7 +192,7 @@ void clap::gl::shader::program::link() {
 			GLsizei len;
 			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &len);
 
-			GLchar *log = new GLchar[len + GLsizei(1)];
+			GLchar *log = new GLchar[size_t(len) + 1];
 			glGetProgramInfoLog(id, len, &len, log);
 			log::warning::critical << "During program linking: " << std::string(log);
 			delete[] log;
