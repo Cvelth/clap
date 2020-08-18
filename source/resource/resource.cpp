@@ -1,33 +1,34 @@
 #include "resource/resource.hpp"
 #include "essential/log.hpp"
 #include "gl/shader.hpp"
+#include "gl/texture.hpp"
 
 #include <filesystem>
 #include <set>
 
 static bool was_loaded = false;
 
-clap::gl::shader::detail::object &clap::resource::detail::shaders_t::operator[](std::string const &identificator) {
+void clap::resource::detail::unloaded_resource_check() {
 	if (!was_loaded) {
-		log::warning::major << "An attempt to access resource before it was loaded.";
-		log::info::major << "Call 'clap::resource::load()' before accessing them.";
-	}
-
-	auto found = find(identificator);
-	if (found != end())
-		return *found->second;
-	else {
-		log::error::major << "Attempting to access a non-existent shader file.";
-		log::info::major << "Requested name is '" << identificator << "'.";
+		clap::log::warning::major << "An attempt to access resource before it was loaded.";
+		clap::log::info::major << "Call 'clap::resource::load()' before accessing them.";
 	}
 }
-
-void clap::resource::detail::shaders_t::clear() {
-	for (auto pair : *this)
-		if (pair.second)
-			delete pair.second;
-	this->shader_storage_t::clear();
+void clap::resource::detail::non_existent_file_error(std::string const &identificator) {
+	clap::log::error::major << "Attempting to access a non-existent resource.";
+	clap::log::info::major << "Requested name is '" << identificator << "'.";
 }
+
+template<typename T> void clap::resource::detail::call_destructor(T *ptr) { delete ptr; }
+template void clap::resource::detail::call_destructor<clap::gl::shader::detail::object>(clap::gl::shader::detail::object *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_1d>(clap::gl::texture::_1d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_2d>(clap::gl::texture::_2d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_3d>(clap::gl::texture::_3d *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_1d_array>(clap::gl::texture::_1d_array *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::_2d_array>(clap::gl::texture::_2d_array *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::rectangle>(clap::gl::texture::rectangle *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::multisample>(clap::gl::texture::multisample *);
+template void clap::resource::detail::call_destructor<clap::gl::texture::multisample_array>(clap::gl::texture::multisample_array *);
 
 void load_shaders(std::filesystem::directory_entry const &path) {
 	for (auto folder : std::filesystem::directory_iterator(path)) {
@@ -35,7 +36,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 			auto type = clap::gl::detail::convert::to_shader_type_from_string(folder.path().filename().string());
 			for (auto entry : std::filesystem::recursive_directory_iterator(folder))
 				if (!entry.is_directory()) {
-					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string())); 
+					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
 					switch (type) {
 						case clap::gl::shader::type::fragment:
@@ -56,7 +57,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 						case clap::gl::shader::type::tesselation_evaluation:
 							clap::resource::detail::load_shader(clap::resource::shader::tesselation_evaluation, identificator, object);
 							break;
-						default: 
+						default:
 							clap::log::warning::critical << "Unsupported enum value.";
 					}
 				}
@@ -70,7 +71,10 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 void load_textures(std::filesystem::directory_entry const &path) {
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
 		if (!subpath.is_directory())
-			clap::resource::detail::load_texture(subpath.path().string());
+			clap::resource::detail::load_texture(
+				subpath.path().string(), 
+				subpath.path().lexically_relative(path).replace_extension().string()
+			);
 }
 
 void load_others(std::filesystem::directory_entry const &path) {
@@ -79,22 +83,22 @@ void load_others(std::filesystem::directory_entry const &path) {
 }
 
 void clap::resource::load() {
-	const std::set<std::filesystem::path> paths = { 
-		std::filesystem::absolute("resource"), 
-		std::filesystem::absolute("../resource"), 
-		std::filesystem::absolute("../../resource"), 
+	const std::set<std::filesystem::path> paths = {
+		std::filesystem::absolute("resource"),
+		std::filesystem::absolute("../resource"),
+		std::filesystem::absolute("../../resource"),
 		std::filesystem::absolute("../../../resource"),
 		std::filesystem::absolute("../../../../resource"),
 
-		std::filesystem::absolute("clap/resource"), 
-		std::filesystem::absolute("../clap/resource"), 
-		std::filesystem::absolute("../../clap/resource"), 
+		std::filesystem::absolute("clap/resource"),
+		std::filesystem::absolute("../clap/resource"),
+		std::filesystem::absolute("../../clap/resource"),
 		std::filesystem::absolute("../../../clap/resource"),
 		std::filesystem::absolute("../../../../clap/resource"),
 
-		std::filesystem::absolute("engine/resource"), 
-		std::filesystem::absolute("../engine/resource"), 
-		std::filesystem::absolute("../../engine/resource"), 
+		std::filesystem::absolute("engine/resource"),
+		std::filesystem::absolute("../engine/resource"),
+		std::filesystem::absolute("../../engine/resource"),
 		std::filesystem::absolute("../../../engine/resource"),
 		std::filesystem::absolute("../../../../engine/resource"),
 	};
@@ -127,6 +131,15 @@ void clap::resource::clear() {
 	shader::compute.clear();
 	shader::tesselation_control.clear();
 	shader::tesselation_evaluation.clear();
+
+	texture::_1d.clear();
+	texture::_2d.clear();
+	texture::_3d.clear();
+	texture::_1d_array.clear();
+	texture::_2d_array.clear();
+	texture::rectangle.clear();
+	texture::multisample.clear();
+	texture::multisample_array.clear();
 
 	was_loaded = false;
 }
