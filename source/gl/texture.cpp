@@ -18,7 +18,68 @@ clap::gl::texture::detail::interface::~interface() {
 		gl::detail::state::unbind(*target);
 
 	glDeleteTextures(1, &id);
-	log::message::minor << "A new texture of type \"" << target << "\" was destroyed.";
+	log::message::minor << "A texture of type \"" << target << "\" was destroyed.";
+}
+
+void clap::gl::texture::detail::interface::bind() {
+	clap::gl::detail::state::bind(target, this);
+}
+
+template <GLenum parameter_name, typename lambda_t, typename ...Ts>
+void set_parameter_template(clap::gl::texture::target const &target, 
+							clap::gl::texture::detail::interface *ptr, 
+							lambda_t lambda, Ts...params) {
+	auto was_bound = clap::gl::detail::state::unbind(target);
+	clap::gl::detail::state::bind(target, ptr);
+
+	lambda(clap::gl::detail::convert::to_gl(target), parameter_name, params...);
+
+	if (was_bound)
+		clap::gl::detail::state::bind(target, was_bound);
+}
+
+void clap::gl::texture::detail::interface::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode) {
+	set_parameter_template<GL_DEPTH_STENCIL_TEXTURE_MODE>(target, this, glTexParameteri,
+														  gl::detail::convert::to_gl(mode));
+}
+void clap::gl::texture::detail::interface::set_base_level(int level) {
+	set_parameter_template<GL_TEXTURE_BASE_LEVEL>(target, this, glTexParameteri, level);
+}
+void clap::gl::texture::detail::interface::set_texure_border_color(float r, float g, float b, float a) {
+	GLfloat temp[] = { r, g, b, a };
+	set_parameter_template<GL_TEXTURE_BORDER_COLOR>(target, this, glTexParameterfv, temp);
+}
+void clap::gl::texture::detail::interface::set_lod_bias(float bias) {
+	set_parameter_template<GL_TEXTURE_LOD_BIAS>(target, this, glTexParameterf, bias);
+}
+void clap::gl::texture::detail::interface::set_min_filter(min_filter filter) {
+	set_parameter_template<GL_TEXTURE_MIN_FILTER>(target, this, glTexParameteri, 
+												  gl::detail::convert::to_gl(filter));
+}
+void clap::gl::texture::detail::interface::set_mag_filter(mag_filter filter) {
+	set_parameter_template<GL_TEXTURE_MAG_FILTER>(target, this, glTexParameteri,
+												  gl::detail::convert::to_gl(filter));
+}
+void clap::gl::texture::detail::interface::set_min_lod(float value) {
+	set_parameter_template<GL_TEXTURE_MIN_LOD>(target, this, glTexParameterf, value);
+}
+void clap::gl::texture::detail::interface::set_max_lod(float value) {
+	set_parameter_template<GL_TEXTURE_MAX_LOD>(target, this, glTexParameterf, value);
+}
+void clap::gl::texture::detail::interface::set_max_level(int level) {
+	set_parameter_template<GL_TEXTURE_MAX_LEVEL>(target, this, glTexParameteri, level);
+}
+void clap::gl::texture::detail::interface::set_texture_wrap_s(wrap wrap) {
+	set_parameter_template<GL_TEXTURE_WRAP_S>(target, this, glTexParameteri,
+											  gl::detail::convert::to_gl(wrap));
+}
+void clap::gl::texture::detail::interface::set_texture_wrap_t(wrap wrap) {
+	set_parameter_template<GL_TEXTURE_WRAP_T>(target, this, glTexParameteri,
+											  gl::detail::convert::to_gl(wrap));
+}
+void clap::gl::texture::detail::interface::set_texture_wrap_r(wrap wrap) {
+	set_parameter_template<GL_TEXTURE_WRAP_R>(target, this, glTexParameteri,
+											  gl::detail::convert::to_gl(wrap));
 }
 
 

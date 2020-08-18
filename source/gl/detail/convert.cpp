@@ -1012,6 +1012,80 @@ clap::gl::texture::external_type clap::gl::detail::convert::to_texture_type(GLen
 	clap::log::error::critical << "Unsupported enum value.";
 }
 
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::depth_stencil_texture_mode v) {
+	switch (v) {
+		case texture::depth_stencil_texture_mode::depth_component: return GL_DEPTH_COMPONENT;
+		case texture::depth_stencil_texture_mode::stencil_index: return GL_STENCIL_INDEX;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+clap::gl::texture::depth_stencil_texture_mode clap::gl::detail::convert::to_depth_stencil_texture_mode(GLenum v) {
+	switch (v) {
+		case GL_DEPTH_COMPONENT: return texture::depth_stencil_texture_mode::depth_component;
+		case GL_STENCIL_INDEX: return texture::depth_stencil_texture_mode::stencil_index;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::min_filter v) {
+	switch (v) {
+		case texture::min_filter::nearest: return GL_NEAREST;
+		case texture::min_filter::linear: return GL_LINEAR;
+		case texture::min_filter::nearest_mipmap_nearest: return GL_NEAREST_MIPMAP_NEAREST;
+		case texture::min_filter::linear_mipmap_nearest: return GL_LINEAR_MIPMAP_NEAREST;
+		case texture::min_filter::nearest_mipmap_linear: return GL_NEAREST_MIPMAP_LINEAR;
+		case texture::min_filter::linear_mipmap_linear: return GL_LINEAR_MIPMAP_LINEAR;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+clap::gl::texture::min_filter clap::gl::detail::convert::to_min_filter(GLenum v) {
+	switch (v) {
+		case GL_NEAREST: return texture::min_filter::nearest;
+		case GL_LINEAR: return texture::min_filter::linear;
+		case GL_NEAREST_MIPMAP_NEAREST: return texture::min_filter::nearest_mipmap_nearest;
+		case GL_LINEAR_MIPMAP_NEAREST: return texture::min_filter::linear_mipmap_nearest;
+		case GL_NEAREST_MIPMAP_LINEAR: return texture::min_filter::nearest_mipmap_linear;
+		case GL_LINEAR_MIPMAP_LINEAR: return texture::min_filter::linear_mipmap_linear;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::mag_filter v) {
+	switch (v) {
+		case texture::mag_filter::nearest: return GL_NEAREST;
+		case texture::mag_filter::linear: return GL_LINEAR;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+clap::gl::texture::mag_filter clap::gl::detail::convert::to_mag_filter(GLenum v) {
+	switch (v) {
+		case GL_NEAREST: return texture::mag_filter::nearest;
+		case GL_LINEAR: return texture::mag_filter::linear;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::wrap v) {
+	switch (v) {
+		case texture::wrap::clamp_to_edge: return GL_CLAMP_TO_EDGE;
+		case texture::wrap::clamp_to_border: return GL_CLAMP_TO_BORDER;
+		case texture::wrap::mirrored_repeat: return GL_MIRRORED_REPEAT;
+		case texture::wrap::repeat: return GL_REPEAT;
+		case texture::wrap::mirror_clamp_to_edge: return GL_MIRROR_CLAMP_TO_EDGE;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+clap::gl::texture::wrap clap::gl::detail::convert::to_wrap(GLenum v) {
+	switch (v) {
+		case GL_CLAMP_TO_EDGE: return texture::wrap::clamp_to_edge;
+		case GL_CLAMP_TO_BORDER: return texture::wrap::clamp_to_border;
+		case GL_MIRRORED_REPEAT: return texture::wrap::mirrored_repeat;
+		case GL_REPEAT: return texture::wrap::repeat;
+		case GL_MIRROR_CLAMP_TO_EDGE: return texture::wrap::mirror_clamp_to_edge;
+	}
+	clap::log::error::critical << "Unsupported enum value.";
+}
+
 std::ostream &operator<<(std::ostream &stream, clap::gl::texture::target target) {
 	switch (target) {
 		case clap::gl::texture::target::_1d:

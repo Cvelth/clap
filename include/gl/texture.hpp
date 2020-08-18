@@ -74,6 +74,37 @@ namespace clap::gl::texture {
 		unsigned_int_8_8_8_8, unsigned_int_8_8_8_8_r,
 		unsigned_int_10_10_10_2, unsigned_int_2_10_10_10_r
 	};
+	enum class depth_stencil_texture_mode {
+		depth_component, stencil_index
+	};
+	//enum class compare_function {
+	//	less_or_equal,
+	//	greater_or_equal,
+	//	less,
+	//	greater,
+	//	equal,
+	//	not_equal,
+	//	always,
+	//	never
+	//};
+	//enum class compare_mode {
+	//	compare_with_ref,
+	//	none
+	//};
+	enum class min_filter {
+		nearest,
+		linear,
+		nearest_mipmap_nearest,
+		linear_mipmap_nearest,
+		nearest_mipmap_linear,
+		linear_mipmap_linear
+	};
+	enum class mag_filter {
+		nearest, linear
+	};
+	enum class wrap {
+		clamp_to_edge, clamp_to_border, mirrored_repeat, repeat, mirror_clamp_to_edge
+	};
 
 	namespace detail {
 		class interface {
@@ -81,6 +112,27 @@ namespace clap::gl::texture {
 
 		public:
 			void bind();
+
+			void set_depth_stencil_texture_mode(depth_stencil_texture_mode mode
+												= depth_stencil_texture_mode::depth_component);
+			void set_base_level(int level = 0);
+			void set_texure_border_color(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f);
+			//void set_compare_function(compare_function function = compare_function::greater);
+			//void set_compare_mode(compare_mode mode = compare_mode::none);
+			void set_lod_bias(float bias = 0.f);
+			void set_min_filter(min_filter filter = min_filter::nearest_mipmap_linear);
+			void set_mag_filter(mag_filter filter = mag_filter::linear);
+			void set_min_lod(float value = -1000.f);
+			void set_max_lod(float value = 1000.f);
+			void set_max_level(int level = 1000);
+			//void set_texture_swizzle_r(...);
+			//void set_texture_swizzle_g(...);
+			//void set_texture_swizzle_b(...);
+			//void set_texture_swizzle_a(...);
+			//void set_texture_swizzle_rgba(...);
+			void set_texture_wrap_s(wrap wrap = wrap::repeat);
+			void set_texture_wrap_t(wrap wrap = wrap::repeat);
+			void set_texture_wrap_r(wrap wrap = wrap::repeat);
 
 		protected:
 			interface(target target, internal_format internal_format = internal_format::rgba);
@@ -272,6 +324,7 @@ namespace clap::gl::texture {
 		const size_t width;
 		const size_t height;
 	};
+
 	class multisample_array : public detail::interface {
 		multisample_array(void *data, size_t sample_count, size_t width, size_t height, size_t depth,
 						  bool are_samples_fixed = false,
@@ -301,6 +354,18 @@ namespace clap::gl::detail::convert {
 
 	GLenum to_gl(clap::gl::texture::external_type v);
 	clap::gl::texture::external_type to_texture_type(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::depth_stencil_texture_mode v);
+	clap::gl::texture::depth_stencil_texture_mode to_depth_stencil_texture_mode(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::min_filter v);
+	clap::gl::texture::min_filter to_min_filter(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::mag_filter v);
+	clap::gl::texture::mag_filter to_mag_filter(GLenum v);
+
+	GLenum to_gl(clap::gl::texture::wrap v);
+	clap::gl::texture::wrap to_wrap(GLenum v);
 }
 
 #include <ostream>
