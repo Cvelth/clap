@@ -48,7 +48,8 @@ std::optional<clap::gl::buffer::detail::indexed> const clap::gl::detail::state::
 	glBindBuffer(detail::convert::to_gl(target), 0);
 	auto out = std::move(bound_buffers[size_t(target)]);
 	bound_buffers[size_t(target)] = std::nullopt;
-	log::message::minor << "\"" << target << "\" was unbound.";
+	if (out)
+		log::message::minor << "\"" << target << "\" was unbound.";
 	return std::move(out);
 }
 std::optional<clap::gl::buffer::detail::indexed> const &clap::gl::detail::state::bound(buffer::target const &target) {
@@ -74,7 +75,8 @@ std::optional<clap::gl::vertex_array::detail::indexed> const clap::gl::detail::s
 	glBindVertexArray(0);
 	auto out = std::move(bound_vertex_array);
 	bound_vertex_array = std::nullopt;
-	log::message::minor << "A vertex_array was unbound.";
+	if (out)
+		log::message::minor << "A vertex_array was unbound.";
 	return std::move(out);
 }
 std::optional<clap::gl::vertex_array::detail::indexed> const &clap::gl::detail::state::bound() {
@@ -117,7 +119,8 @@ clap::gl::texture::detail::interface *clap::gl::detail::state::unbind(texture::t
 	glBindTexture(detail::convert::to_gl(target), 0);
 	auto out = std::move(bound_textures[size_t(target)]);
 	bound_textures[size_t(target)] = nullptr;
-	log::message::minor << "\"" << target << "\" was unbound.";
+	if (out)
+		log::message::minor << "\"" << target << "\" was unbound.";
 	return std::move(out);
 }
 clap::gl::texture::detail::interface const*const clap::gl::detail::state::bound(texture::target const &target) {
