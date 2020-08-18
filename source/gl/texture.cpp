@@ -43,6 +43,13 @@ void clap::gl::texture::detail::indexed::bind(target target) {
 	gl::detail::state::bind(target, std::move(*this));
 }
 
+void clap::gl::texture::detail::indexed::data(void *data, unsigned width, unsigned height, target target, 
+											  bool should_compress, internal_format internal_format, 
+											  external_format external_format, type external_type, 
+											  int level) {
+	/// TODO
+}
+
 clap::gl::texture::detail::indexed::operator bool() const {
 	return pointer && index < pointer->count;
 }
