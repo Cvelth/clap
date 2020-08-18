@@ -22,7 +22,7 @@ clap::gl::texture::detail::interface::~interface() {
 }
 
 
-clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width,
+clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width) {
@@ -38,11 +38,16 @@ clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width,
 	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
 	log::info::major << "Dimentions are (" << width << ").";
 
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
+
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);
 }
 
-void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width,
+void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool generate_mipmap = true,
 								  int level, external_format external_format, external_type external_type) {
 	if (width + offset > this->width) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
@@ -59,12 +64,18 @@ void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width,
 					data);
 	log::message::minor << "Texture (" << target << ") was modified.";
 
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
+
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);
 }
 
 
-clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height,
+clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height, 
+							bool generate_mipmap = true,
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height) {
@@ -80,12 +91,18 @@ clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, si
 	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
 	log::info::major << "Dimentions are (" << width << ", " << height << ").";
 
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
+
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);
 }
 
-void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
-								  int level, external_format external_format, external_type external_type) {
+void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height, 
+								  bool generate_mipmap = true, int level, 
+								  external_format external_format, external_type external_type) {
 	if (width + offset_x > this->width || height + offset_y > this->height) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
 		return;
@@ -102,14 +119,19 @@ void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, 
 					data);
 	log::message::minor << "Texture (" << target << ") was modified.";
 
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
+
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);
 }
 
 
 clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
-							texture::internal_format internal_format, external_format external_format,
-							external_type external_type)
+							bool generate_mipmap = true, texture::internal_format internal_format, 
+							external_format external_format, external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height), depth(depth) {
 	auto was_bound = gl::detail::state::unbind(target);
 	gl::detail::state::bind(target, this);
@@ -123,12 +145,17 @@ clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, si
 	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
 	log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
 
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
+
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);
 }
 
 void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-								  size_t width, size_t height, size_t depth,
+								  size_t width, size_t height, size_t depth, bool generate_mipmap = true,
 								  int level, external_format external_format, external_type external_type) {
 	if (width + offset_x > this->width || height + offset_y > this->height || depth + offset_z > this->depth) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
@@ -145,6 +172,11 @@ void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, 
 					gl::detail::convert::to_gl(external_type),
 					data);
 	log::message::minor << "Texture (" << target << ") was modified.";
+
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target));
+		log::info::minor << "Mipmap was generated.";
+	}
 
 	if (was_bound)
 		gl::detail::state::bind(target, was_bound);

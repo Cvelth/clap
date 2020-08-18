@@ -99,23 +99,25 @@ namespace clap::gl::texture {
 
 	class _1d : public detail::interface {
 	public:
-		_1d(void *data, size_t width,
+		_1d(void *data, size_t width, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte)
-			: _1d(target::_1d, data, width, internal_format, external_format, external_type) {}
+			: _1d(target::_1d, data, width, generate_mipmap, 
+				  internal_format, external_format, external_type) {}
 		inline virtual ~_1d() {}
 
-		void data(void *data, size_t offset, size_t width, int level = 0,
+		void data(void *data, size_t offset, size_t width, 
+				  bool generate_mipmap = true, int level = 0,
 				  external_format external_format = external_format::rgba,
 				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data,
+		inline void data(void *data, bool generate_mipmap = true,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, width, 0, external_format, external_type);
+			this->data(data, generate_mipmap, 0, width, 0, external_format, external_type);
 		}
 	protected:
-		_1d(texture::target target, void *data, size_t width,
+		_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte);
@@ -126,24 +128,27 @@ namespace clap::gl::texture {
 
 	class _2d : public detail::interface {
 	public:
-		_2d(void *data, size_t width, size_t height,
+		_2d(void *data, size_t width, size_t height, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte)
-			: _2d(target::_2d, data, width, height, internal_format, external_format, external_type) {}
+			: _2d(target::_2d, data, width, height, generate_mipmap, 
+				  internal_format, external_format, external_type) {}
 		inline virtual ~_2d() {}
 
 		void data(void *data, size_t offset_x, size_t offset_y,
-				  size_t width, size_t height, int level = 0,
+				  size_t width, size_t height, 
+				  bool generate_mipmap = true, int level = 0,
 				  external_format external_format = external_format::rgba,
 				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data,
+		inline void data(void *data, bool generate_mipmap = true,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, width, height, 0, external_format, external_type);
+			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
 	protected:
-		_2d(texture::target target, void *data, size_t width, size_t height,
+		_2d(texture::target target, void *data, size_t width, size_t height, 
+			bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte);
@@ -155,24 +160,27 @@ namespace clap::gl::texture {
 
 	class _3d : public detail::interface {
 	public:
-		_3d(void *data, size_t width, size_t height, size_t depth,
+		_3d(void *data, size_t width, size_t height, size_t depth, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte)
-			: _3d(target::_3d, data, width, height, depth, internal_format, external_format, external_type) {}
+			: _3d(target::_3d, data, width, height, depth, generate_mipmap, 
+				  internal_format, external_format, external_type) {}
 		inline virtual ~_3d() {}
 
 		void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-				  size_t width, size_t height, size_t depth, int level = 0,
+				  size_t width, size_t height, size_t depth, 
+				  bool generate_mipmaps = true, int level = 0,
 				  external_format external_format = external_format::rgba,
 				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data,
+		inline void data(void *data, bool generate_mipmap = true,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, 0, width, height, depth, 0, external_format, external_type);
+			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, external_format, external_type);
 		}
 	protected:
-		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
+		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth, 
+			bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
 			external_format external_format = external_format::rgba,
 			external_type external_type = external_type::unsigned_byte);
@@ -185,46 +193,50 @@ namespace clap::gl::texture {
 
 	class _1d_array : public _2d {
 	public:
-		inline _1d_array(void *data, size_t width, size_t count,
+		inline _1d_array(void *data, size_t width, size_t count, bool generate_mipmap = true,
 						 texture::internal_format internal_format = internal_format::rgba,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte)
-			: _2d(target::_1d_array, data, width, count, internal_format, external_format, external_type) {}
+			: _2d(target::_1d_array, data, width, count, generate_mipmap, internal_format, external_format, external_type) {}
 		inline virtual ~_1d_array() {}
 
 		inline void data(void *data, size_t offset_x, size_t offset_c,
-						 size_t _width, size_t count, int level = 0,
+						 size_t _width, size_t count, bool generate_mipmap = true, int level = 0,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			_2d::data(data, offset_x, offset_c, _width, count, level, external_format, external_type);
+			_2d::data(data, offset_x, offset_c, _width, count, generate_mipmap, level, external_format, external_type);
 		}
-		inline void data(void *data,
+		inline void data(void *data, bool generate_mipmap = true,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, width, height, 0, external_format, external_type);
+			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
 	};
 
 	class _2d_array : public _3d {
 	public:
-		inline _2d_array(void *data, size_t width, size_t height, size_t count,
+		inline _2d_array(void *data, size_t width, size_t height, size_t count, 
+						 bool generate_mipmap = true,
 						 texture::internal_format internal_format = internal_format::rgba,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte)
-			: _3d(target::_2d_array, data, width, height, count, internal_format, external_format, external_type) {}
+			: _3d(target::_2d_array, data, width, height, count, generate_mipmap, 
+				  internal_format, external_format, external_type) {}
 		inline virtual ~_2d_array() {}
 
 		inline void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
-						 size_t _width, size_t _height, size_t count, int level = 0,
+						 size_t _width, size_t _height, size_t count, 
+						 bool generate_mipmap = true, int level = 0,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
 			_3d::data(data, offset_x, offset_y, offset_c, _width, _height, count,
-					  level, external_format, external_type);
+					  generate_mipmap, level, external_format, external_type);
 		}
-		inline void data(void *data,
+		inline void data(void *data, bool generate_mipmap = true,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, 0, width, height, depth, 0, external_format, external_type);
+			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, 
+					   external_format, external_type);
 		}
 	};
 
@@ -234,14 +246,14 @@ namespace clap::gl::texture {
 						 texture::internal_format internal_format = internal_format::rgba,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte)
-			: _2d(target::rectangle, data, width, height, internal_format, external_format, external_type) {}
+			: _2d(target::rectangle, data, width, height, false, internal_format, external_format, external_type) {}
 		inline virtual ~rectangle() {}
 
 		inline void data(void *data, size_t offset_x, size_t offset_y,
 						 size_t _width, size_t _height, int level = 0,
 						 external_format external_format = external_format::rgba,
 						 external_type external_type = external_type::unsigned_byte) {
-			_2d::data(data, offset_x, offset_y, _width, _height, level, external_format, external_type);
+			_2d::data(data, offset_x, offset_y, _width, _height, false, level, external_format, external_type);
 		}
 		inline void data(void *data,
 						 external_format external_format = external_format::rgba,
