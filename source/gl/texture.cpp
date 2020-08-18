@@ -22,7 +22,7 @@ clap::gl::texture::detail::interface::~interface() {
 }
 
 
-clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
+clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bool generate_mipmap,
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width) {
@@ -47,7 +47,7 @@ clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bo
 		gl::detail::state::bind(target, was_bound);
 }
 
-void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool generate_mipmap = true,
+void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool generate_mipmap,
 								  int level, external_format external_format, external_type external_type) {
 	if (width + offset > this->width) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
@@ -75,7 +75,7 @@ void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool 
 
 
 clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height, 
-							bool generate_mipmap = true,
+							bool generate_mipmap,
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height) {
@@ -101,7 +101,7 @@ clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, si
 }
 
 void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height, 
-								  bool generate_mipmap = true, int level, 
+								  bool generate_mipmap, int level, 
 								  external_format external_format, external_type external_type) {
 	if (width + offset_x > this->width || height + offset_y > this->height) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
@@ -130,7 +130,7 @@ void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, 
 
 
 clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
-							bool generate_mipmap = true, texture::internal_format internal_format, 
+							bool generate_mipmap, texture::internal_format internal_format, 
 							external_format external_format, external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height), depth(depth) {
 	auto was_bound = gl::detail::state::unbind(target);
@@ -155,7 +155,7 @@ clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, si
 }
 
 void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-								  size_t width, size_t height, size_t depth, bool generate_mipmap = true,
+								  size_t width, size_t height, size_t depth, bool generate_mipmap,
 								  int level, external_format external_format, external_type external_type) {
 	if (width + offset_x > this->width || height + offset_y > this->height || depth + offset_z > this->depth) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
