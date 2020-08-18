@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "resource", "project\resourc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lodepng", "dependency\project\lodepng\lodepng.vcxproj", "{5DA57C7E-A961-48C5-8D9C-B9F4FDAD24B3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texture", "example\texture\texture.vcxproj", "{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -95,6 +97,14 @@ Global
 		{5DA57C7E-A961-48C5-8D9C-B9F4FDAD24B3}.Release|x64.Build.0 = Release|x64
 		{5DA57C7E-A961-48C5-8D9C-B9F4FDAD24B3}.Release|x86.ActiveCfg = Release|Win32
 		{5DA57C7E-A961-48C5-8D9C-B9F4FDAD24B3}.Release|x86.Build.0 = Release|Win32
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Debug|x64.ActiveCfg = Debug|x64
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Debug|x64.Build.0 = Debug|x64
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Debug|x86.ActiveCfg = Debug|Win32
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Debug|x86.Build.0 = Debug|Win32
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Release|x64.ActiveCfg = Release|x64
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Release|x64.Build.0 = Release|x64
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Release|x86.ActiveCfg = Release|Win32
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -104,6 +114,7 @@ Global
 		{01A82DA8-D913-487F-9C24-2BC3EDA7D299} = {98E04523-0283-4D01-90A5-094068E80316}
 		{AADD4CA7-02D9-46DB-B48D-1C5115CC58A9} = {93D8D701-839C-424F-BCBF-88D9B5611273}
 		{5DA57C7E-A961-48C5-8D9C-B9F4FDAD24B3} = {98E04523-0283-4D01-90A5-094068E80316}
+		{F5F89F99-3CA8-49BE-9063-CF37972CEAD0} = {93D8D701-839C-424F-BCBF-88D9B5611273}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7DCB255-658F-40B2-BCAE-F6DC596B49C2}
