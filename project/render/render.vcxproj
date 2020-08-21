@@ -152,6 +152,11 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\render\text.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\dependency\project\freetype\freetype.vcxproj">
+      <Project>{bdadb366-cf36-4c1f-bbd3-fdb19ea982c6}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
