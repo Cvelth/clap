@@ -14,9 +14,15 @@
     <ClCompile Include="..\..\source\render\text.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\render\font.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\render\text.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\render\font.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

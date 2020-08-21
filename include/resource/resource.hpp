@@ -15,6 +15,9 @@ namespace clap::gl::texture {
 	class multisample;
 	class multisample_array;
 }
+namespace clap::render {
+	class font;
+}
 
 namespace clap::resource {
 	void load();
@@ -31,8 +34,12 @@ namespace clap::resource::detail {
 	template<typename texture_type_t> class textures_t;
 	class texture_object_storage_t;
 
+	class fonts_t;
+	class font_object_storage_t;
+
 	void load_shader(shaders_t &storage, std::string const &name, clap::gl::shader::detail::object *object);
 	void load_texture(std::string const &filename, std::string const &texture_name);
+	void load_font(std::string const &filename, std::string const &font_name);
 
 	void unloaded_resource_check();
 	void non_existent_file_error(std::string const &identificator);
@@ -124,6 +131,48 @@ namespace clap::resource::detail {
 		textures_t(shaders_t &&) = delete;
 	};
 
+	using underlying_font_container_t = underlying_container_t<clap::render::font>;
+	class fonts_t : private underlying_font_container_t {
+		friend font_object_storage_t;
+		friend void load_font(std::string const &filename, std::string const &font_name);
+		friend void clap::resource::clear();
+	public:
+		clap::render::font &operator[](std::string const &identificator) {
+			unloaded_resource_check();
+			if (auto found = underlying_font_container_t::find(identificator); found != end())
+				return *found->second;
+			else {
+				non_existent_file_error(identificator);
+				throw std::exception{};
+			}
+		}
+
+		using underlying_font_container_t::begin;
+		using underlying_font_container_t::end;
+		using underlying_font_container_t::rbegin;
+		using underlying_font_container_t::rend;
+
+		using underlying_font_container_t::cbegin;
+		using underlying_font_container_t::cend;
+		using underlying_font_container_t::crbegin;
+		using underlying_font_container_t::crend;
+
+		inline ~fonts_t() { clear(); }
+
+	protected:
+		void clear() {
+			for (auto pair : *this)
+				if (pair.second)
+					call_destructor(pair.second);
+			this->underlying_font_container_t::clear();
+		}
+
+	private:
+		fonts_t() = default;
+		fonts_t(fonts_t const &) = delete;
+		fonts_t(fonts_t &&) = delete;
+	};
+
 	class shader_object_storage_t {
 	public:
 		inline static detail::shaders_t fragment;
@@ -145,11 +194,16 @@ namespace clap::resource::detail {
 		inline static detail::textures_t<gl::texture::multisample> multisample;
 		inline static detail::textures_t<gl::texture::multisample_array> multisample_array;
 	};
+	class font_object_storage_t {
+	public:
+		inline static detail::fonts_t font;
+	};
 }
 
 namespace clap::resource {
 	using shader = detail::shader_object_storage_t;
 	using texture = detail::texture_object_storage_t;
+	inline static auto &font = detail::font_object_storage_t::font;
 
 	// Other resource types are to be added here
 }

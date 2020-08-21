@@ -2,6 +2,7 @@
 #include "essential/log.hpp"
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
+#include "render/font.hpp"
 
 #include <filesystem>
 #include <set>
@@ -29,6 +30,7 @@ template void clap::resource::detail::call_destructor<clap::gl::texture::_2d_arr
 template void clap::resource::detail::call_destructor<clap::gl::texture::rectangle>(clap::gl::texture::rectangle *);
 template void clap::resource::detail::call_destructor<clap::gl::texture::multisample>(clap::gl::texture::multisample *);
 template void clap::resource::detail::call_destructor<clap::gl::texture::multisample_array>(clap::gl::texture::multisample_array *);
+template void clap::resource::detail::call_destructor<clap::render::font>(clap::render::font *);
 
 void load_shaders(std::filesystem::directory_entry const &path) {
 	for (auto folder : std::filesystem::directory_iterator(path)) {
@@ -77,6 +79,15 @@ void load_textures(std::filesystem::directory_entry const &path) {
 			);
 }
 
+void load_fonts(std::filesystem::directory_entry const &path) {
+	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
+		if (!subpath.is_directory())
+			clap::resource::detail::load_font(
+				subpath.path().string(), 
+				subpath.path().lexically_relative(path).replace_extension().string()
+			);
+}
+
 void load_others(std::filesystem::directory_entry const &path) {
 	clap::log::warning::major << "Unsupported resource directory was found. It's ignored.";
 	clap::log::info::major << "Directory name is '" << path.path().filename().string() << "'.";
@@ -112,6 +123,8 @@ void clap::resource::load() {
 						load_shaders(subpath);
 					else if (subpath.path().filename().string() == "texture")
 						load_textures(subpath);
+					else if (subpath.path().filename().string() == "font")
+						load_fonts(subpath);
 					else
 						load_others(subpath);
 				else {
@@ -146,6 +159,10 @@ void clap::resource::clear() {
 
 void clap::resource::detail::load_shader(shaders_t &storage, std::string const &name, gl::shader::detail::object *object) {
 	storage.insert(std::pair(name, object));
+}
+
+void clap::resource::detail::load_font(std::string const &filename, std::string const &font_name) {
+	font.insert(std::pair(font_name, new render::font{}));
 }
 
 #include "lodepng/lodepng.h"
