@@ -157,7 +157,8 @@ void clap::resource::clear() {
 	was_loaded = false;
 }
 
-void clap::resource::detail::load_shader(shaders_t &storage, std::string const &name, gl::shader::detail::object *object) {
+void clap::resource::detail::load_shader(resource_container_t<clap::gl::shader::detail::object> &storage, 
+										 std::string const &name, gl::shader::detail::object *object) {
 	storage.insert(std::pair(name, object));
 }
 
