@@ -88,9 +88,11 @@ void load_textures(std::filesystem::directory_entry const &path) {
 				clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
 			}
 
-			clap::resource::detail::load_resource(subpath.path().lexically_relative(path).replace_extension().string(), 
-												  clap::resource::texture::_2d,
-												  new clap::gl::texture::_2d(image_data.data(), width, height));
+			clap::resource::detail::load_resource(
+				subpath.path().lexically_relative(path).replace_extension().string(),
+				clap::resource::texture::_2d,
+				new clap::gl::texture::_2d(image_data.data(), width, height)
+			);
 		}
 }
 
