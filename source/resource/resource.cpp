@@ -40,8 +40,12 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 			auto type = clap::gl::detail::convert::to_shader_type_from_string(folder.path().filename().string());
 			for (auto entry : std::filesystem::recursive_directory_iterator(folder))
 				if (!entry.is_directory()) {
-					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
+
+					clap::log::message::minor << "A " << type << " shader was loaded.";
+					clap::log::info::major << "Path: '" << entry.path().string() << "'.";
+					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
+
 					switch (type) {
 						case clap::gl::shader::type::fragment:
 							clap::resource::detail::load_resource(identificator, clap::resource::shader::fragment, object);
@@ -84,7 +88,7 @@ void load_textures(std::filesystem::directory_entry const &path) {
 				clap::log::info::critical << lodepng_error_text(error_code);
 				return;
 			} else {
-				clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded successfully.";
+				clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded.";
 				clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
 			}
 
@@ -98,11 +102,15 @@ void load_textures(std::filesystem::directory_entry const &path) {
 
 void load_fonts(std::filesystem::directory_entry const &path) {
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
-		if (!subpath.is_directory())
+		if (!subpath.is_directory()) {
 			clap::resource::detail::load_resource(
 				subpath.path().lexically_relative(path).replace_extension().string(),
-				clap::resource::font, new clap::render::font{}
+				clap::resource::font,
+				new clap::render::font{ clap::render::font::load(subpath.path().string()) }
 			);
+			clap::log::message::minor << "A font was loaded.";
+			clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
+		}
 }
 
 void load_others(std::filesystem::directory_entry const &path) {
@@ -139,7 +147,7 @@ void clap::resource::load() {
 	};
 	for (auto &path : paths)
 		if (std::filesystem::exists(path)) {
-			log::message::major << "Loading resources from '" << path << "'.";
+			log::message::major << "Loading resources from '" << path.string() << "'.";
 
 			for (auto &subpath : std::filesystem::directory_iterator(path))
 				if (std::filesystem::is_directory(subpath))
