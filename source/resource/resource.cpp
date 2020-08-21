@@ -7,6 +7,8 @@
 #include <filesystem>
 #include <set>
 
+#include "lodepng/lodepng.h"
+
 static bool was_loaded = false;
 
 void clap::resource::detail::unloaded_resource_check() {
@@ -42,22 +44,22 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
 					switch (type) {
 						case clap::gl::shader::type::fragment:
-							clap::resource::detail::load_shader(clap::resource::shader::fragment, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::fragment, object);
 							break;
 						case clap::gl::shader::type::vertex:
-							clap::resource::detail::load_shader(clap::resource::shader::vertex, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::vertex, object);
 							break;
 						case clap::gl::shader::type::geometry:
-							clap::resource::detail::load_shader(clap::resource::shader::geometry, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::geometry, object);
 							break;
 						case clap::gl::shader::type::compute:
-							clap::resource::detail::load_shader(clap::resource::shader::compute, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::compute, object);
 							break;
 						case clap::gl::shader::type::tesselation_control:
-							clap::resource::detail::load_shader(clap::resource::shader::tesselation_control, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::tesselation_control, object);
 							break;
 						case clap::gl::shader::type::tesselation_evaluation:
-							clap::resource::detail::load_shader(clap::resource::shader::tesselation_evaluation, identificator, object);
+							clap::resource::detail::load_resource(identificator, clap::resource::shader::tesselation_evaluation, object);
 							break;
 						default:
 							clap::log::warning::critical << "Unsupported enum value.";
@@ -72,25 +74,45 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 
 void load_textures(std::filesystem::directory_entry const &path) {
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
-		if (!subpath.is_directory())
-			clap::resource::detail::load_texture(
-				subpath.path().string(), 
-				subpath.path().lexically_relative(path).replace_extension().string()
-			);
+		if (!subpath.is_directory()) {
+			std::vector<unsigned char> image_data;
+			unsigned width, height;
+			unsigned error_code = lodepng::decode(image_data, width, height, subpath.path().string());
+			if (error_code != 0) {
+				clap::log::warning::major << "Error while trying to decode a texture file.";
+				clap::log::info::critical << "Error code: " << error_code << '.';
+				clap::log::info::critical << lodepng_error_text(error_code);
+				return;
+			} else {
+				clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded successfully.";
+				clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
+			}
+
+			clap::resource::detail::load_resource(subpath.path().lexically_relative(path).replace_extension().string(), 
+												  clap::resource::texture::_2d,
+												  new clap::gl::texture::_2d(image_data.data(), width, height));
+		}
 }
 
 void load_fonts(std::filesystem::directory_entry const &path) {
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
 		if (!subpath.is_directory())
-			clap::resource::detail::load_font(
-				subpath.path().string(), 
-				subpath.path().lexically_relative(path).replace_extension().string()
+			clap::resource::detail::load_resource(
+				subpath.path().lexically_relative(path).replace_extension().string(),
+				clap::resource::font, new clap::render::font{}
 			);
 }
 
 void load_others(std::filesystem::directory_entry const &path) {
 	clap::log::warning::major << "Unsupported resource directory was found. It's ignored.";
 	clap::log::info::major << "Directory name is '" << path.path().filename().string() << "'.";
+}
+
+bool is_one_of(std::string const &value, std::initializer_list<std::string> const &list) {
+	for (auto const &entry : list)
+		if (value == entry)
+			return true;
+	return false;
 }
 
 void clap::resource::load() {
@@ -119,11 +141,11 @@ void clap::resource::load() {
 
 			for (auto &subpath : std::filesystem::directory_iterator(path))
 				if (std::filesystem::is_directory(subpath))
-					if (subpath.path().filename().string() == "shader")
+					if (is_one_of(subpath.path().filename().string(), { "shader", "shaders", "Shader", "Shaders" }))
 						load_shaders(subpath);
-					else if (subpath.path().filename().string() == "texture")
+					else if (is_one_of(subpath.path().filename().string(), { "texture", "textures", "Texture", "Textures" }))
 						load_textures(subpath);
-					else if (subpath.path().filename().string() == "font")
+					else if (is_one_of(subpath.path().filename().string(), { "font", "fonts", "Font", "Fonts" }))
 						load_fonts(subpath);
 					else
 						load_others(subpath);
@@ -154,32 +176,7 @@ void clap::resource::clear() {
 	texture::multisample.clear();
 	texture::multisample_array.clear();
 
+	font.clear();
+
 	was_loaded = false;
-}
-
-void clap::resource::detail::load_shader(resource_container_t<clap::gl::shader::detail::object> &storage, 
-										 std::string const &name, gl::shader::detail::object *object) {
-	storage.insert(std::pair(name, object));
-}
-
-void clap::resource::detail::load_font(std::string const &filename, std::string const &font_name) {
-	font.insert(std::pair(font_name, new render::font{}));
-}
-
-#include "lodepng/lodepng.h"
-void clap::resource::detail::load_texture(std::string const &filename, std::string const &texture_name) {
-	std::vector<unsigned char> image_data;
-	unsigned width, height;
-	unsigned error_code = lodepng::decode(image_data, width, height, filename);
-	if (error_code != 0) {
-		log::warning::major << "Error while trying to decode a texture file.";
-		log::info::critical << "Error code: " << error_code << '.';
-		log::info::critical << lodepng_error_text(error_code);
-		return;
-	} else {
-		log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded successfully.";
-		log::info::major << "Path: '" << filename << "'.";
-	}
-
-	texture::_2d.insert(std::pair(texture_name, new gl::texture::_2d(image_data.data(), width, height)));
 }

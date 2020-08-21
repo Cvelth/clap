@@ -32,10 +32,10 @@ namespace clap::resource::detail {
 	template <typename contained_typename>
 	class resource_container_t;
 
-	void load_shader(resource_container_t<clap::gl::shader::detail::object> &storage, 
-					 std::string const &name, clap::gl::shader::detail::object *object);
-	void load_texture(std::string const &filename, std::string const &texture_name);
-	void load_font(std::string const &filename, std::string const &font_name);
+	template<typename storage_t, typename object_t>
+	void load_resource(std::string const &access_name, storage_t &storage, object_t *object) {
+		storage.insert(std::pair(access_name, object));
+	}
 
 	void unloaded_resource_check();
 	void non_existent_file_error(std::string const &identificator);
@@ -47,16 +47,14 @@ namespace clap::resource::detail {
 	using underlying_container_t = std::map<std::string, T *>;
 	template <typename contained_typename>
 	class resource_container_t : private underlying_container_t<contained_typename> {
+		friend void clap::resource::clear();
+
+		template<typename storage_t, typename object_t>
+		friend void load_resource(std::string const &access_name, storage_t &storage, object_t *object);
+
 		friend shader_object_storage_t;
 		friend texture_object_storage_t;
 		friend font_object_storage_t;
-
-		friend void load_shader(resource_container_t<clap::gl::shader::detail::object> &storage, 
-								std::string const &name, clap::gl::shader::detail::object *object);
-		friend void load_texture(std::string const &filename, std::string const &texture_name);
-		friend void load_font(std::string const &filename, std::string const &font_name);
-
-		friend void clap::resource::clear();
 
 	public:
 		contained_typename &operator[](std::string const &identificator) {
