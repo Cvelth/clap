@@ -25,17 +25,29 @@ void clap::gl::texture::detail::interface::bind() {
 	clap::gl::detail::state::bind(target, this);
 }
 
-template <GLenum parameter_name, typename lambda_t, typename ...Ts>
-void set_parameter_template(clap::gl::texture::target const &target, 
-							clap::gl::texture::detail::interface *ptr, 
-							lambda_t lambda, Ts...params) {
-	auto was_bound = clap::gl::detail::state::unbind(target);
-	clap::gl::detail::state::bind(target, ptr);
+template <typename target_t, typename ptr_t, typename lambda_t>
+void temporarily_unbound(target_t const &target, ptr_t *ptr, lambda_t lambda) {
+	auto bound_check = clap::gl::detail::state::bound(target);
 
-	lambda(clap::gl::detail::convert::to_gl(target), parameter_name, params...);
+	clap::gl::texture::detail::interface *was_bound = nullptr;
+	if (bound_check != ptr) {
+		was_bound = clap::gl::detail::state::unbind(target);
+		clap::gl::detail::state::bind(target, ptr);
+	}
 
-	if (was_bound)
+	lambda();
+
+	if (bound_check && bound_check != ptr)
 		clap::gl::detail::state::bind(target, was_bound);
+}
+
+template <GLenum parameter_name, typename lambda_t, typename ...Ts>
+void set_parameter_template(clap::gl::texture::target const &target,
+							clap::gl::texture::detail::interface *ptr,
+							lambda_t lambda, Ts...params) {
+	temporarily_unbound(target, ptr, [&]() {
+		lambda(clap::gl::detail::convert::to_gl(target), parameter_name, params...);
+	});
 }
 
 void clap::gl::texture::detail::interface::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode) {
@@ -53,7 +65,7 @@ void clap::gl::texture::detail::interface::set_lod_bias(float bias) {
 	set_parameter_template<GL_TEXTURE_LOD_BIAS>(target, this, glTexParameterf, bias);
 }
 void clap::gl::texture::detail::interface::set_min_filter(min_filter filter) {
-	set_parameter_template<GL_TEXTURE_MIN_FILTER>(target, this, glTexParameteri, 
+	set_parameter_template<GL_TEXTURE_MIN_FILTER>(target, this, glTexParameteri,
 												  gl::detail::convert::to_gl(filter));
 }
 void clap::gl::texture::detail::interface::set_mag_filter(mag_filter filter) {
@@ -87,25 +99,21 @@ clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bo
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width) {
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexImage1D(gl::detail::convert::to_gl(target), 0,
+					 gl::detail::convert::to_gl(internal_format),
+					 GLsizei(width), 0,
+					 gl::detail::convert::to_gl(external_format),
+					 gl::detail::convert::to_gl(external_type),
+					 data);
+		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+		log::info::major << "Dimentions are (" << width << ").";
 
-	glTexImage1D(gl::detail::convert::to_gl(target), 0,
-				 gl::detail::convert::to_gl(internal_format),
-				 GLsizei(width), 0,
-				 gl::detail::convert::to_gl(external_format),
-				 gl::detail::convert::to_gl(external_type),
-				 data);
-	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-	log::info::major << "Dimentions are (" << width << ").";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
 void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool generate_mipmap,
@@ -115,104 +123,88 @@ void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool 
 		return;
 	}
 
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexSubImage1D(gl::detail::convert::to_gl(target), level,
+						GLsizei(offset), GLsizei(width),
+						gl::detail::convert::to_gl(external_format),
+						gl::detail::convert::to_gl(external_type),
+						data);
+		log::message::minor << "Texture (" << target << ") was modified.";
 
-	glTexSubImage1D(gl::detail::convert::to_gl(target), level,
-					GLsizei(offset), GLsizei(width),
-					gl::detail::convert::to_gl(external_format),
-					gl::detail::convert::to_gl(external_type),
-					data);
-	log::message::minor << "Texture (" << target << ") was modified.";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
 
-clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height, 
+clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height,
 							bool generate_mipmap,
 							texture::internal_format internal_format, external_format external_format,
 							external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height) {
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexImage2D(gl::detail::convert::to_gl(target), 0,
+					 gl::detail::convert::to_gl(internal_format),
+					 GLsizei(width), GLsizei(height), 0,
+					 gl::detail::convert::to_gl(external_format),
+					 gl::detail::convert::to_gl(external_type),
+					 data);
+		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ").";
 
-	glTexImage2D(gl::detail::convert::to_gl(target), 0,
-				 gl::detail::convert::to_gl(internal_format),
-				 GLsizei(width), GLsizei(height), 0,
-				 gl::detail::convert::to_gl(external_format),
-				 gl::detail::convert::to_gl(external_type),
-				 data);
-	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-	log::info::major << "Dimentions are (" << width << ", " << height << ").";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
-void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height, 
-								  bool generate_mipmap, int level, 
+void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
+								  bool generate_mipmap, int level,
 								  external_format external_format, external_type external_type) {
 	if (width + offset_x > this->width || height + offset_y > this->height) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
 		return;
 	}
 
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexSubImage2D(gl::detail::convert::to_gl(target), level,
+						GLsizei(offset_x), GLsizei(offset_y),
+						GLsizei(width), GLsizei(height),
+						gl::detail::convert::to_gl(external_format),
+						gl::detail::convert::to_gl(external_type),
+						data);
+		log::message::minor << "Texture (" << target << ") was modified.";
 
-	glTexSubImage2D(gl::detail::convert::to_gl(target), level,
-					GLsizei(offset_x), GLsizei(offset_y),
-					GLsizei(width), GLsizei(height),
-					gl::detail::convert::to_gl(external_format),
-					gl::detail::convert::to_gl(external_type),
-					data);
-	log::message::minor << "Texture (" << target << ") was modified.";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
 
 clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
-							bool generate_mipmap, texture::internal_format internal_format, 
+							bool generate_mipmap, texture::internal_format internal_format,
 							external_format external_format, external_type external_type)
 	: detail::interface(target, internal_format), width(width), height(height), depth(depth) {
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexImage3D(gl::detail::convert::to_gl(target), 0,
+					 gl::detail::convert::to_gl(internal_format),
+					 GLsizei(width), GLsizei(height), GLsizei(depth), 0,
+					 gl::detail::convert::to_gl(external_format),
+					 gl::detail::convert::to_gl(external_type),
+					 data);
+		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
 
-	glTexImage3D(gl::detail::convert::to_gl(target), 0,
-				 gl::detail::convert::to_gl(internal_format),
-				 GLsizei(width), GLsizei(height), GLsizei(depth), 0,
-				 gl::detail::convert::to_gl(external_format),
-				 gl::detail::convert::to_gl(external_type),
-				 data);
-	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-	log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
 void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
@@ -223,41 +215,33 @@ void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, 
 		return;
 	}
 
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
+	temporarily_unbound(target, this, [&]() {
+		glTexSubImage3D(gl::detail::convert::to_gl(target), level,
+						GLsizei(offset_x), GLsizei(offset_y), GLsizei(offset_z),
+						GLsizei(width), GLsizei(height), GLsizei(depth),
+						gl::detail::convert::to_gl(external_format),
+						gl::detail::convert::to_gl(external_type),
+						data);
+		log::message::minor << "Texture (" << target << ") was modified.";
 
-	glTexSubImage3D(gl::detail::convert::to_gl(target), level,
-					GLsizei(offset_x), GLsizei(offset_y), GLsizei(offset_z),
-					GLsizei(width), GLsizei(height), GLsizei(depth),
-					gl::detail::convert::to_gl(external_format),
-					gl::detail::convert::to_gl(external_type),
-					data);
-	log::message::minor << "Texture (" << target << ") was modified.";
-
-	if (generate_mipmap) {
-		glGenerateMipmap(gl::detail::convert::to_gl(target));
-		log::info::minor << "Mipmap was generated.";
-	}
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			log::info::minor << "Mipmap was generated.";
+		}
+	});
 }
 
 clap::gl::texture::multisample::multisample(void *data, size_t sample_count, size_t width, size_t height,
 											bool are_samples_fixed, texture::internal_format internal_format)
 	: detail::interface(target::multisample, internal_format), width(width), height(height) {
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
-
-	glTexImage2DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
-							gl::detail::convert::to_gl(internal_format),
-							GLsizei(width), GLsizei(height), are_samples_fixed);
-	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-	log::info::major << "Dimentions are (" << width << ", " << height << ").";
-	log::info::minor << "'sample_count' is " << sample_count << ".";
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+	temporarily_unbound(target, this, [&]() {
+		glTexImage2DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
+								gl::detail::convert::to_gl(internal_format),
+								GLsizei(width), GLsizei(height), are_samples_fixed);
+		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ").";
+		log::info::minor << "'sample_count' is " << sample_count << ".";
+	});
 }
 
 clap::gl::texture::multisample_array::multisample_array(void *data, size_t sample_count,
@@ -265,16 +249,12 @@ clap::gl::texture::multisample_array::multisample_array(void *data, size_t sampl
 														bool are_samples_fixed,
 														texture::internal_format internal_format)
 	: detail::interface(target::multisample_array, internal_format), width(width), height(height), depth(depth) {
-	auto was_bound = gl::detail::state::unbind(target);
-	gl::detail::state::bind(target, this);
-
-	glTexImage3DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
-							gl::detail::convert::to_gl(internal_format),
-							GLsizei(width), GLsizei(height), GLsizei(depth), are_samples_fixed);
-	log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-	log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
-	log::info::minor << "'sample_count' is " << sample_count << ".";
-
-	if (was_bound)
-		gl::detail::state::bind(target, was_bound);
+	temporarily_unbound(target, this, [&]() {
+		glTexImage3DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
+								gl::detail::convert::to_gl(internal_format),
+								GLsizei(width), GLsizei(height), GLsizei(depth), are_samples_fixed);
+		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
+		log::info::minor << "'sample_count' is " << sample_count << ".";
+	});
 }
