@@ -1,7 +1,22 @@
 #pragma once
+#include <string>
 
 namespace clap::render {
-	class font {
+	namespace detail {
+		class font_face_t;
+	}
 
+	class font {
+	public:
+		font(detail::font_face_t const&);
+		~font();
+
+		font(font const &) = delete;
+		font(font &&) = default;
+
+		static font load(std::string const &filename);
+
+	private:
+		detail::font_face_t *face;
 	};
 }
