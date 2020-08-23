@@ -43,7 +43,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
 
 					clap::log::message::minor << "A " << type << " shader was loaded.";
-					clap::log::info::major << "Path: '" << entry.path().string() << "'.";
+					clap::log::info::major << "Path: '" << entry.path() << "'.";
 					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
 
 					switch (type) {
@@ -71,7 +71,7 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 				}
 		} else {
 			clap::log::warning::major << "Only directories are supported in the root of the shader directory.";
-			clap::log::info::major << "'" << path.path().string() << "' was found instead.";
+			clap::log::info::major << "'" << path.path() << "' was found instead.";
 		}
 	}
 }
@@ -81,7 +81,7 @@ void load_textures(std::filesystem::directory_entry const &path) {
 		if (!subpath.is_directory()) {
 			std::vector<unsigned char> image_data;
 			unsigned width, height;
-			unsigned error_code = lodepng::decode(image_data, width, height, subpath.path().string());
+			unsigned error_code = lodepng::decode(image_data, width, height, subpath.path());
 			if (error_code != 0) {
 				clap::log::warning::major << "Error while trying to decode a texture file.";
 				clap::log::info::critical << "Error code: " << error_code << '.';
@@ -89,7 +89,7 @@ void load_textures(std::filesystem::directory_entry const &path) {
 				return;
 			} else {
 				clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded.";
-				clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
+				clap::log::info::major << "Path: '" << subpath.path() << "'.";
 			}
 
 			clap::resource::detail::load_resource(
@@ -109,16 +109,17 @@ void load_fonts(std::filesystem::directory_entry const &path) {
 				new clap::render::font{ clap::render::font::load(subpath.path().string()) }
 			);
 			clap::log::message::minor << "A font was loaded.";
-			clap::log::info::major << "Path: '" << subpath.path().string() << "'.";
+			clap::log::info::major << "Path: '" << subpath.path() << "'.";
 		}
 }
 
 void load_others(std::filesystem::directory_entry const &path) {
 	clap::log::warning::major << "Unsupported resource directory was found. It's ignored.";
-	clap::log::info::major << "Directory name is '" << path.path().filename().string() << "'.";
+	clap::log::info::major << "Directory name is '" << path.path().filename() << "'.";
 }
 
-bool is_one_of(std::string const &value, std::initializer_list<std::string> const &list) {
+template<typename T>
+bool is_one_of(T const &value, std::initializer_list<std::string> const &list) {
 	for (auto const &entry : list)
 		if (value == entry)
 			return true;
@@ -161,7 +162,7 @@ void clap::resource::load() {
 						load_others(subpath);
 				else {
 					log::warning::major << "Only directories are supported in the root of the resource directory.";
-					log::info::major << "'" << subpath.path().string() << "' was found instead.";
+					log::info::major << "'" << subpath.path() << "' was found instead.";
 				}
 		}
 
