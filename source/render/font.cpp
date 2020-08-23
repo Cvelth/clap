@@ -4,7 +4,7 @@
 #include "essential/log.hpp"
 
 #include FT_OUTLINE_H
-#include "msdfgen/core/Shape.h"
+#include "msdfgen/msdfgen.h"
 
 namespace clap::render::detail {
 	class font_face_t {
@@ -20,7 +20,7 @@ namespace clap::render::detail {
 			FT_Done_Face(handle);
 		}
 
-		msdfgen::Shape glyph(unsigned char_id);
+		msdfgen::Shape glyph_shape(unsigned char_id);
 	};
 }
 
@@ -31,7 +31,7 @@ static msdfgen::Point2 point(const FT_Vector *vector) {
 	};
 }
 
-msdfgen::Shape clap::render::detail::font_face_t::glyph(unsigned char_id) {
+msdfgen::Shape clap::render::detail::font_face_t::glyph_shape(unsigned char_id) {
 	FT_Error error = FT_Load_Char(handle, char_id, FT_LOAD_NO_SCALE);
 	if (error) {
 		clap::log::error::major << "Unable to read a character.";
@@ -96,6 +96,9 @@ msdfgen::Shape clap::render::detail::font_face_t::glyph(unsigned char_id) {
 	}
 	if (!current.shape.contours.empty() && current.shape.contours.back().edges.empty())
 		current.shape.contours.pop_back();
+
+	current.shape.normalize();
+	msdfgen::edgeColoringSimple(current.shape, 3);
 	return current.shape;
 }
 
@@ -107,10 +110,15 @@ clap::render::font::~font() {
 		delete face;
 }
 
+//!TEMPORARY! 
+#include "lodepng/lodepng.h"
+#include <limits>
+#include <algorithm>
+//!TEMPORARY! 
 
 clap::render::font clap::render::font::load(std::string const &filename) {
 	detail::state::ensure_initialized();
-	
+
 	detail::font_face_t face;
 	auto error = FT_New_Face(clap::render::detail::state::library(), filename.c_str(), 0, &face.handle);
 	if (error == FT_Err_Unknown_File_Format) {
@@ -121,7 +129,58 @@ clap::render::font clap::render::font::load(std::string const &filename) {
 		log::info::critical << "Path: " << filename << ".";
 	}
 
-	//auto test = face.glyph('a');
+	//!TEMPORARY! 
+	auto shape = face.glyph_shape('W');
+
+	double x_min = std::numeric_limits<double>::max();
+	double x_max = std::numeric_limits<double>::min();
+	double y_min = std::numeric_limits<double>::max();
+	double y_max = std::numeric_limits<double>::min();
+	auto update_bounds = [&](double x, double y) {
+		x_min = std::min(x_min, x);
+		x_max = std::max(x_max, x);
+		y_min = std::min(y_min, y);
+		y_max = std::max(y_max, y);
+	};
+
+	for (auto const &contour : shape.contours)
+		for (auto const &edge : contour.edges)
+			for (double segment = 0.; segment < 1.; segment += .25)
+				update_bounds(edge->point(segment).x, edge->point(segment).y);
+
+	auto delta_x = x_max - x_min;
+	auto delta_y = y_max - y_min;
+
+	auto limit_x = std::pow(2, std::ceil(std::log2(delta_x)));
+	auto limit_y = std::pow(2, std::ceil(std::log2(delta_y)));
+
+	const size_t x_size = 4, y_size = 4;
+	auto scale = std::max(double(x_size / limit_x), double(y_size / limit_y));
+	auto translation_x = (limit_x - delta_x) / 2;
+	auto translation_y = (limit_y - delta_y) / 2;
+
+	msdfgen::Bitmap<float, 3> bitmap(x_size, y_size);
+	generateMSDF(bitmap, shape, 1.0, scale, { translation_x, translation_y });
+
+	auto to_byte = [](float input) {
+		return std::clamp(input * std::numeric_limits<unsigned char>::max(),
+						  0.f,
+						  float(std::numeric_limits<unsigned char>::max())
+		);
+	};
+	std::vector<unsigned char> output;
+	output.reserve(3ull * bitmap.width() * bitmap.height());
+	for (auto j = bitmap.height() - 1; j >= 0; j--)
+		for (auto i = 0; i < bitmap.width(); i++) {
+			auto *temp = bitmap(i, j);
+			output.push_back(to_byte(temp[0]));
+			output.push_back(to_byte(temp[1]));
+			output.push_back(to_byte(temp[2]));
+		}
+
+	lodepng::encode("W_t.png", output, //(unsigned char*)bitmap.operator const float *(),
+					bitmap.width(), bitmap.height(), LCT_RGB);
+	//!TEMPORARY! 
 
 	return clap::render::font{ std::move(face) };
 }
