@@ -8,11 +8,11 @@ namespace clap::render {
 
 	class font {
 	public:
-		font(detail::font_face_t const&);
+		font(detail::font_face_t&&) noexcept;
 		~font();
 
 		font(font const &) = delete;
-		font(font &&) = default;
+		font(font &&) noexcept;
 
 		static font load(std::string const &filename);
 

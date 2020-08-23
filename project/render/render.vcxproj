@@ -160,6 +160,12 @@
     <ProjectReference Include="..\..\dependency\project\freetype\freetype.vcxproj">
       <Project>{bdadb366-cf36-4c1f-bbd3-fdb19ea982c6}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\dependency\project\msdfgen\msdfgen.vcxproj">
+      <Project>{2e934eac-b07e-460b-a2b0-c5ccbf0b7a21}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\gl\gl.vcxproj">
+      <Project>{d377c27b-a289-4be4-9c82-f1fc300aabfc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
