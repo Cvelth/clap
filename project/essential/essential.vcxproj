@@ -147,9 +147,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\essential\locale.hpp" />
     <ClInclude Include="..\..\include\essential\log.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\essential\locale.cpp" />
     <ClCompile Include="..\..\source\essential\log.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
