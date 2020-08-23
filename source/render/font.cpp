@@ -7,6 +7,10 @@ namespace clap::render::detail {
 	class font_face_t {
 	public:
 		FT_Face handle;
+
+		~font_face_t() {
+			FT_Done_Face(handle);
+		}
 	};
 }
 
