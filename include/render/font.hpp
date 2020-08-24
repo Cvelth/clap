@@ -47,11 +47,7 @@ namespace clap::render {
 						 detail::cooked_t const &cooked);
 
 	private:
-		font(gl::texture::_2d_array &&msdf, std::unordered_map<size_t, detail::glyph_info> &&data)
-			: data(data), msdf(msdf),
-			msdf_width(msdf.maximum_width()), 
-			msdf_height(msdf.maximum_height()),
-			msdf_count(msdf.maximum_count()) {}
+		font(detail::cooked_t const &cooked, std::unordered_map<size_t, detail::glyph_info> &&data);
 
 	private:
 		gl::texture::_2d_array msdf;

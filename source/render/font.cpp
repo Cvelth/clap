@@ -248,6 +248,16 @@ clap::render::detail::cooked_t clap::render::font::cook(std::filesystem::path co
 	return { width, height, count, character_msdf_size, color_count, output };
 }
 
+clap::render::font::font(detail::cooked_t const &cooked, std::unordered_map<size_t, detail::glyph_info> &&data) 
+	: data(std::move(data)), msdf((void *) cooked.data(), cooked.width, cooked.height, cooked.count),
+	msdf_width(msdf.maximum_width()),
+	msdf_height(msdf.maximum_height()),
+	msdf_count(msdf.maximum_count()) {
+
+	msdf.set_min_filter(gl::texture::min_filter::linear_mipmap_linear);
+	msdf.set_mag_filter(gl::texture::mag_filter::linear);
+}
+
 clap::render::font clap::render::font::load(std::filesystem::path const &filename,
 											detail::cooked_t const &cooked) {
 	detail::state::ensure_initialized();
@@ -293,8 +303,5 @@ clap::render::font clap::render::font::load(std::filesystem::path const &filenam
 	}
 
 	FT_Done_Face(face);
-	return {
-		gl::texture::_2d_array((void *) cooked.data(), cooked.width, cooked.height, cooked.count),
-		std::move(font_data)
-	};
+	return { std::move(cooked), std::move(font_data) };
 }
