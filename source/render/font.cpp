@@ -93,7 +93,7 @@ msdfgen::Shape to_shape(FT_Face &face, size_t char_id) {
 
 class boundaries {
 public:
-	boundaries() : 
+	boundaries() :
 		x_min_(std::numeric_limits<double>::max()),
 		x_max_(std::numeric_limits<double>::min()),
 		y_min_(std::numeric_limits<double>::max()),
@@ -110,7 +110,7 @@ public:
 		y_min_ = std::min(y_min_, y);
 		y_max_ = std::max(y_max_, y);
 	}
-private:		   
+private:
 	double x_min_;
 	double x_max_;
 	double y_min_;
@@ -145,12 +145,111 @@ bitmap_data calculate_bitmap_data(std::vector<msdfgen::Shape> const &shapes) {
 	return out;
 }
 
-//!TEMPORARY! 
-#include "lodepng/lodepng.h"
-//!TEMPORARY! 
+clap::render::detail::cooked_t clap::render::font::cook(std::filesystem::path const &filename) {
+	detail::state::ensure_initialized();
 
+	FT_Face face;
+	auto error = FT_New_Face(clap::render::detail::state::library(), filename.string().c_str(), 0, &face);
+	if (error == FT_Err_Unknown_File_Format) {
+		log::error::major << "Unsupported font file cannot be cooked.";
+		log::info::critical << "Path: " << filename << ".";
+	} else if (error) {
+		log::error::major << "Cannot open font file.";
+		log::info::critical << "Path: " << filename << ".";
+	}
+	if (face->charmap->encoding != FT_ENCODING_UNICODE) {
+		log::error::minor << "Only unicode fonts are supported.";
+		log::info::critical << "Path: " << filename << ".";
+	}
 
-clap::render::font clap::render::font::load(std::filesystem::path const &filename) {
+	const auto msdf_pixel_width = gl::texture::_2d_array::maximum_width();
+	const auto msdf_pixel_height = gl::texture::_2d_array::maximum_height();
+	const auto msdf_pixel_count = gl::texture::_2d_array::maximum_count();
+
+	const auto character_msdf_size = 32;
+	constexpr auto color_count = 3;
+
+	const auto msdf_width = msdf_pixel_width / character_msdf_size;
+	const auto msdf_height = msdf_pixel_height / character_msdf_size;
+	const auto msdf_count = msdf_pixel_count / character_msdf_size;
+
+	const auto maximum_character_count = msdf_width * msdf_height * msdf_count;
+
+	std::vector<msdfgen::Shape> shapes;
+
+	size_t char_code;
+	unsigned index;
+	size_t counter = 0;
+	char_code = FT_Get_First_Char(face, &index);
+	while (index != 0) {
+		shapes.push_back(to_shape(face, char_code)); counter++;
+		char_code = FT_Get_Next_Char(face, FT_ULong(char_code), &index);
+	}
+
+	if (maximum_character_count < counter) {
+		log::error::critical << "Font is too big to fully load on this system.";
+		log::info::critical << "Number of characters in the font: " << counter;
+		log::info::critical << "Maximum number of supported characters per font: " << maximum_character_count;
+	}
+
+	auto bitmap_data = calculate_bitmap_data<character_msdf_size>(shapes);
+
+	std::vector<msdfgen::Bitmap<float, color_count>> msdfs;
+	for (auto &shape : shapes) {
+		msdfs.emplace_back(character_msdf_size, character_msdf_size);
+		generateMSDF(msdfs.back(), shape, 1.0, bitmap_data.scale,
+					 { bitmap_data.translation_x, bitmap_data.translation_y });
+	}
+
+	size_t width, height, count;
+	if (counter < msdf_width) {
+		width = counter;
+		height = 1;
+		count = 1;
+	} else if (counter < msdf_width * msdf_height) {
+		width = msdf_width;
+		height = size_t(std::ceil(float(counter) / msdf_width));
+		count = 1;
+	} else {
+		width = msdf_width;
+		height = msdf_height;
+		count = size_t(std::ceil(float(counter) / msdf_width / msdf_height));
+	}
+	size_t characters_per_layer = width * height;
+	size_t layer_size = characters_per_layer * color_count;
+	size_t bitmap_size = character_msdf_size * character_msdf_size;
+
+	size_t w = -2, h = -2, c = -1;
+	std::vector<unsigned char> output(layer_size * bitmap_size * count);
+	for (auto &bitmap : msdfs) {
+		if (++w >= width) {
+			w = 0;
+			if (++h >= height) {
+				h = 0;
+				++c;
+			}
+		}
+
+		for (size_t j = 0; j < size_t(bitmap.height()); j++)
+			for (size_t i = 0; i < size_t(bitmap.width()); i++) {
+				auto index = (
+					(i + w * character_msdf_size) +
+					(j + h * character_msdf_size) * width * character_msdf_size +
+					(c * width * character_msdf_size * height * character_msdf_size)
+					) * color_count;
+
+				auto *temp = bitmap(int(i), int(bitmap.height() - j - 1));
+				for (size_t i = 0; i < color_count; i++)
+					output[index + i] = to_byte(temp[i]);
+			}
+	}
+
+	FT_Done_Face(face);
+	return { width, height, count, character_msdf_size, color_count, output };
+}
+
+clap::render::font clap::render::font::load(std::filesystem::path const &filename,
+											detail::cooked_t const &cooked) {
 	detail::state::ensure_initialized();
 
 	FT_Face face;
@@ -166,101 +265,36 @@ clap::render::font clap::render::font::load(std::filesystem::path const &filenam
 		log::error::minor << "Only unicode fonts are supported.";
 		log::info::critical << "Path: " << filename << ".";
 	}
-	log::message::minor << "A new font face was loaded.";
-	log::info::major << "Path: " << filename << ".";
-
-	const auto msdf_pixel_width = gl::texture::_2d_array::maximum_width();
-	const auto msdf_pixel_height = gl::texture::_2d_array::maximum_height();
-	const auto msdf_pixel_count = gl::texture::_2d_array::maximum_count();
-
-	const auto character_msdf_size = 32;
-	constexpr auto color_count = 3;
-
-	const auto msdf_width = msdf_pixel_width / character_msdf_size;
-	const auto msdf_height = msdf_pixel_height / character_msdf_size;
-	const auto msdf_count = msdf_pixel_count / character_msdf_size;
-
-	const auto maximum_character_count = msdf_width * msdf_height * msdf_count;
+	if (!cooked.verify_size()) {
+		log::error::major << "Seems like a font was corrupted while being cooked.";
+		log::info::critical << "Path: " << filename << ".";
+	}
 
 	std::unordered_map<size_t, detail::glyph_info> font_data;
-	std::vector<msdfgen::Shape> shapes;
 
 	size_t char_code;
 	unsigned index;
 	size_t counter = 0;
 	char_code = FT_Get_First_Char(face, &index);
 	while (index != 0) {
-		if (char_code > 40 && char_code < 60) { //!!!TEMPORARY!!!
-			font_data.insert(std::pair(char_code, detail::glyph_info{ counter++ }));
-			shapes.push_back(to_shape(face, char_code));
-		}
+		font_data.emplace(
+			char_code, detail::glyph_info{
+				counter++
+			}
+		);
 		char_code = FT_Get_Next_Char(face, FT_ULong(char_code), &index);
 	}
 
-	if (maximum_character_count < font_data.size()) {
-		log::error::critical << "Font is too big to fully load.";
-		log::info::critical << "Number of characters in the font: " << font_data.size();
-		log::info::critical << "Maximum number of supported characters per font: " << maximum_character_count;
+	if (cooked.number() < font_data.size()) {
+		log::error::critical << "Cooked font size is different from the real font. "
+			"There's possibility one of the files was corrupted.";
+		log::info::critical << "Number of characters in the font file: " << font_data.size();
+		log::info::critical << "Number of characters in cooked file: " << cooked.number();
 	}
 
-	auto bitmap_data = calculate_bitmap_data<character_msdf_size>(shapes);
-
-	std::vector<msdfgen::Bitmap<float, color_count>> msdfs;
-	for (auto &shape : shapes) {
-		msdfs.emplace_back(character_msdf_size, character_msdf_size);
-		generateMSDF(msdfs.back(), shape, 1.0, bitmap_data.scale, 
-					 { bitmap_data.translation_x, bitmap_data.translation_y });
-	}
-
-	size_t width, height, count;
-	if (font_data.size() < msdf_width) {
-		width = font_data.size();
-		height = 1;
-		count = 1;
-	} else if (font_data.size() < msdf_width * msdf_height) {
-		width = msdf_width;
-		height = size_t(std::ceil(float(font_data.size()) / msdf_width));
-		count = 1;
-	} else {
-		width = msdf_width;
-		height = msdf_height;
-		count = size_t(std::ceil(float(font_data.size()) / msdf_width / msdf_height));
-	}
-	size_t characters_per_layer = width * height;
-	size_t layer_size = characters_per_layer * color_count;
-	size_t bitmap_size = character_msdf_size * character_msdf_size;
-
-	size_t w = -2, h = -2;
-	std::vector<std::vector<unsigned char>> output;
-	for (auto &bitmap : msdfs) {
-		if (++w >= width) {
-			w = 0;
-			if (++h >= height) {
-				h = 0;
-				output.emplace_back(layer_size * bitmap_size);
-			}
-		}
-
-		for (size_t j = 0; j < size_t(bitmap.height()); j++)
-			for (size_t i = 0; i < size_t(bitmap.width()); i++) {
-				auto index = (
-					(i + w * character_msdf_size) +
-					(j + h * character_msdf_size) * width * character_msdf_size
-				) * color_count;
-
-				auto *temp = bitmap(int(i), int(bitmap.height() - j + 1));
-				for (size_t i = 0; i < color_count; i++)
-					output.back()[index + i] = to_byte(temp[i]);
-			}
-	}
-
-	static size_t texture_counter = 0;
-	for (auto &texture : output)
-		lodepng::encode("texture_" + std::to_string(texture_counter++) + "_" + face->family_name + ".png",
-						texture,
-						unsigned(width * character_msdf_size),
-						unsigned(height * character_msdf_size),
-						LCT_RGB);
-
-	return clap::render::font{ gl::texture::_2d_array(nullptr, 32, 32, 1) };
+	FT_Done_Face(face);
+	return {
+		gl::texture::_2d_array((void *) cooked.data(), cooked.width, cooked.height, cooked.count),
+		std::move(font_data)
+	};
 }
