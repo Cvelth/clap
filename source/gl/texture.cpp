@@ -94,6 +94,22 @@ void clap::gl::texture::detail::interface::set_texture_wrap_r(wrap wrap) {
 											  gl::detail::convert::to_gl(wrap));
 }
 
+size_t clap::gl::texture::detail::interface::maximum_size() {
+	GLint out = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &out);
+	return size_t(out);
+}
+size_t clap::gl::texture::detail::interface::maximum_layer_count() {
+	GLint out = 0;
+	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &out);
+	return size_t(out);
+}
+size_t clap::gl::texture::detail::interface::maximum_3d_size() {
+	GLint out = 0;
+	glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &out);
+	return size_t(out);
+}
+
 
 clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bool generate_mipmap,
 							texture::internal_format internal_format, external_format external_format,

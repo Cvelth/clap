@@ -140,6 +140,10 @@ namespace clap::gl::texture {
 
 			uint32_t operator*() const { return id; }
 
+			static size_t maximum_size();
+			static size_t maximum_layer_count();
+			static size_t maximum_3d_size();
+
 		protected:
 			target target;
 			internal_format internal_format;
@@ -168,6 +172,7 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, generate_mipmap, 0, width, 0, external_format, external_type);
 		}
+		static size_t maximum_width() {	return maximum_size(); }
 	protected:
 		_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
@@ -198,6 +203,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
 	protected:
 		_2d(texture::target target, void *data, size_t width, size_t height, 
 			bool generate_mipmap = true,
@@ -230,6 +237,9 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_3d_size(); }
+		static size_t maximum_height() { return maximum_3d_size(); }
+		static size_t maximum_depth() { return maximum_3d_size(); }
 	protected:
 		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth, 
 			bool generate_mipmap = true,
@@ -263,6 +273,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_count() { return maximum_layer_count(); }
 	};
 
 	class _2d_array : public _3d {
@@ -290,6 +302,9 @@ namespace clap::gl::texture {
 			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, 
 					   external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
+		static size_t maximum_count() { return maximum_layer_count(); }
 	};
 
 	class rectangle : public _2d {
@@ -312,6 +327,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
 	};
 
 	class multisample : public detail::interface {
