@@ -21,32 +21,32 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{2e934eac-b07e-460b-a2b0-c5ccbf0b7a21}</ProjectGuid>
-    <RootNamespace>msdfgen</RootNamespace>
+    <ProjectGuid>{cccdf07c-81c0-4eac-a04a-05543365bf29}</ProjectGuid>
+    <RootNamespace>text</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -86,10 +86,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MSDFGEN_USE_OPENMP;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\include\msdfgen;..\..\include\msdfgen\core</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,10 +102,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MSDFGEN_USE_OPENMP;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\include\msdfgen;..\..\include\msdfgen\core</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,10 +118,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MSDFGEN_USE_OPENMP;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\include\msdfgen;..\..\include\msdfgen\core</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,10 +134,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MSDFGEN_USE_OPENMP;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\include\msdfgen;..\..\include\msdfgen\core</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,50 +147,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\msdfgen\core\arithmetics.hpp" />
-    <ClInclude Include="..\..\include\msdfgen\core\Bitmap.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\Bitmap.hpp" />
-    <ClInclude Include="..\..\include\msdfgen\core\BitmapRef.hpp" />
-    <ClInclude Include="..\..\include\msdfgen\core\contour-combiners.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\Contour.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\edge-coloring.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\edge-segments.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\edge-selectors.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\EdgeColor.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\EdgeHolder.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\equation-solver.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\estimate-sdf-error.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\pixel-conversion.hpp" />
-    <ClInclude Include="..\..\include\msdfgen\core\rasterization.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\render-sdf.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\save-bmp.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\save-tiff.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\Scanline.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\shape-description.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\Shape.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\SignedDistance.h" />
-    <ClInclude Include="..\..\include\msdfgen\core\Vector2.h" />
-    <ClInclude Include="..\..\include\msdfgen\msdfgen.h" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\msdfgen\contour-combiners.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\Contour.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\edge-coloring.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\edge-segments.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\edge-selectors.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\EdgeHolder.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\equation-solver.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\estimate-sdf-error.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\msdfgen.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\rasterization.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\render-sdf.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\save-bmp.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\save-tiff.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\Scanline.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\shape-description.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\Shape.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\SignedDistance.cpp" />
-    <ClCompile Include="..\..\source\msdfgen\Vector2.cpp" />
+    <ClInclude Include="window.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\project\render\render.vcxproj">
+      <Project>{8ee84b2b-1292-4ac5-bdc6-d4de3cc12c30}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\project\resource\resource.vcxproj">
+      <Project>{31d0519b-362b-481c-9408-a9635e955737}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\project\window\window.vcxproj">
+      <Project>{7ad5ae88-bf73-4e51-ba1b-fb624659b69f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

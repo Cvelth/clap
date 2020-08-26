@@ -104,63 +104,10 @@ void load_fonts(std::filesystem::directory_entry const &path) {
 	std::filesystem::path cooked_directory = std::filesystem::absolute(path.path() / "../../cooked/font");
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
 		if (!subpath.is_directory()) {
-			auto cooked_path = (cooked_directory / subpath.path().lexically_relative(path)).replace_extension() += "_msdf.bin";
-
-			bool should_cook = false;
-			if (!std::filesystem::exists(cooked_path)) {
-				should_cook = true;
-				clap::log::message::negligible << "The font is not cooked. Initializing cooking.";
-				clap::log::info::major << "Path: '" << subpath.path() << "'.";
-			} else if (std::filesystem::last_write_time(cooked_path) < std::filesystem::last_write_time(subpath)) {
-				should_cook = true;
-				clap::log::message::negligible << "The font was changed after it was cooked. Initializing cooking.";
-				clap::log::info::major << "Path: '" << subpath.path() << "'.";
-			}
-			std::filesystem::create_directories(cooked_path.parent_path());
-
-			clap::render::detail::cooked_t cooked;
-			if (!should_cook) {
-				std::ifstream file(cooked_path, std::ios::in | std::ios::binary);
-				if (!file) {
-					clap::log::warning::critical << "Cannot open file to load cooked data. Data is cooked once more.";
-					clap::log::info::major << "Path: " << cooked_path << ".";
-					should_cook = true;
-				} else {
-					file.read((char *) &cooked.width, sizeof(decltype(cooked.width)));
-					file.read((char *) &cooked.height, sizeof(decltype(cooked.height)));
-					file.read((char *) &cooked.count, sizeof(decltype(cooked.count)));
-					file.read((char *) &cooked.character, sizeof(decltype(cooked.character)));
-					file.read((char *) &cooked.color_count, sizeof(decltype(cooked.color_count)));
-
-					cooked.update_size();
-					file.read((char *) cooked.data(), cooked.size());
-				}
-			}
-			if (should_cook) {
-				cooked = clap::render::font::cook(subpath.path());
-
-				std::ofstream file(cooked_path, std::ios::out | std::ios::binary);
-				if (!file) {
-					clap::log::warning::critical << "Cannot open file to save cooked data. Data is not saved.";
-					clap::log::info::major << "Path: " << cooked_path << ".";
-				} else {
-					file.write((const char *) &cooked.width, sizeof(decltype(cooked.width)));
-					file.write((const char *) &cooked.height, sizeof(decltype(cooked.height)));
-					file.write((const char *) &cooked.count, sizeof(decltype(cooked.count)));
-					file.write((const char *) &cooked.character, sizeof(decltype(cooked.character)));
-					file.write((const char *) &cooked.color_count, sizeof(decltype(cooked.color_count)));
-					file.write((const char *) cooked.data(), cooked.size());
-
-					clap::log::message::minor << "A font was cooked.";
-					clap::log::info::major << "Font path: '" << subpath.path() << "'.";
-					clap::log::info::major << "Cooked path: '" << cooked_path << "'.";
-				}
-			}
-
 			clap::resource::detail::load_resource(
 				subpath.path().lexically_relative(path).replace_extension().string(),
 				clap::resource::font,
-				new clap::render::font{ clap::render::font::load(subpath.path(), cooked) }
+				new clap::render::font{ clap::render::font::load(subpath.path()) }
 			);
 			clap::log::message::minor << "A font was loaded.";
 			clap::log::info::major << "Path: '" << subpath.path() << "'.";

@@ -14,15 +14,9 @@
     <ClInclude Include="..\..\include\essential\log.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\essential\locale.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\essential\log.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\essential\locale.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

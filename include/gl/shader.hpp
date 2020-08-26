@@ -131,10 +131,11 @@ namespace clap::gl::shader {
 		using std::map<std::string, detail::variable>::cend;
 		using std::map<std::string, detail::variable>::crbegin;
 		using std::map<std::string, detail::variable>::crend;
+
+		//variables(variables const &) = default;
+		//variables(variables &&) noexcept = default;
 	private:
-		variables() = default;
-		variables(variables const &) = default;
-		variables(variables &&) noexcept = default;
+		//variables() = default;
 	};
 
 	class program {
