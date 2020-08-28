@@ -157,9 +157,6 @@
     <ClInclude Include="..\..\include\render\text.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\dependency\project\freetype\freetype.vcxproj">
-      <Project>{bdadb366-cf36-4c1f-bbd3-fdb19ea982c6}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\gl\gl.vcxproj">
       <Project>{d377c27b-a289-4be4-9c82-f1fc300aabfc}</Project>
     </ProjectReference>

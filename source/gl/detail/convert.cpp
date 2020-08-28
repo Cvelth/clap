@@ -5,7 +5,7 @@
 #include "gl/texture.hpp"
 #include "gl/vertex_array.hpp"
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::target v) {
 	switch (v) {

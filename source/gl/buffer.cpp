@@ -3,7 +3,7 @@
 #include "gl/detail/state.hpp"
 #include "essential/log.hpp"
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 
 clap::gl::buffer::multiple::multiple(size_t count)
 	: count(count), currently_mapped_id(size_t(-1)), currently_mapped_pointer(nullptr) {

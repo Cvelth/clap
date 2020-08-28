@@ -1,6 +1,6 @@
 #include "gl/texture.hpp"
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 
 #include "gl/detail/state.hpp"
 #include "essential/log.hpp"
