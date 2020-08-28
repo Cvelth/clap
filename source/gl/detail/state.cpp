@@ -1,6 +1,6 @@
 #include "gl/detail/state.hpp"
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 #include "glfw/glfw3.h"
 
 #include "window/detail/glfw.hpp"
@@ -16,7 +16,7 @@ bool clap::gl::detail::state::load() {
 			return false;
 		}
 
-		bool out = gladLoadGL((GLADloadfunc) glfwGetProcAddress);
+		bool out = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 		if (!out)
 			log::error::critical << "Unable to load GL. 'glad' returns false.";
 		was_loaded = true;
