@@ -10,6 +10,7 @@
 #ifdef _MSC_VER
 	#pragma warning(disable: 4996)
 #endif
+
 std::string current_time_stamp(const char *mask) {
 	auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	struct tm time_struct = *localtime(&now);
@@ -25,10 +26,10 @@ std::string filename_time_stamp() {
 	return current_time_stamp("%Y-%m-%d %H-%M-%S");
 }
 
-void clap::log::detail::stream::initialize_writing() {
+void clap::log::detail::stream::initialize_entry() {
 	static size_t message_count = 0;
 	if (static_cast<bool>(severity & ~detail::severity_mask::info_every)) {
-		std::move(*this) << "\n > "; 
+		std::move(*this) << "\n!>> "; 
 		
 		if (static_cast<bool>(severity & detail::severity_mask::error_every))
 			std::move(*this) << "error ";
@@ -36,32 +37,34 @@ void clap::log::detail::stream::initialize_writing() {
 			std::move(*this) << "warning ";
 		else if (static_cast<bool>(severity & detail::severity_mask::message_every))
 			std::move(*this) << "message ";
+		else
+			std::move(*this) << "unknown entry ";
 
 		std::move(*this) << "[0x" << std::hex << message_count++ << std::dec << "] " 
-			<< verbose_time_stamp() << " <\n";
+			<< verbose_time_stamp() << " <<!\n";
 	}
 }
 
-void clap::log::detail::stream::finish_writing() {
+void clap::log::detail::stream::finish_entry() {
 	std::move(*this) << '\n';
 
-	if (static_cast<bool>(severity & logger_ref.exception_mask)) {
+	if (static_cast<bool>(severity & logger_state_ref.exception_mask)) {
 		std::move(*this) << "\nBecause of the error a 'logger_exception' is raised.\n";
-		throw clap::detail::logger_exception();
+		throw clap::log::detail::logger_exception();
 	}
 
-	if (static_cast<bool>(severity & logger_ref.termination_mask)) {
+	if (static_cast<bool>(severity & logger_state_ref.termination_mask)) {
 		std::move(*this) << "\nBecause of the error the program is being terminated.\n";
 		std::terminate();
 	}
 }
 
-clap::detail::logger_t &clap::logger() {
-	static detail::logger_t object;
+clap::log::detail::logger_state_t &clap::logger() {
+	static log::detail::logger_state_t object;
 	return object;
 }
 
-clap::detail::logger_t::~logger_t() {
+clap::log::detail::logger_state_t::~logger_state_t() {
 	log::message::minor << "Logging is over. Logger destructor was called.";
 	log::info::major << other_streams.size() + owned_streams.size() << " streams were used.";
 	log::info::major << owned_streams.size() << " streams were owned.";
@@ -70,7 +73,7 @@ clap::detail::logger_t::~logger_t() {
 		delete stream_ptr.first;
 }
 
-void clap::detail::logger_t::add_stream(std::ostream &stream, logger_mask mask) {
+void clap::log::detail::logger_state_t::add_stream(std::ostream &stream, logger_mask mask) {
 	if (!stream) {
 		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
 		return;
@@ -88,11 +91,11 @@ void clap::detail::logger_t::add_stream(std::ostream &stream, logger_mask mask) 
 	}
 }
 
-void clap::detail::logger_t::add_file(std::filesystem::path const &filename, logger_mask mask) {
+void clap::log::detail::logger_state_t::add_file(std::filesystem::path const &filename, logger_mask mask) {
 	add_file_wo_timestamp(std::filesystem::path(filename) += filename_time_stamp(), mask);
 }
 
-void clap::detail::logger_t::add_file_wo_timestamp(std::filesystem::path const &filename, logger_mask mask) {
+void clap::log::detail::logger_state_t::add_file_wo_timestamp(std::filesystem::path const &filename, logger_mask mask) {
 	auto full_filename = (std::filesystem::path("log") / filename) += ".log";
 	auto directory_path = full_filename.parent_path();
 
