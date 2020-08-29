@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "nowide/iostream.hpp"
+
 //Temporary. To be redesigned after c++20 date-time support arrives.
 #include <time.h>
 #ifdef _MSC_VER
@@ -48,7 +50,12 @@ void clap::log::detail::stream::initialize_entry() {
 void clap::log::detail::stream::finish_entry() {
 	std::move(*this) << '\n';
 	for (auto &wrapper : logger_state_ref.used_streams)
-		std::visit([](auto &ptr) { ptr->flush(); }, *wrapper);
+		std::visit(
+			[](auto &ptr) { 
+				if (ptr && *ptr)
+					ptr->flush(); 
+			}, *wrapper
+		);
 
 	if (static_cast<bool>(severity & logger_state_ref.exception_mask)) {
 		std::move(*this) << "\nBecause of the error a 'logger_exception' is raised.\n";
@@ -69,6 +76,8 @@ clap::log::detail::logger_state_t &clap::logger() {
 clap::log::detail::logger_state_t::~logger_state_t() {
 	log::message::minor << "Logging is over. Logger destructor was called.";
 	log::info::major << used_streams.size() << " streams were used.";
+
+	used_streams.clear();
 }
 
 void clap::log::detail::logger_state_t::add_stream(std::ostream &stream, logger_mask mask) {
@@ -147,28 +156,6 @@ void clap::log::detail::logger_state_t::add_stream(std::wostream &stream, logger
 	}
 }
 
-void clap::log::detail::logger_state_t::add_stream(nowide::ofstream &stream, log::detail::severity_mask mask) {
-	if (!stream) {
-		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
-		return;
-	}
-
-	log::message::minor << "Logging to a stream was initialized.";
-	log::info::critical << "Stream is a user-controled object";
-	log::info::critical << "Make sure the lifetime of the stream exceeds lifetime of the logger.";
-	used_streams.emplace_back(stream, mask);
-}
-
-void clap::log::detail::logger_state_t::add_stream(nowide::detail::winconsole_ostream &stream, log::detail::severity_mask mask) {
-	if (!stream) {
-		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
-		return;
-	}
-
-	log::message::minor << "Logging to a stream was initialized.";
-	used_streams.emplace_back(stream, mask);
-}
-
 void clap::log::detail::logger_state_t::add_file(std::filesystem::path const &filename, logger_mask mask) {
 	add_file_wo_timestamp(std::filesystem::path(filename) += filename_time_stamp(), mask);
 }
@@ -195,25 +182,29 @@ void clap::log::detail::logger_state_t::add_file_wo_timestamp(std::filesystem::p
 }
 
 clap::log::detail::stream_wrapper::~stream_wrapper() {
-	if (owned)
-		std::visit(
-			[](auto *stream) { 
-				if (stream) 
+	std::visit(
+		overload{
+			[](nowide::ofstream *stream) {
+				if (stream)
 					delete stream;
-			}, stream
-		);
+			},
+			[](auto *stream) {}
+		}, stream
+	);
 }
 
-clap::log::detail::stream_wrapper::stream_wrapper(stream_wrapper &&other) 
-	: stream(other.stream), owned(other.owned), mask(other.mask), write_next_info(other.write_next_info) {
+clap::log::detail::stream_wrapper::stream_wrapper(stream_wrapper &&other)
+	: stream(other.stream), mask(other.mask), write_next_info(other.write_next_info) {
 	std::visit(
-		[](auto &stream) { 
-			stream = nullptr; 
+		[](auto &stream) {
+			stream = nullptr;
 		}, other.stream);
 }
 
 clap::log::detail::stream_wrapper::operator bool() const {
-	return std::visit([](auto const *stream) { 
-		return stream && bool(*stream); 
-	}, stream);
+	return std::visit(
+		[](auto const *stream) {
+			return stream && bool(*stream);
+		}, stream
+	);
 }

@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <filesystem>
-#include <fstream>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -9,7 +8,6 @@
 
 #include "nowide/convert.hpp"
 #include "nowide/fstream.hpp"
-#include "nowide/iostream.hpp"
 
 /**
  * @brief Contains implementation details
@@ -191,7 +189,7 @@ namespace clap::log::detail {
 		friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
 
 		/**
-		 * @brief flushes 
+		 * @brief flushes
 		*/
 		void flush();
 
@@ -339,20 +337,12 @@ namespace clap::log::detail {
 		friend class logger_state_t;
 		template <typename rhs_t> friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
 	public:
-		stream_wrapper(std::ostream &stream, log::detail::severity_mask mask) 
-			: stream(&stream), owned(false), mask(mask), write_next_info(false) {}
-		stream_wrapper(std::wostream &stream, log::detail::severity_mask mask) 
-			: stream(&stream), owned(false), mask(mask), write_next_info(false) {}
-		stream_wrapper(nowide::ofstream &stream, log::detail::severity_mask mask) 
-			: stream(&stream), owned(false), mask(mask), write_next_info(false) {}
-		stream_wrapper(nowide::detail::winconsole_ostream &stream, log::detail::severity_mask mask) 
-			: stream(&stream), owned(false), mask(mask), write_next_info(false) {}
-		stream_wrapper(std::ostream *stream, log::detail::severity_mask mask) 
-			: stream(stream), owned(true), mask(mask), write_next_info(false) {}
-		stream_wrapper(std::wostream *stream, log::detail::severity_mask mask) 
-			: stream(stream), owned(true), mask(mask), write_next_info(false) {}
-		stream_wrapper(nowide::ofstream *stream, log::detail::severity_mask mask) 
-			: stream(stream), owned(true), mask(mask), write_next_info(false) {}
+		stream_wrapper(std::ostream &stream, log::detail::severity_mask mask)
+			: stream(&stream), mask(mask), write_next_info(false) {}
+		stream_wrapper(std::wostream &stream, log::detail::severity_mask mask)
+			: stream(&stream), mask(mask), write_next_info(false) {}
+		stream_wrapper(nowide::ofstream *stream, log::detail::severity_mask mask)
+			: stream(stream), mask(mask), write_next_info(false) {}
 		~stream_wrapper();
 
 		stream_wrapper(stream_wrapper const &) = delete;
@@ -367,29 +357,12 @@ namespace clap::log::detail {
 		template<typename rhs_t>
 		stream_wrapper &operator<<(rhs_t const &rhs);
 
-		/**
-		 * @brief operator<<() for utf-8 strings;
-		 * @param rhs string
-		 * @return `*this`
-		*/
 		inline stream_wrapper &operator<<(char8_t const *rhs) {
 			return *this << (char *) rhs;
 		}
-
-		/**
-		 * @brief operator<<() for utf-8 strings;
-		 * @param rhs string
-		 * @return `*this`
-		*/
 		inline stream_wrapper &operator<<(std::basic_string<char8_t> const &rhs) {
 			return *this << (char *) rhs.c_str();
 		}
-
-		/**
-		 * @brief operator<<() for utf-8 strings;
-		 * @param rhs string
-		 * @return `*this`
-		*/
 		inline stream_wrapper &operator<<(std::basic_string_view<char8_t> const &rhs) {
 			return *this << (char *) rhs.data();
 		}
@@ -401,7 +374,7 @@ namespace clap::log::detail {
 
 		/**
 		 * @brief Returns a reference to an unrelying stream.
-		 * @return 
+		 * @return
 		*/
 		auto &operator*() { return stream; };
 
@@ -409,11 +382,8 @@ namespace clap::log::detail {
 		std::variant<
 			std::ostream *,
 			std::wostream *,
-			nowide::ofstream *,
-			nowide::detail::winconsole_ostream *
+			nowide::ofstream *
 		> stream;
-
-		const bool owned;
 
 		log::detail::severity_mask mask;
 		mutable bool write_next_info;
@@ -430,7 +400,7 @@ namespace clap::log::detail {
 		~logger_state_t();
 
 		/**
-		 * @brief Adds a stream (e.g. std::cout) as an output target for the logger.
+		 * @brief Adds a stream (e.g. `std::cout`) as an output target for the logger.
 		 * @param stream is the stream reference.
 		 * @param mask is the mask defining which entries are to be sent to the stream.
 		 *		It's recommended to only use masks defined in clap::logger_mask.
@@ -439,31 +409,13 @@ namespace clap::log::detail {
 		void add_stream(std::ostream &stream, log::detail::severity_mask mask);
 
 		/**
-		 * @brief Adds a stream (e.g. std::cout) as an output target for the logger.
+		 * @brief Adds a **wide** stream (e.g. `std::wcout`) as an output target for the logger.
 		 * @param stream is the stream reference.
 		 * @param mask is the mask defining which entries are to be sent to the stream.
 		 *		It's recommended to only use masks defined in clap::logger_mask.
 		 *		@see clap::logger_mask
 		*/
 		void add_stream(std::wostream &stream, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Adds a stream (e.g. std::cout) as an output target for the logger.
-		 * @param stream is the stream reference.
-		 * @param mask is the mask defining which entries are to be sent to the stream.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_stream(nowide::ofstream &stream, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Adds a stream (e.g. std::cout) as an output target for the logger.
-		 * @param stream is the stream reference.
-		 * @param mask is the mask defining which entries are to be sent to the stream.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_stream(nowide::detail::winconsole_ostream &stream, log::detail::severity_mask mask);
 
 		/**
 		 * @brief Adds a text file as an output target for the logger.
@@ -495,13 +447,13 @@ namespace clap::log::detail {
 		 * @param mask is the mask defining which entries are to be logged.
 		 *		It's recommended to only use masks defined in clap::logger_mask.
 		 *		@see clap::logger_mask
-		 * 
+		 *
 		 * It's disabled by default.
 		*/
 		inline void enable_exceptions(log::detail::severity_mask mask) { exception_mask = mask; }
 		/**
 		 * @brief Disables an exception thrown when a new entry with specified severity is logged.
-		 * 
+		 *
 		 * It's disabled by default.
 		*/
 		inline void disable_exceptions() { enable_exceptions(log::detail::severity_mask::none); }
@@ -511,14 +463,14 @@ namespace clap::log::detail {
 		 * @param mask is the mask defining which entries are to be logged.
 		 *		It's recommended to only use masks defined in clap::logger_mask.
 		 *		@see clap::logger_mask
-		 * 
+		 *
 		 * It's enabled for errors by default.
 		*/
 		inline void enable_termination(log::detail::severity_mask mask) { termination_mask = mask; }
 
 		/**
 		 * @brief Disables std::terminate() called when a new entry with specified severity is logged.
-		 * 
+		 *
 		 * It's enabled for errors by default.
 		*/
 		inline void disable_termination() { enable_termination(log::detail::severity_mask::none); }
@@ -557,21 +509,21 @@ namespace clap::log::detail {
 
 		/**
 		 * @brief Stores mask specifying errors/warnings/messages that require an exception to be thrown.
-		 * 
+		 *
 		 * It's disabled by default.
 		*/
 		log::detail::severity_mask exception_mask;
 
 		/**
 		 * @brief Stores mask specifying errors/warnings/messages that require a std::terminate() call.
-		 * 
+		 *
 		 * It's enabled for errors by default.
 		*/
 		log::detail::severity_mask termination_mask;
 
 		/**
 		 * @brief Determines whether standard output (e.g. 'std::cout') should be replaced with nowide provided alternative (e.g. 'nowide::cout').
-		 * 
+		 *
 		 * It's enabled by default.
 		*/
 		bool replace_std_with_nowide;
@@ -654,8 +606,9 @@ clap::log::detail::stream &&operator<<(clap::log::detail::stream &&stream, rhs_t
 				} else
 					wrapper.write_next_info = false; // following info-entries shouldn't be written.
 			}
-		} else
-			clap::log::warning::critical << "Cannot write an log entry. One of the streams seems to be corrupted.";
+		} else {
+			//clap::log::warning::critical << "Cannot write an log entry. One of the streams seems to be corrupted.";
+		}
 	}
 	return std::move(stream);
 }
@@ -667,16 +620,19 @@ namespace clap::log::detail {
 
 template<typename rhs_t>
 inline clap::log::detail::stream_wrapper &clap::log::detail::stream_wrapper::operator<<(rhs_t const &rhs) {
-	std::visit(overload{
-		[&rhs](std::ostream *stream) {
-			*stream << rhs;
-		}, [&rhs](std::wostream *stream) {
-			std::ostringstream temp; temp << rhs;
-			*stream << nowide::widen(temp.str());
-		}, [&rhs](nowide::ofstream *stream) {
-			*stream << rhs;
-		}, [&rhs](nowide::detail::winconsole_ostream *stream) {
-			*stream << rhs;
-	}}, stream);
+	std::visit(
+		overload{
+			[&rhs](std::ostream *stream) {
+				*stream << rhs;
+			},
+			[&rhs](std::wostream *stream) {
+				// Temporary solution.
+				std::ostringstream temp; temp << rhs;
+				*stream << nowide::widen(temp.str());
+			},
+			[&rhs](nowide::ofstream *stream) {
+				*stream << rhs;
+			}
+		}, stream);
 	return *this;
 }
