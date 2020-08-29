@@ -1,4 +1,4 @@
-#include "window.hpp"
+﻿#include "window.hpp"
 #include "resource/resource.hpp"
 
 #include <chrono>

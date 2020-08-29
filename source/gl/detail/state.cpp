@@ -1,4 +1,4 @@
-#include "gl/detail/state.hpp"
+﻿#include "gl/detail/state.hpp"
 
 #include "glad/glad.h"
 #include "glfw/glfw3.h"

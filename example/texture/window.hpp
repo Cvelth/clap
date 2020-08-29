@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "window/window_interface.hpp"
 #include "gl/gl.hpp"
 
