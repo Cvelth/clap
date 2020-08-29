@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "gl/buffer.hpp"
 #include "gl/misc.hpp"
 #include "gl/shader.hpp"

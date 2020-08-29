@@ -1,4 +1,4 @@
-#include "resource/resource.hpp"
+﻿#include "resource/resource.hpp"
 #include "essential/log.hpp"
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
