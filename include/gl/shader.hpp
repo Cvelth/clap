@@ -7,6 +7,10 @@
 
 typedef unsigned int GLenum;
 
+namespace std::filesystem {
+	class path;
+}
+
 namespace clap::gl::detail {
 	class state;
 }
@@ -51,9 +55,7 @@ namespace clap::gl::shader {
 	detail::object from_source(type type, std::string_view source);
 	detail::object from_source(type type, char const *source);
 
-	detail::object from_file(type type, std::string filename);
-	detail::object from_file(type type, std::string_view filename);
-	detail::object from_file(type type, char const *filename);
+	detail::object from_file(type type, std::filesystem::path const &filename);
 
 	namespace detail {
 		namespace variable_type_t {
