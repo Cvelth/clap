@@ -2,6 +2,8 @@
 #include <map>
 #include <string>
 
+#include "nowide/convert.hpp"
+
 namespace clap::gl::shader::detail {
 	class object;
 }
@@ -33,31 +35,31 @@ namespace clap::resource::detail {
 	class resource_container_t;
 
 	template<typename storage_t, typename object_t>
-	void load_resource(std::string const &access_name, storage_t &storage, object_t *object) {
+	void load_resource(std::basic_string<char8_t> const &access_name, storage_t &storage, object_t *object) {
 		storage.insert(std::pair(access_name, object));
 	}
 
 	void unloaded_resource_check();
-	void non_existent_file_error(std::string const &identificator);
+	void non_existent_file_error(std::basic_string<char8_t> const &identificator);
 	
 	template <typename T>
 	void call_destructor(T *ptr);
 
 	template<typename T>
-	using underlying_container_t = std::map<std::string, T *>;
+	using underlying_container_t = std::map<std::basic_string<char8_t>, T *>;
 	template <typename contained_typename>
 	class resource_container_t : private underlying_container_t<contained_typename> {
 		friend void clap::resource::clear();
 
 		template<typename storage_t, typename object_t>
-		friend void load_resource(std::string const &access_name, storage_t &storage, object_t *object);
+		friend void load_resource(std::basic_string<char8_t> const &access_name, storage_t &storage, object_t *object);
 
 		friend shader_object_storage_t;
 		friend texture_object_storage_t;
 		friend font_object_storage_t;
 
 	public:
-		contained_typename &operator[](std::string const &identificator) {
+		contained_typename &operator[](std::basic_string<char8_t> const &identificator) {
 			unloaded_resource_check();
 			if (auto found = underlying_container_t<contained_typename>::find(identificator); found != end())
 				return *found->second;
@@ -65,6 +67,12 @@ namespace clap::resource::detail {
 				non_existent_file_error(identificator);
 				throw std::exception{};
 			}
+		}
+		contained_typename &operator[](std::basic_string<char> const &identificator) {
+			return operator[](std::basic_string<char8_t>((char8_t const*) identificator.c_str()));
+		}
+		contained_typename &operator[](std::basic_string<wchar_t> const &identificator) {
+			return operator[](nowide::narrow(identificator));
 		}
 
 		using underlying_container_t<contained_typename>::begin;
