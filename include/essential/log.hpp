@@ -333,15 +333,16 @@ namespace clap::log {
 namespace clap::log::detail {
 	template <typename interface_t, typename actual_t, 
 		typename destructor_t = std::default_delete<typename actual_t>>
-	class wrapper_t {
+	class basic_polymorphic_wrapper {
 	public:
 		template <typename ...Ts>
-		wrapper_t(Ts const &...ts) : pointer(new actual_t{ts...}) {}
-		wrapper_t() : pointer(new actual_t{}) {}
-		~wrapper_t() { if (pointer) destructor_t{}((actual_t *) pointer); }
+		basic_polymorphic_wrapper(Ts const &...ts) : pointer(new actual_t{ts...}) {}
+		basic_polymorphic_wrapper() : pointer(new actual_t{}) {}
+		~basic_polymorphic_wrapper() { if (pointer) destructor_t{}((actual_t *) pointer); }
 
-		wrapper_t(wrapper_t const &) = delete;
-		wrapper_t(wrapper_t &&other) noexcept : pointer(other.pointer) { other.pointer = nullptr; }
+		basic_polymorphic_wrapper(basic_polymorphic_wrapper const &) = delete;
+		basic_polymorphic_wrapper(basic_polymorphic_wrapper &&other) noexcept 
+			: pointer(other.pointer) { other.pointer = nullptr; }
 
 		operator interface_t *() { return pointer; }
 		operator interface_t &() { return *pointer; }
@@ -359,7 +360,7 @@ namespace clap::log::detail {
 	struct nowide_ofstream_destructor_callable {
 		void operator()(nowide::ofstream *ptr);
 	};
-	using file_wrapper = wrapper_t<
+	using file_wrapper = basic_polymorphic_wrapper<
 		std::ostream, nowide::ofstream, 
 		nowide_ofstream_destructor_callable
 	>;
