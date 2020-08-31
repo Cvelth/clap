@@ -1,4 +1,4 @@
-#include "essential/log.hpp"
+﻿#include "essential/log.hpp"
 
 #include "gl/buffer.hpp"
 #include "gl/shader.hpp"

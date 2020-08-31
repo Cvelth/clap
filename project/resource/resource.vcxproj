@@ -153,9 +153,6 @@
     <ClCompile Include="..\..\source\resource\resource.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\dependency\dependency.vcxproj">
-      <Project>{25b6b285-4e22-4cfd-b0c1-6e380de85d52}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\gl\gl.vcxproj">
       <Project>{d377c27b-a289-4be4-9c82-f1fc300aabfc}</Project>
     </ProjectReference>

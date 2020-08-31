@@ -1,4 +1,4 @@
-#include "gl/buffer.hpp"
+﻿#include "gl/buffer.hpp"
 
 #include "gl/detail/state.hpp"
 #include "essential/log.hpp"

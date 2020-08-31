@@ -1,4 +1,4 @@
-#include "gl/shader.hpp"
+﻿#include "gl/shader.hpp"
 
 #include <fstream>
 #include <string>
@@ -70,7 +70,7 @@ clap::gl::shader::detail::object clap::gl::shader::from_source(type type, char c
 	return from_source(type, std::string(source));
 }
 
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string filename) {
+clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::filesystem::path const &filename) {
 	std::ifstream filestream;
 	filestream.open(filename);
 	if (!filestream) {
@@ -84,13 +84,6 @@ clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::str
 	};
 
 	return from_source(type, source);
-}
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string_view filename) {
-	return from_file(type, std::string(filename));
-}
-
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, char const *filename) {
-	return from_file(type, std::string(filename));
 }
 
 size_t clap::gl::shader::detail::variable::count() const {

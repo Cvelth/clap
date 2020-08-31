@@ -1,10 +1,11 @@
-#include "resource/resource.hpp"
+﻿#include "resource/resource.hpp"
 #include "essential/log.hpp"
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
 #include "render/font.hpp"
 
 #include <filesystem>
+#include <functional>
 #include <set>
 
 #include "lodepng/lodepng.h"
@@ -17,7 +18,7 @@ void clap::resource::detail::unloaded_resource_check() {
 		clap::log::info::major << "Call 'clap::resource::load()' before accessing them.";
 	}
 }
-void clap::resource::detail::non_existent_file_error(std::string const &identificator) {
+void clap::resource::detail::non_existent_file_error(std::basic_string<char8_t> const &identificator) {
 	clap::log::error::major << "Attempting to access a non-existent resource.";
 	clap::log::info::major << "Requested name is '" << identificator << "'.";
 }
@@ -40,11 +41,11 @@ void load_shaders(std::filesystem::directory_entry const &path) {
 			auto type = clap::gl::detail::convert::to_shader_type_from_string(folder.path().filename().string());
 			for (auto entry : std::filesystem::recursive_directory_iterator(folder))
 				if (!entry.is_directory()) {
-					auto identificator = entry.path().lexically_relative(folder).replace_extension().string();
+					auto identificator = entry.path().lexically_relative(folder).replace_extension().u8string();
 
 					clap::log::message::minor << "A " << type << " shader was loaded.";
 					clap::log::info::major << "Path: '" << entry.path() << "'.";
-					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry.path().string()));
+					auto *object = new clap::gl::shader::detail::object(clap::gl::shader::from_file(type, entry));
 
 					switch (type) {
 						case clap::gl::shader::type::fragment:
@@ -93,7 +94,7 @@ void load_textures(std::filesystem::directory_entry const &path) {
 			}
 
 			clap::resource::detail::load_resource(
-				subpath.path().lexically_relative(path).replace_extension().string(),
+				subpath.path().lexically_relative(path).replace_extension().u8string(),
 				clap::resource::texture::_2d,
 				new clap::gl::texture::_2d(image_data.data(), width, height)
 			);
@@ -101,11 +102,10 @@ void load_textures(std::filesystem::directory_entry const &path) {
 }
 
 void load_fonts(std::filesystem::directory_entry const &path) {
-	std::filesystem::path cooked_directory = std::filesystem::absolute(path.path() / "../../cooked/font");
 	for (auto subpath : std::filesystem::recursive_directory_iterator(path))
 		if (!subpath.is_directory()) {
 			clap::resource::detail::load_resource(
-				subpath.path().lexically_relative(path).replace_extension().string(),
+				subpath.path().lexically_relative(path).replace_extension().u8string(),
 				clap::resource::font,
 				new clap::render::font{ clap::render::font::load(subpath.path()) }
 			);
@@ -119,48 +119,74 @@ void load_others(std::filesystem::directory_entry const &path) {
 	clap::log::info::major << "Directory name is '" << path.path().filename() << "'.";
 }
 
-template<typename T>
-bool is_one_of(T const &value, std::initializer_list<std::string> const &list) {
+using load_function_t = std::function<void(std::filesystem::directory_entry)>;
+using path_set_function_pair = std::pair<
+	std::set<std::filesystem::path>,
+	load_function_t
+>;
+bool is_one_of(std::filesystem::path const &path, 
+			   std::set<std::filesystem::path> const &list) {
 	for (auto const &entry : list)
-		if (value == entry)
+		if (path.filename() == entry)
 			return true;
 	return false;
+}
+void folderwise_load(std::filesystem::directory_entry const &path,
+					 std::vector<path_set_function_pair> const &input,
+					 load_function_t const &on_fail) {
+	for (auto pair : input)
+		if (is_one_of(path, pair.first)) {
+			pair.second(path);
+			return;
+		}
+	on_fail(path);
 }
 
 void clap::resource::load() {
 	const std::set<std::filesystem::path> paths = {
-		std::filesystem::absolute("resource"),
-		std::filesystem::absolute("../resource"),
-		std::filesystem::absolute("../../resource"),
-		std::filesystem::absolute("../../../resource"),
-		std::filesystem::absolute("../../../../resource"),
+		std::filesystem::absolute(u8"resource"),
+		std::filesystem::absolute(u8"../resource"),
+		std::filesystem::absolute(u8"../../resource"),
+		std::filesystem::absolute(u8"../../../resource"),
+		std::filesystem::absolute(u8"../../../../resource"),
 
-		std::filesystem::absolute("clap/resource"),
-		std::filesystem::absolute("../clap/resource"),
-		std::filesystem::absolute("../../clap/resource"),
-		std::filesystem::absolute("../../../clap/resource"),
-		std::filesystem::absolute("../../../../clap/resource"),
+		std::filesystem::absolute(u8"clap/resource"),
+		std::filesystem::absolute(u8"../clap/resource"),
+		std::filesystem::absolute(u8"../../clap/resource"),
+		std::filesystem::absolute(u8"../../../clap/resource"),
+		std::filesystem::absolute(u8"../../../../clap/resource"),
 
-		std::filesystem::absolute("engine/resource"),
-		std::filesystem::absolute("../engine/resource"),
-		std::filesystem::absolute("../../engine/resource"),
-		std::filesystem::absolute("../../../engine/resource"),
-		std::filesystem::absolute("../../../../engine/resource"),
+		std::filesystem::absolute(u8"engine/resource"),
+		std::filesystem::absolute(u8"../engine/resource"),
+		std::filesystem::absolute(u8"../../engine/resource"),
+		std::filesystem::absolute(u8"../../../engine/resource"),
+		std::filesystem::absolute(u8"../../../../engine/resource"),
 	};
+	const std::vector<path_set_function_pair> resource_folder_names{
+		{
+			std::set<std::filesystem::path>{
+				u8"shader", u8"shaders", u8"Shader", u8"Shaders"
+			}, &load_shaders
+		},
+		{
+			std::set<std::filesystem::path>{
+				u8"texture", u8"textures", u8"Texture", u8"Textures"
+			}, &load_textures
+		},
+		{
+			std::set<std::filesystem::path>{
+				u8"font", u8"fonts", u8"Font", u8"Fonts"
+			}, &load_fonts
+		}
+	};
+
 	for (auto &path : paths)
 		if (std::filesystem::exists(path)) {
-			log::message::major << "Loading resources from '" << path.string() << "'.";
+			log::message::major << "Loading resources from '" << path << "'.";
 
 			for (auto &subpath : std::filesystem::directory_iterator(path))
 				if (std::filesystem::is_directory(subpath))
-					if (is_one_of(subpath.path().filename().string(), { "shader", "shaders", "Shader", "Shaders" }))
-						load_shaders(subpath);
-					else if (is_one_of(subpath.path().filename().string(), { "texture", "textures", "Texture", "Textures" }))
-						load_textures(subpath);
-					else if (is_one_of(subpath.path().filename().string(), { "font", "fonts", "Font", "Fonts" }))
-						load_fonts(subpath);
-					else
-						load_others(subpath);
+					folderwise_load(subpath, resource_folder_names, &load_others);
 				else {
 					log::warning::major << "Only directories are supported in the root of the resource directory.";
 					log::info::major << "'" << subpath.path() << "' was found instead.";

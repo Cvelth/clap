@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <filesystem>
 #include <unordered_map>
 #include "gl/texture.hpp"
