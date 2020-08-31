@@ -1,12 +1,19 @@
 ﻿#include "render/font.hpp"
 #include "render/detail/state.hpp"
 
+#include <fstream>
+
 #include "essential/log.hpp"
 
 namespace clap::render::detail {
 	class font_file_handle {
 	public:
 		FT_Face face;
+		std::vector<char> buffer;
+
+		~font_file_handle() {
+			FT_Done_Face(face);
+		}
 	};
 }
 
@@ -22,7 +29,20 @@ clap::render::font clap::render::font::load(std::filesystem::path const &filenam
 	detail::state::ensure_initialized();
 
 	auto *handle = new detail::font_file_handle{};
-	auto error = FT_New_Face(clap::render::detail::state::library(), filename.string().c_str(), 0, &handle->face);
+
+	std::ifstream font_file(filename, std::ios::in | std::ios::binary | std::ios::ate);
+	auto file_size = font_file.tellg();
+	font_file.seekg(0, std::ios::beg);
+
+	handle->buffer.resize(file_size);
+	if (!font_file.read(handle->buffer.data(), file_size)) {
+		log::error::major << "Font file cannot be loaded. 'std::ifstream::read' returns error.";
+		log::info::critical << "Path: " << filename << ".";
+	}
+
+	auto error = FT_New_Memory_Face(clap::render::detail::state::library(),
+									(FT_Byte const *) handle->buffer.data(),
+									(FT_Long) file_size, 0, &handle->face);
 	if (error == FT_Err_Unknown_File_Format) {
 		log::error::major << "Unsupported font file cannot be loaded.";
 		log::info::critical << "Path: " << filename << ".";
