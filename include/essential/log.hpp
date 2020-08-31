@@ -360,11 +360,21 @@ namespace clap::log::detail {
 		inline stream_wrapper &operator<<(char8_t const *rhs) {
 			return *this << (char *) rhs;
 		}
-		inline stream_wrapper &operator<<(std::basic_string<char8_t> const &rhs) {
-			return *this << (char *) rhs.c_str();
+		inline stream_wrapper &operator<<(wchar_t const *rhs) {
+			return *this << nowide::narrow(rhs);
 		}
-		inline stream_wrapper &operator<<(std::basic_string_view<char8_t> const &rhs) {
-			return *this << (char *) rhs.data();
+
+		template <typename Elem, typename Traits>
+		inline stream_wrapper &operator<<(std::basic_string<Elem, Traits> const &rhs) {
+			return *this << rhs.c_str();
+		}
+		template <typename Elem, typename Traits>
+		inline stream_wrapper &operator<<(std::basic_string_view<Elem, Traits> const &rhs) {
+			return *this << rhs.data();
+		}
+
+		inline stream_wrapper &operator<<(std::filesystem::path const &path) {
+			return *this << path.u8string();
 		}
 
 		/**
