@@ -2,7 +2,9 @@
 #include <map>
 #include <string>
 
-#include "nowide/convert.hpp"
+namespace nowide {
+	std::string narrow(const std::wstring &s);
+}
 
 namespace clap::gl::shader::detail {
 	class object;
