@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "nowide/convert.hpp"
+#include "nowide/fstream.hpp"
 #include "nowide/iostream.hpp"
 
 //Temporary. To be redesigned after c++20 date-time support arrives.
@@ -51,9 +53,9 @@ void clap::log::detail::stream::finish_entry() {
 	std::move(*this) << '\n';
 	for (auto &wrapper : logger_state_ref.used_streams)
 		std::visit(
-			[](auto &ptr) { 
+			[](auto &ptr) {
 				if (ptr && *ptr)
-					ptr->flush(); 
+					ptr->flush();
 			}, *wrapper
 		);
 
@@ -169,42 +171,29 @@ void clap::log::detail::logger_state_t::add_file_wo_timestamp(std::filesystem::p
 		log::message::negligible << "Creating '" << directory_path << "' directory ";
 	}
 
-	auto ptr = new nowide::ofstream();
-	ptr->open(nowide::narrow(full_filename.wstring()));
-	if (ptr->fail()) {
-		delete ptr;
+	file_wrapper wrapper;
+	(&wrapper).open(nowide::narrow(full_filename.wstring()));
+	if ((&wrapper).fail()) {
 		log::warning::major << "'clap::detail::logger' cannot open file '" << full_filename << "'.";
 		return;
 	}
 
-	used_streams.emplace_back(ptr, mask);
+	used_streams.emplace_back(std::move(wrapper), mask);
 	log::message::minor << "Logging to '" << full_filename << "' was initialized.";
-}
-
-clap::log::detail::stream_wrapper::~stream_wrapper() {
-	std::visit(
-		overload{
-			[](nowide::ofstream *stream) {
-				if (stream)
-					delete stream;
-			},
-			[](auto *stream) {}
-		}, stream
-	);
-}
-
-clap::log::detail::stream_wrapper::stream_wrapper(stream_wrapper &&other)
-	: stream(other.stream), mask(other.mask), write_next_info(other.write_next_info) {
-	std::visit(
-		[](auto &stream) {
-			stream = nullptr;
-		}, other.stream);
 }
 
 clap::log::detail::stream_wrapper::operator bool() const {
 	return std::visit(
-		[](auto const *stream) {
-			return stream && bool(*stream);
-		}, stream
-	);
+		overload{
+			[](auto const *stream) {
+				return stream && bool(*stream);
+			},
+			[](file_wrapper const &stream) {
+				return bool(*stream);
+			}
+		}, stream);
+}
+
+void clap::log::detail::nowide_ofstream_destructor_callable::operator()(nowide::ofstream *ptr) {
+	delete ptr;
 }

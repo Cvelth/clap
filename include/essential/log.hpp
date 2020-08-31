@@ -6,8 +6,14 @@
 #include <variant>
 #include <vector>
 
-#include "nowide/convert.hpp"
-#include "nowide/fstream.hpp"
+namespace nowide {
+	template<typename CharType, typename Traits>
+	class basic_ofstream;
+	typedef basic_ofstream<char, std::char_traits<char>> ofstream;
+
+	std::string narrow(const std::wstring &s);
+	inline std::wstring widen(const std::string &s);
+}
 
 /**
  * @brief Contains implementation details
@@ -188,11 +194,6 @@ namespace clap::log::detail {
 		template <typename rhs_t>
 		friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
 
-		/**
-		 * @brief flushes
-		*/
-		void flush();
-
 	private:
 		/**
 		 * @brief A reference to the logger the stream object writes to
@@ -330,6 +331,39 @@ namespace clap::log {
 }
 
 namespace clap::log::detail {
+	template <typename interface_t, typename actual_t, 
+		typename destructor_t = std::default_delete<typename actual_t>>
+	class wrapper_t {
+	public:
+		template <typename ...Ts>
+		wrapper_t(Ts const &...ts) : pointer(new actual_t{ts...}) {}
+		wrapper_t() : pointer(new actual_t{}) {}
+		~wrapper_t() { if (pointer) destructor_t{}((actual_t *) pointer); }
+
+		wrapper_t(wrapper_t const &) = delete;
+		wrapper_t(wrapper_t &&other) noexcept : pointer(other.pointer) { other.pointer = nullptr; }
+
+		operator interface_t *() { return pointer; }
+		operator interface_t &() { return *pointer; }
+
+		interface_t *operator->() { return pointer; };
+		interface_t *operator->() const { return pointer; };
+		interface_t &operator*() { return *pointer; };
+		interface_t &operator*() const { return *pointer; };
+		actual_t &operator&() { return *(actual_t *) pointer; };
+		actual_t &operator&() const { return *(actual_t *) pointer; };
+	private:
+		interface_t *pointer;
+	};
+
+	struct nowide_ofstream_destructor_callable {
+		void operator()(nowide::ofstream *ptr);
+	};
+	using file_wrapper = wrapper_t<
+		std::ostream, nowide::ofstream, 
+		nowide_ofstream_destructor_callable
+	>;
+
 	/**
 	 * @brief A single class able to wrap all the supported underlying stream types.
 	*/
@@ -341,12 +375,14 @@ namespace clap::log::detail {
 			: stream(&stream), mask(mask), write_next_info(false) {}
 		stream_wrapper(std::wostream &stream, log::detail::severity_mask mask)
 			: stream(&stream), mask(mask), write_next_info(false) {}
-		stream_wrapper(nowide::ofstream *stream, log::detail::severity_mask mask)
-			: stream(stream), mask(mask), write_next_info(false) {}
-		~stream_wrapper();
+		stream_wrapper(file_wrapper &&stream, log::detail::severity_mask mask)
+			: stream(std::move(stream)), mask(mask), write_next_info(false) {}
+		~stream_wrapper() = default;
 
 		stream_wrapper(stream_wrapper const &) = delete;
-		stream_wrapper(stream_wrapper &&other);
+		stream_wrapper(stream_wrapper &&other) noexcept
+			: stream(std::move(other.stream)), mask(other.mask), 
+			write_next_info(other.write_next_info) {}
 
 		/**
 		 * @brief Default operator<<().
@@ -392,7 +428,7 @@ namespace clap::log::detail {
 		std::variant<
 			std::ostream *,
 			std::wostream *,
-			nowide::ofstream *
+			file_wrapper
 		> stream;
 
 		log::detail::severity_mask mask;
@@ -640,7 +676,7 @@ inline clap::log::detail::stream_wrapper &clap::log::detail::stream_wrapper::ope
 				std::ostringstream temp; temp << rhs;
 				*stream << nowide::widen(temp.str());
 			},
-			[&rhs](nowide::ofstream *stream) {
+			[&rhs](file_wrapper const &stream) {
 				*stream << rhs;
 			}
 		}, stream);
