@@ -1,6 +1,7 @@
 ﻿#include "essential/log.hpp"
 
 #include "gl/buffer.hpp"
+#include "gl/misc.hpp"
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
 #include "gl/vertex_array.hpp"
@@ -1168,4 +1169,178 @@ clap::gl::vertex_array::index_type clap::gl::detail::convert::to_index_type(GLen
 		case GL_UNSIGNED_INT: return clap::gl::vertex_array::index_type::unsigned_int;
 	}
 	log::error::critical << "Unsupported enum value.";
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::detail::blend_function v) {
+	switch (v) {
+		case clap::gl::detail::blend_function::zero: return GL_ZERO;
+		case clap::gl::detail::blend_function::one: return GL_ONE;
+		case clap::gl::detail::blend_function::source_color: return GL_SRC_COLOR;
+		case clap::gl::detail::blend_function::one_minus_source_color: return GL_ONE_MINUS_SRC_COLOR;
+		case clap::gl::detail::blend_function::destination_color: return GL_DST_COLOR;
+		case clap::gl::detail::blend_function::one_minus_destination_color: return GL_ONE_MINUS_DST_COLOR;
+		case clap::gl::detail::blend_function::source_alpha: return GL_SRC_ALPHA;
+		case clap::gl::detail::blend_function::one_minus_source_alpha: return GL_ONE_MINUS_SRC_ALPHA;
+		case clap::gl::detail::blend_function::destination_alpha: return GL_DST_ALPHA;
+		case clap::gl::detail::blend_function::one_minus_destination_alpha: return GL_ONE_MINUS_DST_ALPHA;
+		case clap::gl::detail::blend_function::constant_color: return GL_CONSTANT_COLOR;
+		case clap::gl::detail::blend_function::one_minus_constant_color: return GL_ONE_MINUS_CONSTANT_COLOR;
+		case clap::gl::detail::blend_function::constant_alpha: return GL_CONSTANT_ALPHA;
+		case clap::gl::detail::blend_function::one_minus_constant_alpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
+		case clap::gl::detail::blend_function::source_alpha_saturate: return GL_SRC_ALPHA_SATURATE;
+		case clap::gl::detail::blend_function::source_1_color: return GL_SRC1_COLOR;
+		case clap::gl::detail::blend_function::one_minus_source_1_color: return GL_ONE_MINUS_SRC1_COLOR;
+		case clap::gl::detail::blend_function::source_1_alpha: return GL_SRC1_ALPHA;
+		case clap::gl::detail::blend_function::one_minus_source_1_alpha: return GL_ONE_MINUS_SRC1_ALPHA;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+clap::gl::detail::blend_function clap::gl::detail::convert::to_blend_function(GLenum v) {
+	switch (v) {
+		case GL_ZERO: return clap::gl::detail::blend_function::zero;
+		case GL_ONE: return clap::gl::detail::blend_function::one;
+		case GL_SRC_COLOR: return clap::gl::detail::blend_function::source_color;
+		case GL_ONE_MINUS_SRC_COLOR: return clap::gl::detail::blend_function::one_minus_source_color;
+		case GL_DST_COLOR: return clap::gl::detail::blend_function::destination_color;
+		case GL_ONE_MINUS_DST_COLOR: return clap::gl::detail::blend_function::one_minus_destination_color;
+		case GL_SRC_ALPHA: return clap::gl::detail::blend_function::source_alpha;
+		case GL_ONE_MINUS_SRC_ALPHA: return clap::gl::detail::blend_function::one_minus_source_alpha;
+		case GL_DST_ALPHA: return clap::gl::detail::blend_function::destination_alpha;
+		case GL_ONE_MINUS_DST_ALPHA: return clap::gl::detail::blend_function::one_minus_destination_alpha;
+		case GL_CONSTANT_COLOR: return clap::gl::detail::blend_function::constant_color;
+		case GL_ONE_MINUS_CONSTANT_COLOR: return clap::gl::detail::blend_function::one_minus_constant_color;
+		case GL_CONSTANT_ALPHA: return clap::gl::detail::blend_function::constant_alpha;
+		case GL_ONE_MINUS_CONSTANT_ALPHA: return clap::gl::detail::blend_function::one_minus_constant_alpha;
+		case GL_SRC_ALPHA_SATURATE: return clap::gl::detail::blend_function::source_alpha_saturate;
+		case GL_SRC1_COLOR: return clap::gl::detail::blend_function::source_1_color;
+		case GL_ONE_MINUS_SRC1_COLOR: return clap::gl::detail::blend_function::one_minus_source_1_color;
+		case GL_SRC1_ALPHA: return clap::gl::detail::blend_function::source_1_alpha;
+		case GL_ONE_MINUS_SRC1_ALPHA: return clap::gl::detail::blend_function::one_minus_source_1_alpha;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+std::ostream &operator<<(std::ostream &stream, clap::gl::detail::blend_function function) {
+	switch (function) {
+		case clap::gl::detail::blend_function::zero:
+			stream << "0"; break;
+		case clap::gl::detail::blend_function::one:
+			stream << "1"; break;
+		case clap::gl::detail::blend_function::source_color:
+			stream << "source_color"; break;
+		case clap::gl::detail::blend_function::one_minus_source_color:
+			stream << "1 - source_color"; break;
+		case clap::gl::detail::blend_function::destination_color:
+			stream << "destination_color"; break;
+		case clap::gl::detail::blend_function::one_minus_destination_color:
+			stream << "1 - destination_color"; break;
+		case clap::gl::detail::blend_function::source_alpha:
+			stream << "source_alpha"; break;
+		case clap::gl::detail::blend_function::one_minus_source_alpha:
+			stream << "1 - source_alpha"; break;
+		case clap::gl::detail::blend_function::destination_alpha:
+			stream << "destination_alpha"; break;
+		case clap::gl::detail::blend_function::one_minus_destination_alpha:
+			stream << "1 - destination_alpha"; break;
+		case clap::gl::detail::blend_function::constant_color:
+			stream << "constant_color"; break;
+		case clap::gl::detail::blend_function::one_minus_constant_color:
+			stream << "1 - constant_color"; break;
+		case clap::gl::detail::blend_function::constant_alpha:
+			stream << "constant_alpha"; break;
+		case clap::gl::detail::blend_function::one_minus_constant_alpha:
+			stream << "1 - constant_alpha"; break;
+		case clap::gl::detail::blend_function::source_alpha_saturate:
+			stream << "source_alpha_saturate"; break;
+		case clap::gl::detail::blend_function::source_1_color:
+			stream << "source_1_color"; break;
+		case clap::gl::detail::blend_function::one_minus_source_1_color:
+			stream << "1 - source_1_color"; break;
+		case clap::gl::detail::blend_function::source_1_alpha:
+			stream << "source_1_alpha"; break;
+		case clap::gl::detail::blend_function::one_minus_source_1_alpha:
+			stream << "1 - source_1_alpha"; break;
+		default:
+			clap::log::warning::major << "Unsupported enum value.";
+	}
+	return stream;
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::face v) {
+	switch (v) {
+		case clap::gl::face::back: return GL_BACK;
+		case clap::gl::face::both: return GL_FRONT_AND_BACK;
+		case clap::gl::face::front: return GL_FRONT;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+clap::gl::face clap::gl::detail::convert::to_face(GLenum v) {
+	switch (v) {
+		case GL_BACK: return clap::gl::face::back;
+		case GL_FRONT_AND_BACK: return clap::gl::face::both;
+		case GL_FRONT: return clap::gl::face::front;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+std::ostream &operator<<(std::ostream &stream, clap::gl::face function) {
+	switch (function) {
+		case clap::gl::face::back:
+			stream << "back faces"; break;
+		case clap::gl::face::both:
+			stream << "both front and back faces"; break;
+		case clap::gl::face::front:
+			stream << "front faces"; break;
+		default:
+			clap::log::warning::major << "Unsupported enum value.";
+	}
+	return stream;
+}
+
+GLenum clap::gl::detail::convert::to_gl(clap::gl::depth_function v) {
+	switch (v) {
+		case clap::gl::depth_function::never: return GL_NEVER;
+		case clap::gl::depth_function::less: return GL_LESS;
+		case clap::gl::depth_function::equal: return GL_EQUAL;
+		case clap::gl::depth_function::less_or_equal: return GL_LEQUAL;
+		case clap::gl::depth_function::greater: return GL_GREATER;
+		case clap::gl::depth_function::not_equal: return GL_NOTEQUAL;
+		case clap::gl::depth_function::greater_or_equal: return GL_GEQUAL;
+		case clap::gl::depth_function::always: return GL_ALWAYS;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+clap::gl::depth_function clap::gl::detail::convert::to_depth_function(GLenum v) {
+	switch (v) {
+		case GL_NEVER: return clap::gl::depth_function::never;
+		case GL_LESS: return clap::gl::depth_function::less;
+		case GL_EQUAL: return clap::gl::depth_function::equal;
+		case GL_LEQUAL: return clap::gl::depth_function::less_or_equal;
+		case GL_GREATER: return clap::gl::depth_function::greater;
+		case GL_NOTEQUAL: return clap::gl::depth_function::not_equal;
+		case GL_GEQUAL: return clap::gl::depth_function::greater_or_equal;
+		case GL_ALWAYS: return clap::gl::depth_function::always;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+std::ostream &operator<<(std::ostream &stream, clap::gl::depth_function function) {
+	switch (function) {
+		case clap::gl::depth_function::never:
+			stream << "never be passed"; break;
+		case clap::gl::depth_function::less:
+			stream << "be passed if new value is less than the current one"; break;
+		case clap::gl::depth_function::equal:
+			stream << "be passed if new value is equal to the current one"; break;
+		case clap::gl::depth_function::less_or_equal:
+			stream << "be passed if new value is less or equal than the current one"; break;
+		case clap::gl::depth_function::greater:
+			stream << "be passed if new value is greater than the current one"; break;
+		case clap::gl::depth_function::not_equal:
+			stream << "be passed if new value is not equal to the current one"; break;
+		case clap::gl::depth_function::greater_or_equal:
+			stream << "be passed if new value is greater or equal than the current one"; break;
+		case clap::gl::depth_function::always:
+			stream << "always be passed"; break;
+		default:
+			clap::log::warning::major << "Unsupported enum value.";
+	}
+	return stream;
 }
