@@ -148,7 +148,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\render\detail\state.cpp" />
-    <ClCompile Include="..\..\source\render\font.cpp" />
     <ClCompile Include="..\..\source\render\text.cpp" />
   </ItemGroup>
   <ItemGroup>

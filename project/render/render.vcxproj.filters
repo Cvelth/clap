@@ -20,9 +20,6 @@
     <ClCompile Include="..\..\source\render\text.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\render\font.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\render\detail\state.cpp">
       <Filter>source\detail</Filter>
     </ClCompile>
