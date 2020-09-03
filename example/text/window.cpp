@@ -4,8 +4,9 @@
 #include <chrono>
 #include <thread>
 
+#include "gl/misc.hpp"
 #include "gl/texture.hpp"
-#include "render/font.hpp"
+#include "render/text.hpp"
 
 //FORCE_NVIDIA_GPU_ON_OPTIMUS;
 
@@ -20,6 +21,9 @@ void window::initialize() {
 	program.link();
 	variables = program.getVariables();
 	program.use();
+
+	clap::gl::enable::blend(clap::gl::blend_function::source_alpha);
+	clap::render::text text(u8"A simple example. 日本語もここだよ!", clap::resource::font["GL-AntiquePlus"], 48);
 
 	auto &texture = clap::resource::texture::_2d["logo"];
 	texture.set_min_filter(texture::min_filter::linear_mipmap_linear);
@@ -38,15 +42,17 @@ void window::initialize() {
 
 	buffer::single texture_coordinates;
 	static const float texture_coordinate_data[] = {
-		0.f, 1.f,
+		0.f, 1.f * (height() - 40) / texture.maximum_height(),
 		0.f, 0.f,
-		1.f, 1.f,
-		1.f, 0.f,
+		1.f * (width() - 40) / texture.maximum_width(), 1.f * (height() - 40) / texture.maximum_height(),
+		1.f * (width() - 40) / texture.maximum_width(), 0.f,
 	};
 	texture_coordinates.data(texture_coordinate_data, sizeof(texture_coordinate_data), buffer::usage::static_draw);
 	vertex_array.attribute_pointer(texture_coordinates, variables["texture_coordinates"], 0, 0);
 
 	on_resize(width(), height());
+
+	text.render();
 }
 
 void window::render() {
