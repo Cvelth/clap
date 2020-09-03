@@ -13,6 +13,11 @@ namespace nowide {
 
 	std::string narrow(const std::wstring &s);
 	inline std::wstring widen(const std::string &s);
+
+	namespace utf {
+		template<typename CharOut, typename CharIn>
+		std::basic_string<CharOut> convert_string(const CharIn *begin, const CharIn *end);
+	}
 }
 
 /**
@@ -400,7 +405,9 @@ namespace clap::log::detail {
 		inline stream_wrapper &operator<<(wchar_t const *rhs) {
 			return *this << nowide::narrow(rhs);
 		}
-
+		inline stream_wrapper &operator<<(char32_t const rhs) {
+			return *this << nowide::utf::convert_string<char8_t>(&rhs, &rhs + 1);
+		}
 		template <typename Elem, typename Traits>
 		inline stream_wrapper &operator<<(std::basic_string<Elem, Traits> const &rhs) {
 			return *this << rhs.c_str();
