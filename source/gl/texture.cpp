@@ -14,11 +14,13 @@ clap::gl::texture::detail::interface::interface(texture::target target,
 	log::message::minor << "A new texture of type \"" << target << "\" was created.";
 }
 clap::gl::texture::detail::interface::~interface() {
-	while (auto target = gl::detail::state::is_bound(this))
-		gl::detail::state::unbind(*target);
+	if (id != 0) {
+		while (auto target = gl::detail::state::is_bound(this))
+			gl::detail::state::unbind(*target);
 
-	glDeleteTextures(1, &id);
-	log::message::minor << "A texture of type \"" << target << "\" was destroyed.";
+		glDeleteTextures(1, &id);
+		log::message::minor << "A texture of type \"" << target << "\" was destroyed.";
+	}
 }
 
 void clap::gl::texture::detail::interface::bind() {
