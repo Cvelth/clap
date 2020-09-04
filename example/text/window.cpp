@@ -14,7 +14,8 @@ void window::initialize() {
 
 
 	text_program.add(clap::resource::shader::fragment["text"],
-					 clap::resource::shader::vertex["text"]);
+					 clap::resource::shader::vertex["text"],
+					 clap::resource::shader::geometry["text"]);
 	text_program.link();
 
 	text_atlas_program.add(clap::resource::shader::fragment["text_atlas"],

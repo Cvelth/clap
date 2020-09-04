@@ -100,7 +100,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	auto &target = font_handle.data.at(height);
 
 	std::vector<float> buffer_data;
-	buffer_data.reserve(string.size() * 4 * 4);
+	buffer_data.reserve(string.size() * 4 * 4 / 2);
 	float advance_x = 0.f,
 		advance_y = 0.f;
 
@@ -192,16 +192,6 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			buffer_data.push_back(texture_from_x);
 			buffer_data.push_back(texture_from_y);
 
-			buffer_data.push_back(position_from_x);
-			buffer_data.push_back(position_to_y);
-			buffer_data.push_back(texture_from_x);
-			buffer_data.push_back(texture_to_y);
-
-			buffer_data.push_back(position_to_x);
-			buffer_data.push_back(position_from_y);
-			buffer_data.push_back(texture_to_x);
-			buffer_data.push_back(texture_from_y);
-
 			buffer_data.push_back(position_to_x);
 			buffer_data.push_back(position_to_y);
 			buffer_data.push_back(texture_to_x);
@@ -230,5 +220,5 @@ void clap::render::text::move(size_t x, size_t y) {
 void clap::render::text::render() const {
 	program.use();
 	font_handle.data.at(height).bitmap.bind();
-	vertex_array.draw(clap::gl::vertex_array::connection::triangle_strip, count);
+	vertex_array.draw(clap::gl::vertex_array::connection::lines, count);
 }
