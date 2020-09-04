@@ -100,7 +100,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	auto &target = font_handle.data.at(height);
 
 	std::vector<float> buffer_data;
-	buffer_data.reserve(string.size() * 4 * 4 / 2);
+	buffer_data.reserve(string.size() * 4 * 2);
 	float advance_x = 0.f,
 		advance_y = 0.f;
 
@@ -119,7 +119,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
 			clap::log::info::major << "Index: " << index << ".";
 		} else {
-			auto iterator = target.coordinates.find(index);
+			auto iterator = target.coordinates.find(code_point);
 			if (iterator == target.coordinates.end()) {
 				if (height < font_face->glyph->bitmap.rows) {
 					clap::log::warning::major << "Bitmap height of the glyph exceeds maximum allowed. Glyph is skipped.";
@@ -197,8 +197,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			buffer_data.push_back(texture_to_x);
 			buffer_data.push_back(texture_to_y);
 
-			advance_x += float(font_face->glyph->advance.x) / 64;
-			advance_y += float(font_face->glyph->advance.y) / 64;
+			advance_x += float(font_face->glyph->advance.x >> 6);
+			advance_y += float(font_face->glyph->advance.y >> 6);
 		}
 	}
 
