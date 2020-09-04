@@ -92,9 +92,16 @@ size_t clap::gl::shader::detail::variable::count() const {
 
 size_t clap::gl::shader::detail::variable::size() const {
 	if (type.structure == variable_type_t::structure::data)
-		return count() * gl::detail::convert::to_size(type.datatype);
+		return count() * datatype_size();
 	else
 		log::warning::critical << "Size can only be obtained for data variables.";
+}
+
+size_t clap::gl::shader::detail::variable::datatype_size() const {
+	if (type.structure == variable_type_t::structure::data)
+		return gl::detail::convert::to_size(type.datatype);
+	else
+		log::warning::critical << "Datatype size can only be obtained for data variables.";
 }
 
 clap::gl::shader::detail::variable::variable(std::string const &name, uint32_t const &location,

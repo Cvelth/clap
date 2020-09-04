@@ -107,6 +107,7 @@ namespace clap::gl::shader {
 			bool operator<(variable const &other) const { return location < other.location; }
 			size_t count() const;
 			size_t size() const;
+			size_t datatype_size() const;
 
 		private:
 			explicit variable(std::string const &name, uint32_t const &location,
