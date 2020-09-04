@@ -50,6 +50,10 @@ namespace clap::gl::vertex_array {
 			void attribute_pointer(buffer::detail::indexed &&buffer,
 								   shader::detail::variable const &variable,
 								   size_t stride, size_t shift);
+			inline void attribute_pointer(buffer::detail::indexed &&buffer,
+								   shader::detail::variable const &variable) {
+				attribute_pointer(std::move(buffer), variable, 0, 0);
+			}
 			void attribute_divisor(shader::detail::variable const &variable, size_t divisor);
 			void attribute_pointer(buffer::detail::indexed &&buffer,
 								   shader::detail::variable const &variable,
@@ -137,6 +141,10 @@ namespace clap::gl::vertex_array {
 
 		inline void bind() {
 			return detail::indexed(this, 0u).bind();
+		}
+		inline void attribute_pointer(buffer::detail::indexed &&buffer,
+									  shader::detail::variable const &variable) {
+			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer), variable);
 		}
 		inline void attribute_pointer(buffer::detail::indexed &&buffer,
 									  shader::detail::variable const &variable,
