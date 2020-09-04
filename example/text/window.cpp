@@ -27,7 +27,7 @@ void window::initialize() {
 	text = std::make_unique<clap::render::text>(u8"A simple example. 日本語もここだよ!",
 												clap::resource::font["GL-AntiquePlus"],
 												text_program, 48);
-	text->move(width() / 2, height() / 2);
+	text->move(width() / 8, height() / 2);
 
 	buffer::single vertices;
 	static const float vertex_data[] = {
@@ -37,7 +37,7 @@ void window::initialize() {
 		width() - 20, height() - 20
 	};
 	vertices.data(vertex_data, sizeof(vertex_data), buffer::usage::static_draw);
-	vertex_array.attribute_pointer(vertices, variables["position"], 0, 0);
+	vertex_array.attribute_pointer(vertices, variables["position"]);
 
 	buffer::single texture_coordinates;
 	static const float texture_coordinate_data[] = {
@@ -47,22 +47,24 @@ void window::initialize() {
 		1.f * (width() - 40) / clap::gl::texture::_2d::maximum_width(), 0.f,
 	};
 	texture_coordinates.data(texture_coordinate_data, sizeof(texture_coordinate_data), buffer::usage::static_draw);
-	vertex_array.attribute_pointer(texture_coordinates, variables["texture_coordinates"], 0, 0);
+	vertex_array.attribute_pointer(texture_coordinates, variables["texture_coordinates"]);
 
 	on_resize(width(), height());
 }
 
 void window::render() {
 	using namespace clap::gl;
-	auto time = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1000);
+	auto time = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10);
 
 	poll_events();
-	clear::color();
+	if (should_update()) {
+		clear::color();
 
-	text->render();
+		text->draw();
 
-	text_atlas_program.use();
-	vertex_array.draw(vertex_array::connection::triangle_strip, 4);
+		text_atlas_program.use();
+		vertex_array.draw(vertex_array::connection::triangle_strip, 4);
+	}
 
 	std::this_thread::sleep_until(time);
 }
@@ -85,4 +87,6 @@ void window::on_resize(size_t width, size_t height) {
 
 	text_atlas_program.set(variables["projection_matrix"], projection_matrix);
 	text_program.set(variables["projection_matrix"], projection_matrix);
+
+	update();
 }
