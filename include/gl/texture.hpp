@@ -181,6 +181,7 @@ namespace clap::gl::texture {
 			this->data(data, generate_mipmap, 0, width, 0, external_format, external_type);
 		}
 		static size_t maximum_width() {	return maximum_size(); }
+		size_t get_width() const { return width; }
 	protected:
 		_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
@@ -217,6 +218,8 @@ namespace clap::gl::texture {
 		}
 		static size_t maximum_width() { return maximum_size(); }
 		static size_t maximum_height() { return maximum_size(); }
+		size_t get_width() const { return width; }
+		size_t get_height() const { return height; }
 	protected:
 		_2d(texture::target target, void *data, size_t width, size_t height, 
 			bool generate_mipmap = true,
@@ -256,6 +259,9 @@ namespace clap::gl::texture {
 		static size_t maximum_width() { return maximum_3d_size(); }
 		static size_t maximum_height() { return maximum_3d_size(); }
 		static size_t maximum_depth() { return maximum_3d_size(); }
+		size_t get_width() const { return width; }
+		size_t get_height() const { return height; }
+		size_t get_depth() const { return depth; }
 	protected:
 		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth, 
 			bool generate_mipmap = true,
