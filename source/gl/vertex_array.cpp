@@ -47,8 +47,8 @@ void clap::gl::vertex_array::detail::indexed::bind() {
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																  shader::detail::variable const &variable,
-																  size_t stride, size_t shift) {
+																shader::detail::variable const &variable,
+																size_t stride, size_t shift) {
 	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_pointer'";
 		return;
@@ -61,10 +61,11 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::
 	this->bind();
 	buffer.bind();
 	for (size_t i = 0; i < variable.type.dimentions.x; i++) {
-		glVertexAttribPointer(GLuint(variable.location + i), 
+		glVertexAttribPointer(GLuint(variable.location + i),
 							  GLint(variable.type.dimentions.x * variable.type.dimentions.y),
 							  gl::detail::convert::to_gl(variable.type.datatype),
-							  GL_FALSE, GLsizei(stride), (const void *) shift);
+							  GL_FALSE, GLsizei(stride * variable.datatype_size()),
+							  (const void *) (shift * variable.datatype_size()));
 		glEnableVertexAttribArray(GLuint(variable.location + i));
 
 		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
@@ -75,7 +76,7 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::detail::variable const &variable,
-																  size_t divisor) {
+																size_t divisor) {
 	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
 		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_divisor'";
 		return;
@@ -96,15 +97,15 @@ void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::detail::
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																  shader::detail::variable const &variable,
-																  size_t stride, size_t shift,
-																  size_t divisor) {
+																shader::detail::variable const &variable,
+																size_t stride, size_t shift,
+																size_t divisor) {
 	attribute_pointer(std::move(buffer), variable, stride, shift);
 	attribute_divisor(variable, divisor);
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																  shader::variables const &variables) {
+																shader::variables const &variables) {
 	size_t stride = 0;
 	for (auto variable : variables)
 		stride += variable.second.size();
@@ -122,8 +123,8 @@ void clap::gl::vertex_array::detail::indexed::draw(connection connection, size_t
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t count,
-															 size_t first, int base_vertex,
-															 index_type type) {
+														   size_t first, int base_vertex,
+														   index_type type) {
 	if (!gl::detail::state::bound(buffer::target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer "
 			<< "with index data being bound to 'buffer::target::element_array'.";
@@ -141,8 +142,8 @@ void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t start,
-															 size_t end, size_t count, size_t first,
-															 int base_vertex, index_type type) {
+														   size_t end, size_t count, size_t first,
+														   int base_vertex, index_type type) {
 	if (!gl::detail::state::bound(buffer::target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
@@ -172,8 +173,8 @@ void clap::gl::vertex_array::detail::indexed::draw_indirect(connection connectio
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_indexed_indirect(connection connection,
-																	  size_t byte_offset,
-																	  index_type type) {
+																	size_t byte_offset,
+																	index_type type) {
 	if (!gl::detail::state::bound(buffer::target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_indexed_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
@@ -192,7 +193,7 @@ void clap::gl::vertex_array::detail::indexed::draw_indexed_indirect(connection c
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_multiple(connection connection, size_t drawcount,
-															  int const *counts, int const *firsts) {
+															int const *counts, int const *firsts) {
 	this->bind();
 	glMultiDrawArrays(gl::detail::convert::to_gl(connection), (GLint const *) firsts,
 					  (GLint const *) counts, GLsizei(drawcount));
@@ -200,10 +201,10 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple(connection connectio
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection connection,
-																	  size_t drawcount,
-																	  int const *counts,
-																	  int const *byte_offsets,
-																	  index_type type) {
+																	size_t drawcount,
+																	int const *counts,
+																	int const *byte_offsets,
+																	index_type type) {
 	if (!gl::detail::state::bound(buffer::target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
@@ -216,11 +217,11 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection c
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection connection,
-																	  size_t drawcount,
-																	  int const *counts,
-																	  int const *byte_offsets,
-																	  int const *base_vertices,
-																	  index_type type) {
+																	size_t drawcount,
+																	int const *counts,
+																	int const *byte_offsets,
+																	int const *base_vertices,
+																	index_type type) {
 	if (!gl::detail::state::bound(buffer::target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
@@ -234,9 +235,9 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection c
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_multiple_indirect(connection connection,
-																	   size_t drawcount,
-																	   size_t byte_offset,
-																	   size_t stride) {
+																	 size_t drawcount,
+																	 size_t byte_offset,
+																	 size_t stride) {
 	if (!gl::detail::state::bound(buffer::target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
@@ -249,10 +250,10 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple_indirect(connection 
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed_indirect(connection connection,
-																			   size_t drawcount,
-																			   size_t byte_offset,
-																			   size_t stride,
-																			   index_type type) {
+																			 size_t drawcount,
+																			 size_t byte_offset,
+																			 size_t stride,
+																			 index_type type) {
 	if (!gl::detail::state::bound(buffer::target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
@@ -271,8 +272,8 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed_indirect(con
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_instanced(connection connection, size_t count,
-															   size_t draw_count, size_t first,
-															   int base_instance) {
+															 size_t draw_count, size_t first,
+															 int base_instance) {
 	this->bind();
 	if (base_instance)
 		glDrawArraysInstancedBaseInstance(gl::detail::convert::to_gl(connection), GLint(first),
@@ -284,9 +285,9 @@ void clap::gl::vertex_array::detail::indexed::draw_instanced(connection connecti
 }
 
 void clap::gl::vertex_array::detail::indexed::draw_instanced_indexed(connection connection, size_t count,
-																	   size_t draw_count, size_t first,
-																	   int base_vertex, int base_instance,
-																	   index_type type) {
+																	 size_t draw_count, size_t first,
+																	 int base_vertex, int base_instance,
+																	 index_type type) {
 	if (!gl::detail::state::bound(buffer::target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_instanced_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
