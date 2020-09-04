@@ -1,6 +1,11 @@
 ﻿#pragma once
 #include "window/window_interface.hpp"
 #include "gl/gl.hpp"
+#include "render/text.hpp"
+
+namespace clap::render {
+	class text;
+}
 
 using clap::window_mode;
 
@@ -17,6 +22,7 @@ protected:
 
 private:
 	clap::gl::vertex_array::single vertex_array;
-	clap::gl::shader::program program;
+	clap::gl::shader::program text_atlas_program, text_program;
 	clap::gl::shader::variables variables;
+	std::unique_ptr<clap::render::text> text;
 };

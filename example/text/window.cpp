@@ -4,10 +4,6 @@
 #include <chrono>
 #include <thread>
 
-#include "gl/misc.hpp"
-#include "gl/texture.hpp"
-#include "render/text.hpp"
-
 //FORCE_NVIDIA_GPU_ON_OPTIMUS;
 
 void window::initialize() {
@@ -16,19 +12,22 @@ void window::initialize() {
 	clap::resource::load();
 	clear::set_color(0.4f, 0.0f, 0.5f, 1.0f);
 
-	program.add(clap::resource::shader::fragment["text"],
-				clap::resource::shader::vertex["text"]);
-	program.link();
-	variables = program.getVariables();
-	program.use();
+
+	text_program.add(clap::resource::shader::fragment["text"],
+					 clap::resource::shader::vertex["text"]);
+	text_program.link();
+
+	text_atlas_program.add(clap::resource::shader::fragment["text_atlas"],
+						   clap::resource::shader::vertex["text_atlas"]);
+	text_atlas_program.link();
+	variables = text_atlas_program.getVariables();
+	text_atlas_program.use();
 
 	clap::gl::enable::blend(clap::gl::blend_function::source_alpha);
-	clap::render::text text(u8"A simple example. 日本語もここだよ!", clap::resource::font["GL-AntiquePlus"], 48);
-
-	auto &texture = clap::resource::texture::_2d["logo"];
-	texture.set_min_filter(texture::min_filter::linear_mipmap_linear);
-	texture.set_mag_filter(texture::mag_filter::linear);
-	texture.bind();
+	text = std::make_unique<clap::render::text>(u8"A simple example. 日本語もここだよ!",
+												clap::resource::font["GL-AntiquePlus"],
+												text_program, 48);
+	text->move(width() / 2, height() / 2);
 
 	buffer::single vertices;
 	static const float vertex_data[] = {
@@ -42,25 +41,27 @@ void window::initialize() {
 
 	buffer::single texture_coordinates;
 	static const float texture_coordinate_data[] = {
-		0.f, 1.f * (height() - 40) / texture.maximum_height(),
+		0.f, 1.f * (height() - 40) / clap::gl::texture::_2d::maximum_height(),
 		0.f, 0.f,
-		1.f * (width() - 40) / texture.maximum_width(), 1.f * (height() - 40) / texture.maximum_height(),
-		1.f * (width() - 40) / texture.maximum_width(), 0.f,
+		1.f * (width() - 40) / clap::gl::texture::_2d::maximum_width(), 1.f * (height() - 40) / clap::gl::texture::_2d::maximum_height(),
+		1.f * (width() - 40) / clap::gl::texture::_2d::maximum_width(), 0.f,
 	};
 	texture_coordinates.data(texture_coordinate_data, sizeof(texture_coordinate_data), buffer::usage::static_draw);
 	vertex_array.attribute_pointer(texture_coordinates, variables["texture_coordinates"], 0, 0);
 
 	on_resize(width(), height());
-
-	text.render();
 }
 
 void window::render() {
 	using namespace clap::gl;
-	auto time = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100);
+	auto time = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1000);
 
 	poll_events();
 	clear::color();
+
+	text->render();
+
+	text_atlas_program.use();
 	vertex_array.draw(vertex_array::connection::triangle_strip, 4);
 
 	std::this_thread::sleep_until(time);
@@ -82,5 +83,6 @@ void window::on_resize(size_t width, size_t height) {
 		-1.f,			-1.f,			0.f,	1.f
 	};
 
-	program.set(variables["projection_matrix"], projection_matrix);
+	text_atlas_program.set(variables["projection_matrix"], projection_matrix);
+	text_program.set(variables["projection_matrix"], projection_matrix);
 }
