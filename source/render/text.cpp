@@ -207,8 +207,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			buffer_data.push_back(texture_to_x);
 			buffer_data.push_back(texture_to_y);
 
-			advance_x += (iterator->second.to_x - iterator->second.from_x);// font_face->glyph->advance.x;
-			advance_y += 0;// (iterator->second.to_y - iterator->second.from_y);// font_face->glyph->advance.y;
+			advance_x += float(font_face->glyph->advance.x) / 64;
+			advance_y += float(font_face->glyph->advance.y) / 64;
 		}
 	}
 
@@ -216,8 +216,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), clap::gl::buffer::usage::static_draw);
 
 	auto variables = program.getAttributes();
-	vertex_array.attribute_pointer(buffer, variables["position"], 4 * 4, 0 * 4);
-	vertex_array.attribute_pointer(buffer, variables["texture_coordinates"], 4 * 4, 2 * 4);
+	vertex_array.attribute_pointer(buffer, variables["position"], 4, 0);
+	vertex_array.attribute_pointer(buffer, variables["texture_coordinates"], 4, 2);
 	count = buffer_data.size() / 4;
 
 	return;
