@@ -123,7 +123,7 @@ namespace clap::gl::shader {
 	class variables : private std::map<std::string, detail::variable> {
 		friend program;
 	public:
-		detail::variable const &operator[](std::string name);
+		detail::variable const &operator[](std::string name) const;
 
 		using std::map<std::string, detail::variable>::begin;
 		using std::map<std::string, detail::variable>::end;

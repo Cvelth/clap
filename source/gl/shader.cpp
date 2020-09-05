@@ -448,7 +448,7 @@ clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
 		log::message::negligible << "A shader program was moved.";
 }
 
-clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) {
+clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) const {
 	auto found = find(name);
 	if (found != end())
 		return found->second;
