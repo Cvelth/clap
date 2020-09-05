@@ -45,6 +45,7 @@ clap::window_interface::~window_interface() {
 
 void clap::window_interface::redraw() {
 	handle->update();
+	should_redraw = false;
 }
 
 void clap::window_interface::poll_events() {
@@ -78,13 +79,8 @@ int clap::window_interface::loop() {
 	log::message::critical << "Window loop initialization has started.";
 	initialize();
 	log::message::critical << "Window loop initialization is complete. Starting the loop...";
-	while (!should_close()) {
+	while (!should_close())
 		render();
-		if (should_redraw) {
-			redraw();
-			should_redraw = false;
-		}
-	}
 	log::message::critical << "Window loop is complete. Cleaning up...";
 	cleanup();
 

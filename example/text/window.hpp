@@ -26,4 +26,7 @@ private:
 	std::unique_ptr<clap::render::text> text;
 	std::unique_ptr<clap::render::text> long_text;
 	std::unique_ptr<clap::render::text> japanese_text;
+
+	std::unique_ptr<clap::render::text> counter_label, counter;
+	size_t counter_value;
 };

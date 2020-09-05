@@ -61,7 +61,27 @@ void window::initialize() {
 		clap::resource::font["GL-AntiquePlus"],
 		text_program, 16
 	);
-	 
+
+	counter_label = std::make_unique<clap::render::text>("Counter: ",
+														 clap::resource::font["Kalam-Light"],
+														 text_program, 24);
+	counter = std::make_unique<clap::render::text>("0",
+												   clap::resource::font["Kalam-Light"],
+												   text_program, 24);
+	counter_value = 0;
+
+	std::thread counter_thread(
+		[this]() {
+			while (!should_close()) {
+				auto time = std::chrono::high_resolution_clock::now() + std::chrono::seconds(1);
+				counter_value++;
+				update();
+				std::this_thread::sleep_until(time);
+			}
+		}
+	);
+	counter_thread.detach();
+
 	on_resize(width(), height());
 }
 
@@ -76,6 +96,12 @@ void window::render() {
 		text->draw(width() / 8, height() / 20);
 		long_text->draw(0, height() / 6);
 		japanese_text->draw(0, height() / 2);
+
+		counter->update(std::to_string(counter_value));
+		counter_label->draw(0, height() / 2 - 70);
+		counter->draw(100, height() / 2 - 70);
+
+		redraw();
 	}
 
 	std::this_thread::sleep_until(time);
