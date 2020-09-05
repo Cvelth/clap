@@ -96,7 +96,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ProjectReference>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -117,7 +117,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ProjectReference>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ProjectReference>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,7 +155,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ProjectReference>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -177,12 +177,6 @@
     <ClCompile Include="..\..\source\gl\vertex_array.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\dependency\project\glad\glad.vcxproj">
-      <Project>{1c048066-0573-4fe0-81ea-4b6f3a59807b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\dependency\project\glfw\glfw.vcxproj">
-      <Project>{01a82da8-d913-487f-9c24-2bc3eda7d299}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\essential\essential.vcxproj">
       <Project>{ccc41c95-0f48-4b27-9b42-f3ef8bab60ac}</Project>
     </ProjectReference>

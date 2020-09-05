@@ -1,4 +1,4 @@
-#include "window/window_interface.hpp"
+﻿#include "window/window_interface.hpp"
 
 #include "window/detail/glfw.hpp"
 #include "essential/log.hpp"
@@ -6,7 +6,7 @@
 
 clap::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
-										: aspect_ratio(double(width) / height), handle(nullptr) {
+										: aspect_ratio(double(width) / height), handle(nullptr), should_redraw(false) {
 	switch (mode) {
 		case window_mode::windowed:
 			handle = new detail::glfw_window(detail::glfw::create_window_windowed(width, height, title));
@@ -43,8 +43,9 @@ clap::window_interface::~window_interface() {
 	}
 }
 
-void clap::window_interface::update() {
+void clap::window_interface::redraw() {
 	handle->update();
+	should_redraw = false;
 }
 
 void clap::window_interface::poll_events() {
@@ -67,14 +68,19 @@ bool clap::window_interface::should_close() {
 	return handle->should_close();
 }
 
+bool clap::window_interface::should_update() const {
+	return should_redraw;
+}
+void clap::window_interface::update() {
+	should_redraw = true;
+}
+
 int clap::window_interface::loop() {
 	log::message::critical << "Window loop initialization has started.";
 	initialize();
 	log::message::critical << "Window loop initialization is complete. Starting the loop...";
-	while (!should_close()) {
+	while (!should_close())
 		render();
-		update();
-	}
 	log::message::critical << "Window loop is complete. Cleaning up...";
 	cleanup();
 

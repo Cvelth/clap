@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdint>
 #include <utility>
 
@@ -138,7 +138,15 @@ namespace clap::gl::texture {
 			interface(target target, internal_format internal_format = internal_format::rgba);
 			virtual ~interface();
 
+			interface(interface const &) = delete;
+			interface(interface &&other) noexcept : id(other.id), target(other.target), internal_format(other.internal_format) {
+				other.id = 0;
+			}
 			uint32_t operator*() const { return id; }
+
+			static size_t maximum_size();
+			static size_t maximum_layer_count();
+			static size_t maximum_3d_size();
 
 		protected:
 			target target;
@@ -159,6 +167,10 @@ namespace clap::gl::texture {
 				  internal_format, external_format, external_type) {}
 		inline virtual ~_1d() {}
 
+		_1d(_1d &&other) noexcept
+			: detail::interface(std::move(other)),
+			width(other.width) {}
+
 		void data(void *data, size_t offset, size_t width, 
 				  bool generate_mipmap = true, int level = 0,
 				  external_format external_format = external_format::rgba,
@@ -168,6 +180,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, generate_mipmap, 0, width, 0, external_format, external_type);
 		}
+		static size_t maximum_width() {	return maximum_size(); }
+		size_t get_width() const { return width; }
 	protected:
 		_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
 			texture::internal_format internal_format = internal_format::rgba,
@@ -188,6 +202,10 @@ namespace clap::gl::texture {
 				  internal_format, external_format, external_type) {}
 		inline virtual ~_2d() {}
 
+		_2d(_2d &&other) noexcept
+			: detail::interface(std::move(other)), 
+			width(other.width), height(other.height) {}
+
 		void data(void *data, size_t offset_x, size_t offset_y,
 				  size_t width, size_t height, 
 				  bool generate_mipmap = true, int level = 0,
@@ -198,6 +216,10 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
+		size_t get_width() const { return width; }
+		size_t get_height() const { return height; }
 	protected:
 		_2d(texture::target target, void *data, size_t width, size_t height, 
 			bool generate_mipmap = true,
@@ -220,6 +242,10 @@ namespace clap::gl::texture {
 				  internal_format, external_format, external_type) {}
 		inline virtual ~_3d() {}
 
+		_3d(_3d &&other) noexcept
+			: detail::interface(std::move(other)),
+			width(other.width), height(other.height), depth(other.depth) {}
+
 		void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
 				  size_t width, size_t height, size_t depth, 
 				  bool generate_mipmaps = true, int level = 0,
@@ -230,6 +256,12 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_3d_size(); }
+		static size_t maximum_height() { return maximum_3d_size(); }
+		static size_t maximum_depth() { return maximum_3d_size(); }
+		size_t get_width() const { return width; }
+		size_t get_height() const { return height; }
+		size_t get_depth() const { return depth; }
 	protected:
 		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth, 
 			bool generate_mipmap = true,
@@ -252,6 +284,9 @@ namespace clap::gl::texture {
 			: _2d(target::_1d_array, data, width, count, generate_mipmap, internal_format, external_format, external_type) {}
 		inline virtual ~_1d_array() {}
 
+		_1d_array(_1d_array &&other) noexcept
+			: _2d(std::move(other)) {}
+
 		inline void data(void *data, size_t offset_x, size_t offset_c,
 						 size_t _width, size_t count, bool generate_mipmap = true, int level = 0,
 						 external_format external_format = external_format::rgba,
@@ -263,6 +298,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_count() { return maximum_layer_count(); }
 	};
 
 	class _2d_array : public _3d {
@@ -275,6 +312,9 @@ namespace clap::gl::texture {
 			: _3d(target::_2d_array, data, width, height, count, generate_mipmap, 
 				  internal_format, external_format, external_type) {}
 		inline virtual ~_2d_array() {}
+
+		_2d_array(_2d_array &&other) noexcept
+			: _3d(std::move(other)) {}
 
 		inline void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
 						 size_t _width, size_t _height, size_t count, 
@@ -290,6 +330,9 @@ namespace clap::gl::texture {
 			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, 
 					   external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
+		static size_t maximum_count() { return maximum_layer_count(); }
 	};
 
 	class rectangle : public _2d {
@@ -300,6 +343,9 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte)
 			: _2d(target::rectangle, data, width, height, false, internal_format, external_format, external_type) {}
 		inline virtual ~rectangle() {}
+
+		rectangle(rectangle &&other) noexcept
+			: _2d(std::move(other)) {}
 
 		inline void data(void *data, size_t offset_x, size_t offset_y,
 						 size_t _width, size_t _height, int level = 0,
@@ -312,6 +358,8 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, width, height, 0, external_format, external_type);
 		}
+		static size_t maximum_width() { return maximum_size(); }
+		static size_t maximum_height() { return maximum_size(); }
 	};
 
 	class multisample : public detail::interface {

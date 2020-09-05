@@ -1,10 +1,10 @@
-#include "gl/shader.hpp"
+﻿#include "gl/shader.hpp"
 
 #include <fstream>
 #include <string>
 #include <vector>
 
-#include "glad/gl.h"
+#include "glad/glad.h"
 
 #include "gl/detail/state.hpp"
 #include "essential/log.hpp"
@@ -70,7 +70,7 @@ clap::gl::shader::detail::object clap::gl::shader::from_source(type type, char c
 	return from_source(type, std::string(source));
 }
 
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string filename) {
+clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::filesystem::path const &filename) {
 	std::ifstream filestream;
 	filestream.open(filename);
 	if (!filestream) {
@@ -85,13 +85,6 @@ clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::str
 
 	return from_source(type, source);
 }
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::string_view filename) {
-	return from_file(type, std::string(filename));
-}
-
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, char const *filename) {
-	return from_file(type, std::string(filename));
-}
 
 size_t clap::gl::shader::detail::variable::count() const {
 	return type.dimentions.x * type.dimentions.y;
@@ -99,9 +92,16 @@ size_t clap::gl::shader::detail::variable::count() const {
 
 size_t clap::gl::shader::detail::variable::size() const {
 	if (type.structure == variable_type_t::structure::data)
-		return count() * gl::detail::convert::to_size(type.datatype);
+		return count() * datatype_size();
 	else
 		log::warning::critical << "Size can only be obtained for data variables.";
+}
+
+size_t clap::gl::shader::detail::variable::datatype_size() const {
+	if (type.structure == variable_type_t::structure::data)
+		return gl::detail::convert::to_size(type.datatype);
+	else
+		log::warning::critical << "Datatype size can only be obtained for data variables.";
 }
 
 clap::gl::shader::detail::variable::variable(std::string const &name, uint32_t const &location,
@@ -448,7 +448,7 @@ clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
 		log::message::negligible << "A shader program was moved.";
 }
 
-clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) {
+clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) const {
 	auto found = find(name);
 	if (found != end())
 		return found->second;

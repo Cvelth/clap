@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdint>
 #include <initializer_list>
 #include <map>
@@ -6,6 +6,10 @@
 #include <vector>
 
 typedef unsigned int GLenum;
+
+namespace std::filesystem {
+	class path;
+}
 
 namespace clap::gl::detail {
 	class state;
@@ -51,9 +55,7 @@ namespace clap::gl::shader {
 	detail::object from_source(type type, std::string_view source);
 	detail::object from_source(type type, char const *source);
 
-	detail::object from_file(type type, std::string filename);
-	detail::object from_file(type type, std::string_view filename);
-	detail::object from_file(type type, char const *filename);
+	detail::object from_file(type type, std::filesystem::path const &filename);
 
 	namespace detail {
 		namespace variable_type_t {
@@ -105,6 +107,7 @@ namespace clap::gl::shader {
 			bool operator<(variable const &other) const { return location < other.location; }
 			size_t count() const;
 			size_t size() const;
+			size_t datatype_size() const;
 
 		private:
 			explicit variable(std::string const &name, uint32_t const &location,
@@ -120,7 +123,7 @@ namespace clap::gl::shader {
 	class variables : private std::map<std::string, detail::variable> {
 		friend program;
 	public:
-		detail::variable const &operator[](std::string name);
+		detail::variable const &operator[](std::string name) const;
 
 		using std::map<std::string, detail::variable>::begin;
 		using std::map<std::string, detail::variable>::end;
@@ -131,10 +134,11 @@ namespace clap::gl::shader {
 		using std::map<std::string, detail::variable>::cend;
 		using std::map<std::string, detail::variable>::crbegin;
 		using std::map<std::string, detail::variable>::crend;
+
+		//variables(variables const &) = default;
+		//variables(variables &&) noexcept = default;
 	private:
-		variables() = default;
-		variables(variables const &) = default;
-		variables(variables &&) noexcept = default;
+		//variables() = default;
 	};
 
 	class program {

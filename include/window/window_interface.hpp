@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 
 namespace clap {
@@ -17,7 +17,7 @@ namespace clap {
 		explicit window_interface(std::string const &title, window_mode mode = window_mode::borderless_window);
 		virtual ~window_interface();
 
-		void update();
+		void redraw();
 		void poll_events();
 		void wait_events();
 
@@ -25,6 +25,9 @@ namespace clap {
 		size_t height();
 
 		bool should_close();
+		bool should_update() const;
+
+		void update();
 
 		int loop();
 
@@ -35,6 +38,7 @@ namespace clap {
 
 	protected:
 		double aspect_ratio;
+		bool should_redraw;
 
 	private:
 		detail::glfw_window *handle;
