@@ -406,15 +406,15 @@ namespace clap::log::detail {
 			return *this << nowide::narrow(rhs);
 		}
 		inline stream_wrapper &operator<<(char32_t const rhs) {
-			return *this << nowide::utf::convert_string<char8_t>(&rhs, &rhs + 1);
+			return *this << nowide::utf::convert_string<char8_t>(&rhs, &rhs + 1).c_str();
 		}
 		template <typename Elem, typename Traits>
 		inline stream_wrapper &operator<<(std::basic_string<Elem, Traits> const &rhs) {
-			return *this << rhs.c_str();
+			return *this << nowide::utf::convert_string<char8_t>(rhs.c_str(), rhs.c_str() + rhs.size()).c_str();
 		}
 		template <typename Elem, typename Traits>
 		inline stream_wrapper &operator<<(std::basic_string_view<Elem, Traits> const &rhs) {
-			return *this << rhs.data();
+			return *this << nowide::utf::convert_string<char8_t>(rhs.c_str(), rhs.c_str() + rhs.size()).c_str();
 		}
 
 		inline stream_wrapper &operator<<(std::filesystem::path const &path) {
