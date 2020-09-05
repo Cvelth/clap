@@ -229,11 +229,6 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			advance_x += font_face->glyph->advance.x >> 6;
 			advance_y += font_face->glyph->advance.y >> 6;
 		}
-
-		clap::log::message::minor << "Text object was updated.";
-		clap::log::info::major << "Message: \"" << string << "\".";
-		clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-		clap::log::info::major << "Size: " << height << ".";
 	}
 
 	clap::gl::buffer::single buffer;
@@ -243,6 +238,11 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	vertex_array.attribute_pointer(buffer, variables["position"], 4, 0);
 	vertex_array.attribute_pointer(buffer, variables["texture_coordinates"], 4, 2);
 	count = buffer_data.size() / 4;
+
+	clap::log::message::minor << "Text object was updated.";
+	clap::log::info::major << "Message: \"" << string << "\".";
+	clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
+	clap::log::info::major << "Size: " << height << ".";
 
 	return;
 }
