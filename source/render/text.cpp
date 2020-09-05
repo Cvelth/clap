@@ -157,62 +157,53 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 		} else {
 			auto iterator = target.coordinates.find(code_point);
 			if (iterator == target.coordinates.end()) {
-				if (height < font_face->glyph->bitmap.rows) {
-					clap::log::warning::major << "Bitmap height of the glyph exceeds maximum allowed. Glyph is skipped.";
+				if (target.offset_x + font_face->glyph->bitmap.width > target.bitmap.get_width()) {
+					target.offset_x = 0;
+					target.offset_y += target.current_layer_y;
+					target.current_layer_y = 0;
+				}
+				if (target.offset_y + height > target.bitmap.get_height()) {
+					clap::log::warning::critical << "Font bitmap buffer is not big enough to store all the requested characters.";
+					clap::log::info::critical << "No further character of the font with given size can be loaded.";
 					clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-					clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
-					clap::log::info::major << "Index: " << index << ".";
+					clap::log::info::major << "Size: " << height << ".";
 				} else {
-
-					if (target.offset_x + font_face->glyph->bitmap.width > target.bitmap.get_width()) {
-						target.offset_x = 0;
-						target.offset_y += target.current_layer_y;
-						target.current_layer_y = 0;
-					}
-					if (target.offset_y + height > target.bitmap.get_height()) {
-						clap::log::warning::critical << "Font bitmap buffer is not big enough to store all the requested characters.";
+					if (font_face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
+						clap::log::warning::critical << "Used font features unsupported pixel mode. It will not be rendered correctly.";
 						clap::log::info::critical << "No further character of the font with given size can be loaded.";
 						clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-						clap::log::info::major << "Size: " << height << ".";
-					} else {
-						if (font_face->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
-							clap::log::warning::critical << "Used font features unsupported pixel mode. It will not be rendered correctly.";
-							clap::log::info::critical << "No further character of the font with given size can be loaded.";
-							clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-						}
-						if (font_face->glyph->bitmap.width != font_face->glyph->bitmap.pitch) {
-							clap::log::warning::critical << "Bitmap alignment of the character contains padding. "
-								"Such characters are currently not supported. It will not be rendered correctly.";
-							clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-							clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
-							clap::log::info::major << "Index: " << index << ".";
-							clap::log::info::minor << "Buffer width: " << font_face->glyph->bitmap.width << ".";
-							clap::log::info::minor << "Buffer pitch: " << font_face->glyph->bitmap.pitch << ".";
-						}
-						if (font_face->glyph->bitmap.rows > height) {
-							clap::log::warning::critical << "Bitmap of the character is too big. Part of it will be cut down. "
-								"Such characters are currently not supported. It will not be rendered correctly.";
-							clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-							clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
-							clap::log::info::major << "Index: " << index << ".";
-						}
-						target.bitmap.data(font_face->glyph->bitmap.buffer, target.offset_x, target.offset_y,
-										   font_face->glyph->bitmap.width, font_face->glyph->bitmap.rows,
-										   true, 0, clap::gl::texture::external_format::red);
-						iterator = target.coordinates.emplace(code_point,
-															  detail::bitmap_coordinates{
-																  target.offset_x, target.offset_y,
-																  target.offset_x + font_face->glyph->bitmap.width,
-																  target.offset_y + font_face->glyph->bitmap.rows
-															  }).first;
-						target.offset_x += font_face->glyph->bitmap.width;
-						target.current_layer_y = std::max(target.current_layer_y, (size_t) font_face->glyph->bitmap.rows);
-						clap::log::message::minor << "A new character was added to font bitmap atlas.";
+					}
+					if (font_face->glyph->bitmap.width != font_face->glyph->bitmap.pitch) {
+						clap::log::warning::critical << "Bitmap alignment of the character contains padding. "
+							"Such characters are currently not supported. It will not be rendered correctly.";
 						clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
-						clap::log::info::major << "Size: " << height << ".";
+						clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
+						clap::log::info::major << "Index: " << index << ".";
+						clap::log::info::minor << "Buffer width: " << font_face->glyph->bitmap.width << ".";
+						clap::log::info::minor << "Buffer pitch: " << font_face->glyph->bitmap.pitch << ".";
+					}
+					if (font_face->glyph->bitmap.rows > height) {
+						clap::log::warning::minor << "Bitmap of the character is too big. Part of it could be lost.";
+						clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
 						clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
 						clap::log::info::major << "Index: " << index << ".";
 					}
+					target.bitmap.data(font_face->glyph->bitmap.buffer, target.offset_x, target.offset_y,
+									   font_face->glyph->bitmap.width, font_face->glyph->bitmap.rows,
+									   true, 0, clap::gl::texture::external_format::red);
+					iterator = target.coordinates.emplace(code_point,
+														  detail::bitmap_coordinates{
+															  target.offset_x, target.offset_y,
+															  target.offset_x + font_face->glyph->bitmap.width,
+															  target.offset_y + font_face->glyph->bitmap.rows
+														  }).first;
+					target.offset_x += font_face->glyph->bitmap.width;
+					target.current_layer_y = std::max(target.current_layer_y, (size_t) font_face->glyph->bitmap.rows);
+					clap::log::message::minor << "A new character was added to font bitmap atlas.";
+					clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
+					clap::log::info::major << "Size: " << height << ".";
+					clap::log::info::major << "Character: '" << code_point << "' (0x" << std::hex << size_t(code_point) << std::dec << ").";
+					clap::log::info::major << "Index: " << index << ".";
 				}
 			}
 			if (has_kerning && previous_index && index) {
@@ -228,10 +219,10 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			buffer_data.push_back(float(iterator->second.from_x) / target.bitmap.get_width());
 			buffer_data.push_back(float(iterator->second.from_y) / target.bitmap.get_height());
 
-			buffer_data.push_back(float(advance_x + font_face->glyph->bitmap_left 
-								  + (iterator->second.to_x - iterator->second.from_x)));
-			buffer_data.push_back(float(advance_y + height - font_face->glyph->bitmap_top 
-								  + (iterator->second.to_y - iterator->second.from_y)));
+			buffer_data.push_back(float(advance_x + font_face->glyph->bitmap_left
+										+ (iterator->second.to_x - iterator->second.from_x)));
+			buffer_data.push_back(float(advance_y + height - font_face->glyph->bitmap_top
+										+ (iterator->second.to_y - iterator->second.from_y)));
 			buffer_data.push_back(float(iterator->second.to_x) / target.bitmap.get_width());
 			buffer_data.push_back(float(iterator->second.to_y) / target.bitmap.get_height());
 
