@@ -6,6 +6,21 @@
 
 #include <fstream>
 
+//Temporary. To be updated after full c++20 <bit> support arrives.
+namespace nonstd {
+	template<typename T>
+	T bit_ceil(T input) {
+		unsigned output = 1;
+		if (input && !(input & (input - 1)))
+			return input;
+
+		while (output < input)
+			output <<= 1;
+
+		return output;
+	}
+}
+
 #include "essential/log.hpp"
 
 namespace clap::render::detail {
@@ -81,8 +96,10 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	FT_Set_Pixel_Sizes(font_face, 0, FT_UInt(height));
 
 	if (font_handle.data.find(height) == font_handle.data.end()) {
-		if (height * settings::font_bitmap_size_multiplier > gl::texture::_2d::maximum_height() ||
-			height * settings::font_bitmap_size_multiplier > gl::texture::_2d::maximum_width()) {
+		auto expected_height = nonstd::bit_ceil(height * settings::font_bitmap_size_multiplier),
+			expected_width = expected_height;
+		if (expected_height > gl::texture::_2d::maximum_height() ||
+			expected_width > gl::texture::_2d::maximum_width()) {
 
 			clap::log::warning::major << "Requested font bitmap size is not supported on given system. "
 				"Setting it to the maximum allowed size.";
@@ -96,8 +113,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 		font_handle.data.emplace(
 			height,
 			detail::size_data(
-				std::min(height * settings::font_bitmap_size_multiplier, gl::texture::_2d::maximum_width()),
-				std::min(height * settings::font_bitmap_size_multiplier, gl::texture::_2d::maximum_height())
+				std::min(expected_width, gl::texture::_2d::maximum_width()),
+				std::min(expected_height, gl::texture::_2d::maximum_height())
 			)
 		);
 	}
