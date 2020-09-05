@@ -107,6 +107,16 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	buffer_data.reserve(string.size() * 4 * 2);
 	size_t advance_x = 0, advance_y = 0;
 
+	bool has_kerning = FT_HAS_KERNING(font_face);
+	if (has_kerning) {
+		clap::log::message::minor << "Kerning is available.";
+		clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
+	} else {
+		clap::log::message::minor << "Kerning is not available.";
+		clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
+	}
+
+	unsigned previous_index = 0;
 	for (auto code_point : string) {
 		if (code_point == U'\n') {
 			advance_y += height;
@@ -187,6 +197,13 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 						clap::log::info::major << "Index: " << index << ".";
 					}
 				}
+			}
+			if (has_kerning && previous_index && index) {
+				FT_Vector kerning_data;
+				error = FT_Get_Kerning(font_face, previous_index, index, FT_KERNING_DEFAULT, &kerning_data);
+				advance_x += kerning_data.x >> 6;
+				advance_y += kerning_data.y >> 6;
+				previous_index = index;
 			}
 
 			buffer_data.push_back(float(advance_x + font_face->glyph->bitmap_left));
