@@ -63,22 +63,14 @@ clap::render::detail::size_data::size_data(size_t bitmap_width, size_t bitmap_he
 			nullptr,
 			bitmap_width,
 			bitmap_height,
-			true,
-			clap::gl::texture::internal_format::red,
+			false,
+			clap::gl::texture::internal_format::r8,
 			clap::gl::texture::external_format::red,
 			clap::gl::texture::external_type::unsigned_byte
 		}
-	), offset_x(0), offset_y(0) {}
-
-clap::render::text::text(std::basic_string<char8_t> const &string, font &font,
-						 clap::gl::shader::program &program, size_t height) 
-	: font_handle(font), height(height), program(program), count(0ull) {
-	update(string);
-}
-clap::render::text::text(std::string const &string, font &font,
-						 clap::gl::shader::program &program, size_t height)
-	: font_handle(font), height(height), program(program), count(0ull) {
-	update(string);
+	), offset_x(0), offset_y(0), current_layer_y(0) {
+	bitmap.set_min_filter(clap::gl::texture::min_filter::nearest);
+	bitmap.set_mag_filter(clap::gl::texture::mag_filter::nearest);
 }
 
 void clap::render::text::update(std::basic_string<char8_t> const &string) {
@@ -89,11 +81,23 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	FT_Set_Pixel_Sizes(font_face, 0, FT_UInt(height));
 
 	if (font_handle.data.find(height) == font_handle.data.end()) {
+		if (height * settings::font_bitmap_size_multiplier > gl::texture::_2d::maximum_height() ||
+			height * settings::font_bitmap_size_multiplier > gl::texture::_2d::maximum_width()) {
+
+			clap::log::warning::major << "Requested font bitmap size is not supported on given system. "
+				"Setting it to the maximum allowed size.";
+			clap::log::info::critical << "Requested size: " << height * settings::font_bitmap_size_multiplier
+				<< "x" << height * settings::font_bitmap_size_multiplier << ".";
+			clap::log::info::critical << "Maximum allowed size: " << gl::texture::_2d::maximum_width()
+				<< "x" << gl::texture::_2d::maximum_height() << ".";
+			clap::log::info::minor << "'settings::font_bitmap_size_multiplier':" 
+				<< settings::font_bitmap_size_multiplier << ".";
+		}
 		font_handle.data.emplace(
 			height,
 			detail::size_data(
-				font_handle.bitmap_width,
-				font_handle.bitmap_height
+				std::min(height * settings::font_bitmap_size_multiplier, gl::texture::_2d::maximum_width()),
+				std::min(height * settings::font_bitmap_size_multiplier, gl::texture::_2d::maximum_height())
 			)
 		);
 	}
@@ -101,10 +105,15 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 
 	std::vector<float> buffer_data;
 	buffer_data.reserve(string.size() * 4 * 2);
-	float advance_x = 0.f,
-		advance_y = 0.f;
+	size_t advance_x = 0, advance_y = 0;
 
 	for (auto code_point : string) {
+		if (code_point == U'\n') {
+			advance_y += height;
+			advance_x = 0;
+			continue;
+		}
+
 		auto index = FT_Get_Char_Index(font_face, code_point);
 		if (!index) {
 			clap::log::warning::major << "Requested character isn't present in the choosen font. It cannot be displayed.";
@@ -128,11 +137,12 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 					clap::log::info::major << "Index: " << index << ".";
 				} else {
 
-					if (target.offset_x + font_face->glyph->bitmap.width > font_handle.bitmap_width) {
-						target.offset_y += height;
+					if (target.offset_x + font_face->glyph->bitmap.width > target.bitmap.get_width()) {
 						target.offset_x = 0;
+						target.offset_y += target.current_layer_y;
+						target.current_layer_y = 0;
 					}
-					if (target.offset_y + height > font_handle.bitmap_height) {
+					if (target.offset_y + height > target.bitmap.get_height()) {
 						clap::log::warning::critical << "Font bitmap buffer is not big enough to store all the requested characters.";
 						clap::log::info::critical << "No further character of the font with given size can be loaded.";
 						clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
@@ -169,6 +179,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 																  target.offset_y + font_face->glyph->bitmap.rows
 															  }).first;
 						target.offset_x += font_face->glyph->bitmap.width;
+						target.current_layer_y = std::max(target.current_layer_y, (size_t) font_face->glyph->bitmap.rows);
 						clap::log::message::minor << "A new character was added to font bitmap atlas.";
 						clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
 						clap::log::info::major << "Size: " << height << ".";
@@ -182,10 +193,10 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			float position_to_x = (float) advance_x + font_face->glyph->bitmap_left + (iterator->second.to_x - iterator->second.from_x);
 			float position_to_y = (float) advance_y + font_face->glyph->bitmap_top - (iterator->second.to_y - iterator->second.from_y);
 
-			float texture_from_x = float(iterator->second.from_x) / target.bitmap.maximum_width();
-			float texture_from_y = float(iterator->second.from_y) / target.bitmap.maximum_height();
-			float texture_to_x = float(iterator->second.to_x) / target.bitmap.maximum_width();
-			float texture_to_y = float(iterator->second.to_y) / target.bitmap.maximum_height();
+			float texture_from_x = float(iterator->second.from_x) / target.bitmap.get_width();
+			float texture_from_y = float(iterator->second.from_y) / target.bitmap.get_height();
+			float texture_to_x = float(iterator->second.to_x) / target.bitmap.get_width();
+			float texture_to_y = float(iterator->second.to_y) / target.bitmap.get_height();
 
 			buffer_data.push_back(position_from_x);
 			buffer_data.push_back(position_from_y);
@@ -197,9 +208,14 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 			buffer_data.push_back(texture_to_x);
 			buffer_data.push_back(texture_to_y);
 
-			advance_x += float(font_face->glyph->advance.x >> 6);
-			advance_y += float(font_face->glyph->advance.y >> 6);
+			advance_x += font_face->glyph->advance.x >> 6;
+			advance_y += font_face->glyph->advance.y >> 6;
 		}
+
+		clap::log::message::minor << "Text object was updated.";
+		clap::log::info::major << "Message: \"" << string << "\".";
+		clap::log::info::major << "Font: " << font_face->family_name << " " << font_face->style_name << ".";
+		clap::log::info::major << "Size: " << height << ".";
 	}
 
 	clap::gl::buffer::single buffer;
@@ -213,12 +229,11 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	return;
 }
 
-void clap::render::text::move(size_t x, size_t y) {
-	program.set(program.getUniforms()["offset"], { float(x), float(y) });
-}
-
-void clap::render::text::render() const {
+void clap::render::text::render(size_t x, size_t y) const {
 	program.use();
+	program.set(uniforms["offset"], { float(x), float(y) });
 	font_handle.data.at(height).bitmap.bind();
 	vertex_array.draw(clap::gl::vertex_array::connection::lines, count);
 }
+
+size_t clap::render::settings::font_bitmap_size_multiplier = 32;

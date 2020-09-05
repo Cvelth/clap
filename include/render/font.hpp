@@ -15,6 +15,7 @@ namespace clap::render {
 			gl::texture::_2d bitmap;
 			std::unordered_map<char32_t, detail::bitmap_coordinates> coordinates;
 			size_t offset_x, offset_y;
+			size_t current_layer_y;
 
 			size_data(size_t bitmap_width, size_t bitmap_height);
 
@@ -22,7 +23,8 @@ namespace clap::render {
 			size_data(size_data &&other) noexcept 
 				: bitmap(std::move(other.bitmap)), 
 				coordinates(std::move(other.coordinates)),
-				offset_x(other.offset_x), offset_y(other.offset_y){}
+				offset_x(other.offset_x), offset_y(other.offset_y), 
+				current_layer_y(other.current_layer_y) {}
 		};
 	}
 	class text;
