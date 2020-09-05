@@ -21,8 +21,9 @@ protected:
 	virtual void on_resize(size_t width, size_t height);
 
 private:
-	clap::gl::vertex_array::single vertex_array;
-	clap::gl::shader::program text_atlas_program, text_program;
+	clap::gl::shader::program text_program;
 	clap::gl::shader::variables variables;
 	std::unique_ptr<clap::render::text> text;
+	std::unique_ptr<clap::render::text> long_text;
+	std::unique_ptr<clap::render::text> japanese_text;
 };

@@ -90,7 +90,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 				<< "x" << height * settings::font_bitmap_size_multiplier << ".";
 			clap::log::info::critical << "Maximum allowed size: " << gl::texture::_2d::maximum_width()
 				<< "x" << gl::texture::_2d::maximum_height() << ".";
-			clap::log::info::minor << "'settings::font_bitmap_size_multiplier':" 
+			clap::log::info::minor << "'settings::font_bitmap_size_multiplier':"
 				<< settings::font_bitmap_size_multiplier << ".";
 		}
 		font_handle.data.emplace(
@@ -188,25 +188,18 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 					}
 				}
 			}
-			float position_from_x = (float) advance_x + font_face->glyph->bitmap_left;
-			float position_from_y = (float) advance_y + font_face->glyph->bitmap_top;
-			float position_to_x = (float) advance_x + font_face->glyph->bitmap_left + (iterator->second.to_x - iterator->second.from_x);
-			float position_to_y = (float) advance_y + font_face->glyph->bitmap_top - (iterator->second.to_y - iterator->second.from_y);
 
-			float texture_from_x = float(iterator->second.from_x) / target.bitmap.get_width();
-			float texture_from_y = float(iterator->second.from_y) / target.bitmap.get_height();
-			float texture_to_x = float(iterator->second.to_x) / target.bitmap.get_width();
-			float texture_to_y = float(iterator->second.to_y) / target.bitmap.get_height();
+			buffer_data.push_back(float(advance_x + font_face->glyph->bitmap_left));
+			buffer_data.push_back(float(advance_y + height - font_face->glyph->bitmap_top));
+			buffer_data.push_back(float(iterator->second.from_x) / target.bitmap.get_width());
+			buffer_data.push_back(float(iterator->second.from_y) / target.bitmap.get_height());
 
-			buffer_data.push_back(position_from_x);
-			buffer_data.push_back(position_from_y);
-			buffer_data.push_back(texture_from_x);
-			buffer_data.push_back(texture_from_y);
-
-			buffer_data.push_back(position_to_x);
-			buffer_data.push_back(position_to_y);
-			buffer_data.push_back(texture_to_x);
-			buffer_data.push_back(texture_to_y);
+			buffer_data.push_back(float(advance_x + font_face->glyph->bitmap_left 
+								  + (iterator->second.to_x - iterator->second.from_x)));
+			buffer_data.push_back(float(advance_y + height - font_face->glyph->bitmap_top 
+								  + (iterator->second.to_y - iterator->second.from_y)));
+			buffer_data.push_back(float(iterator->second.to_x) / target.bitmap.get_width());
+			buffer_data.push_back(float(iterator->second.to_y) / target.bitmap.get_height());
 
 			advance_x += font_face->glyph->advance.x >> 6;
 			advance_y += font_face->glyph->advance.y >> 6;
