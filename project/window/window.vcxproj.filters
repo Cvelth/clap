@@ -26,6 +26,9 @@
     <ClInclude Include="..\..\include\window\event_type.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\window\event_handler_interface.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\window\window_interface.cpp">

@@ -1,14 +1,15 @@
 ﻿#pragma once
 #include <string>
 
-#include "window/event_type.hpp"
-
 struct GLFWwindow;
 struct GLFWmonitor;
 struct GLFWvidmode;
 
 namespace clap::gl::detail {
 	class state;
+}
+namespace clap::event {
+	class handler_interface;
 }
 
 namespace clap::detail {
@@ -35,6 +36,9 @@ namespace clap::detail {
 	class glfw_window {
 	public:
 		glfw_window(detail::glfw_window_handle handle) : handle(handle) {}
+		~glfw_window() {
+			remove_event_handler();
+		}
 
 		operator detail::glfw_window_handle() { return handle; }
 		detail::glfw_window_handle operator*() { return handle; }
@@ -49,6 +53,9 @@ namespace clap::detail {
 
 		size_t width();
 		size_t height();
+
+		void set_event_handler(clap::event::handler_interface *handler_interface);
+		void remove_event_handler() { set_event_handler(nullptr); }
 
 	private:
 		detail::glfw_window_handle handle;
@@ -123,6 +130,7 @@ namespace clap::detail {
 	};
 }
 
+#include "window/event_type.hpp"
 namespace clap::event::detail::convert {
 	int to_glfw(key v);
 	key to_key(int v);

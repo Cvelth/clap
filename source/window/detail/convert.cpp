@@ -529,12 +529,12 @@ std::ostream &operator<<(std::ostream &s, clap::event::mouse_hover_action v) {
 }
 std::ostream &operator<<(std::ostream &s, clap::event::modificator_mask v) {
 	if (static_cast<underlying>(v & clap::event::modificator_mask::super))
-		s << "Super +";
+		s << "Super + ";
 	if (static_cast<underlying>(v & clap::event::modificator_mask::alt))
-		s << "Alt +";
+		s << "Alt + ";
 	if (static_cast<underlying>(v & clap::event::modificator_mask::ctrl))
-		s << "Ctrl +";
+		s << "Ctrl + ";
 	if (static_cast<underlying>(v & clap::event::modificator_mask::shift))
-		s << "Shift +";
+		s << "Shift + ";
 	return s;
 }

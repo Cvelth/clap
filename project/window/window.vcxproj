@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\window\detail\glfw.hpp" />
+    <ClInclude Include="..\..\include\window\event_handler_interface.hpp" />
     <ClInclude Include="..\..\include\window\event_type.hpp" />
     <ClInclude Include="..\..\include\window\window_interface.hpp" />
   </ItemGroup>

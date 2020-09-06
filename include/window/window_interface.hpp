@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <string>
 
+#include "window/event_handler_interface.hpp"
+
 namespace clap {
 	enum class window_mode {
 		fullscreen,
@@ -11,7 +13,7 @@ namespace clap {
 		class glfw_window;
 	}
 
-	class window_interface {
+	class window_interface : public event::handler_interface {
 	public:
 		explicit window_interface(std::string const &title, window_mode mode, size_t width, size_t height);
 		explicit window_interface(std::string const &title, window_mode mode = window_mode::borderless_window);
