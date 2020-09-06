@@ -39,6 +39,8 @@ namespace clap {
 		virtual void render() = 0;
 		virtual void cleanup() = 0;
 
+		virtual bool on_resize(size_t width, size_t height);
+
 	protected:
 		double aspect_ratio;
 		bool should_redraw;

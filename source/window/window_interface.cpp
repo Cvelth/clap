@@ -3,6 +3,7 @@
 #include "window/detail/glfw.hpp"
 #include "essential/log.hpp"
 #include "gl/detail/state.hpp"
+#include "gl/misc.hpp"
 
 clap::window_interface::window_interface(std::string const &title, window_mode mode, 
 										   size_t width, size_t height) 
@@ -92,4 +93,9 @@ int clap::window_interface::loop() {
 	cleanup();
 
 	return 0;
+}
+
+bool clap::window_interface::on_resize(size_t width, size_t height) {
+	gl::update_viewport(width, height);
+	return true;
 }
