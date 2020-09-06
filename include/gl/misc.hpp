@@ -141,4 +141,7 @@ namespace clap::gl::enable {
 
 namespace clap::gl {
 	void set_line_width(float width);
+
+	void update_viewport(int offset_x, int offset_y, size_t width, size_t height);
+	void update_viewport(size_t width, size_t height);
 }
