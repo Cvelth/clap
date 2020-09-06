@@ -13,7 +13,7 @@ protected:
 	virtual void render() override;
 	virtual void cleanup() override;
 
-Com	virtual bool on_mouse_button(clap::event::mouse_button button, 
+	virtual bool on_mouse_button(clap::event::mouse_button button, 
 								 clap::event::mouse_button_action action,
 								 clap::event::modificator_mask modificators) override;
 
