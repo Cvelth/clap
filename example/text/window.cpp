@@ -81,8 +81,6 @@ void window::initialize() {
 		}
 	);
 	counter_thread.detach();
-
-	on_resize(width(), height());
 }
 
 void window::render() {
@@ -113,7 +111,7 @@ void window::cleanup() {
 	clap::resource::clear();
 }
 
-void window::on_resize(size_t width, size_t height) {
+bool window::on_resize(size_t width, size_t height) {
 	using namespace clap::gl;
 
 	float projection_matrix[] = {
@@ -125,4 +123,6 @@ void window::on_resize(size_t width, size_t height) {
 
 	text_program.set(variables["projection_matrix"], projection_matrix);
 	update();
+
+	return true;
 }

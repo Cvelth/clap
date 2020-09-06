@@ -18,7 +18,7 @@ protected:
 	virtual void render() override;
 	virtual void cleanup() override;
 
-	virtual void on_resize(size_t width, size_t height);
+	virtual bool on_resize(size_t width, size_t height) override;
 
 private:
 	clap::gl::shader::program text_program;
