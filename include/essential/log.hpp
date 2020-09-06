@@ -602,16 +602,19 @@ namespace clap {
 }
 
 inline clap::log::detail::severity_mask operator|(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) | 
+														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator&(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) & 
+														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator^(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<unsigned>(lhs) ^ static_cast<unsigned>(rhs));
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) ^ 
+														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator~(clap::log::detail::severity_mask const lhs) {
-	return static_cast<clap::log::detail::severity_mask>(~static_cast<unsigned>(lhs));
+	return static_cast<clap::log::detail::severity_mask>(~static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs));
 }
 
 inline clap::log::detail::severity_mask operator|(clap::log::detail::severity const lhs, clap::log::detail::severity const rhs) {
