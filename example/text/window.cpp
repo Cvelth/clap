@@ -69,7 +69,7 @@ void window::initialize() {
 												   clap::resource::font["Kalam-Light"],
 												   text_program, 24);
 	counter_value = 0;
-
+	
 	std::thread counter_thread(
 		[this]() {
 			while (!should_close()) {
@@ -94,7 +94,7 @@ void window::render() {
 		text->draw(width() / 8, height() / 20);
 		long_text->draw(0, height() / 6);
 		japanese_text->draw(0, height() / 2);
-
+		
 		counter->update(std::to_string(counter_value));
 		counter_label->draw(0, height() / 2 - 70);
 		counter->draw(100, height() / 2 - 70);
@@ -113,6 +113,7 @@ void window::cleanup() {
 
 bool window::on_resize(size_t width, size_t height) {
 	using namespace clap::gl;
+	update_viewport(width, height);
 
 	float projection_matrix[] = {
 		2.f / width,	0.f,			0.f,	0.f,
