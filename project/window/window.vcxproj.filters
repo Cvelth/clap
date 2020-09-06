@@ -23,12 +23,21 @@
     <ClInclude Include="..\..\include\window\detail\glfw.hpp">
       <Filter>include\detail</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\window\event_type.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\window\event_handler_interface.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\window\window_interface.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\window\detail\glfw.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\window\detail\convert.cpp">
       <Filter>source\detail</Filter>
     </ClCompile>
   </ItemGroup>

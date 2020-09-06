@@ -20,8 +20,8 @@ namespace clap::render {
 		void update(std::basic_string<char8_t> const &string);
 		inline void update(std::string const &string) { update((char8_t const *) string.c_str()); }
 
-		void render(size_t x = 0, size_t y = 0) const;
-		void draw(size_t x = 0, size_t y = 0) const { render(x, y); }
+		void render(int x = 0, int y = 0) const;
+		void draw(int x = 0, int y = 0) const { render(x, y); }
 
 		size_t size() const { return height; }
 		void size(size_t value) { height = value; }

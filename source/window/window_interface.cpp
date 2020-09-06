@@ -27,6 +27,8 @@ clap::window_interface::window_interface(std::string const &title, window_mode m
 
 	handle->make_current();
 	gl::detail::state::load();
+
+	handle->set_event_handler(this);
 }
 
 clap::window_interface::window_interface(std::string const &title, window_mode mode) 
@@ -56,6 +58,10 @@ void clap::window_interface::wait_events() {
 	detail::glfw::wait_events();
 }
 
+void clap::window_interface::wait_events(double seconds) {
+	detail::glfw::wait_events(seconds);
+}
+
 size_t clap::window_interface::width() {
 	return handle->width();
 }
@@ -78,6 +84,7 @@ void clap::window_interface::update() {
 int clap::window_interface::loop() {
 	log::message::critical << "Window loop initialization has started.";
 	initialize();
+	on_resize(width(), height());
 	log::message::critical << "Window loop initialization is complete. Starting the loop...";
 	while (!should_close())
 		render();

@@ -217,3 +217,13 @@ void clap::gl::set_line_width(float width) {
 	glLineWidth(width);
 	clap::log::message::minor << "Line width was changed to " << width << ".";
 }
+
+void clap::gl::update_viewport(int offset_x, int offset_y, size_t width, size_t height) {
+	gl::detail::state::ensure_loaded();
+	glViewport(offset_x, offset_y, GLsizei(width), GLsizei(height));
+	clap::log::message::minor << "Viewport was changed to (" << width << ", " << height << ").";
+}
+
+void clap::gl::update_viewport(size_t width, size_t height) {
+	update_viewport(0, 0, width, height);
+}

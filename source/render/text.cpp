@@ -247,7 +247,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	return;
 }
 
-void clap::render::text::render(size_t x, size_t y) const {
+void clap::render::text::render(int x, int y) const {
 	program.use();
 	program.set(uniforms["offset"], { float(x), float(y) });
 	font_handle.data.at(height).bitmap.bind();
