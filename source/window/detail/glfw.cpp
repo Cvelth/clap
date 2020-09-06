@@ -99,6 +99,11 @@ void clap::detail::glfw::wait_events() {
 	glfwWaitEvents();
 }
 
+void clap::detail::glfw::wait_events(double seconds) {
+	ensure_initialization();
+	glfwWaitEventsTimeout(seconds);
+}
+
 clap::detail::detail::glfw_monitor_handle clap::detail::glfw::primary_monitor() {
 	ensure_initialization();
 

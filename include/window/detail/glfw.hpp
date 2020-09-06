@@ -96,6 +96,7 @@ namespace clap::detail {
 
 		static void poll_events();
 		static void wait_events();
+		static void wait_events(double seconds);
 
 		static detail::glfw_monitor_handle primary_monitor();
 		static glfw_video_mode const video_mode(detail::glfw_monitor_handle monitor);

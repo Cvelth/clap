@@ -20,6 +20,7 @@ namespace clap {
 		void redraw();
 		void poll_events();
 		void wait_events();
+		void wait_events(double seconds);
 
 		size_t width();
 		size_t height();

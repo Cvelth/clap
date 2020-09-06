@@ -56,6 +56,10 @@ void clap::window_interface::wait_events() {
 	detail::glfw::wait_events();
 }
 
+void clap::window_interface::wait_events(double seconds) {
+	detail::glfw::wait_events(seconds);
+}
+
 size_t clap::window_interface::width() {
 	return handle->width();
 }
