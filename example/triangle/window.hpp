@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "window/window_interface.hpp"
-#include "gl/gl.hpp"
+#include "gl.hpp"
 
 using clap::window_mode;
 

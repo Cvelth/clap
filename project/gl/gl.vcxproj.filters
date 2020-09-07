@@ -32,12 +32,10 @@
     <ClInclude Include="..\..\include\gl\detail\state.hpp">
       <Filter>include\detail</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\gl\gl.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\gl\texture.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\gl\gl.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\buffer.cpp">

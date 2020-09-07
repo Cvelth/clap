@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <string>
 
-#include "gl/gl.hpp"
+#include "gl.hpp"
 
 namespace clap::render {
 	class font;
