@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "text", "example\text\text.v
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dependency", "dependency\dependency.vcxproj", "{25B6B285-4E22-4CFD-B0C1-6E380DE85D52}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ui", "project\ui\ui.vcxproj", "{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -95,6 +97,14 @@ Global
 		{25B6B285-4E22-4CFD-B0C1-6E380DE85D52}.Release|x64.Build.0 = Release|x64
 		{25B6B285-4E22-4CFD-B0C1-6E380DE85D52}.Release|x86.ActiveCfg = Release|Win32
 		{25B6B285-4E22-4CFD-B0C1-6E380DE85D52}.Release|x86.Build.0 = Release|Win32
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Debug|x64.ActiveCfg = Debug|x64
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Debug|x64.Build.0 = Debug|x64
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Debug|x86.ActiveCfg = Debug|Win32
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Debug|x86.Build.0 = Debug|Win32
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Release|x64.ActiveCfg = Release|x64
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Release|x64.Build.0 = Release|x64
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Release|x86.ActiveCfg = Release|Win32
+		{2AF57DE3-8A7D-4D59-AE74-E5821FD762E8}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
