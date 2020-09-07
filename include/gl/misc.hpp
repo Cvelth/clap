@@ -87,6 +87,7 @@ namespace clap::gl {
 			case blend_function::source_alpha_saturate: return detail::blend_function::source_alpha_saturate;
 			case blend_function::source_1_color: return detail::blend_function::one_minus_source_1_color;
 			case blend_function::source_1_alpha: return detail::blend_function::one_minus_source_1_alpha;
+			default: return detail::blend_function::zero;
 		}
 	}
 

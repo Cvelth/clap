@@ -8,6 +8,9 @@
 
 #include "glad/glad.h"
 
+#pragma warning(push)
+#pragma warning(disable : 4715)
+
 GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::target v) {
 	switch (v) {
 		case clap::gl::buffer::target::array: return GL_ARRAY_BUFFER;
@@ -1344,3 +1347,5 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::depth_function function
 	}
 	return stream;
 }
+
+#pragma warning(pop)
