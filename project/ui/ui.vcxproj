@@ -19,12 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\ui.hpp" />
     <ClInclude Include="..\..\include\ui\entity.hpp" />
+    <ClInclude Include="..\..\include\ui\loop.hpp" />
     <ClInclude Include="..\..\include\ui\zone.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp" />
+    <ClCompile Include="..\..\source\ui\loop.cpp" />
     <ClCompile Include="..\..\source\ui\zone.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\window\window.vcxproj">
+      <Project>{7ad5ae88-bf73-4e51-ba1b-fb624659b69f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
