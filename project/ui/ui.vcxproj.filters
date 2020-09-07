@@ -12,9 +12,15 @@
     <ClInclude Include="..\..\include\ui\entity.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\ui\zone.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\ui\zone.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
