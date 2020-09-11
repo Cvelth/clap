@@ -22,11 +22,13 @@
     <ClInclude Include="..\..\include\ui.hpp" />
     <ClInclude Include="..\..\include\ui\entity.hpp" />
     <ClInclude Include="..\..\include\ui\loop.hpp" />
+    <ClInclude Include="..\..\include\ui\pile.hpp" />
     <ClInclude Include="..\..\include\ui\zone.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp" />
     <ClCompile Include="..\..\source\ui\loop.cpp" />
+    <ClCompile Include="..\..\source\ui\pile.cpp" />
     <ClCompile Include="..\..\source\ui\zone.cpp" />
   </ItemGroup>
   <ItemGroup>

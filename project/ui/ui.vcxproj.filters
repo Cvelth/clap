@@ -19,6 +19,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\ui.hpp" />
+    <ClInclude Include="..\..\include\ui\pile.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp">
@@ -28,6 +31,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\ui\loop.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\ui\pile.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
