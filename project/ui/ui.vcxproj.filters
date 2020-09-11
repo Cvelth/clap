@@ -22,6 +22,9 @@
     <ClInclude Include="..\..\include\ui\pile.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\ui\compound.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp">

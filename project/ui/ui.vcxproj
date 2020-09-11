@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\ui.hpp" />
+    <ClInclude Include="..\..\include\ui\compound.hpp" />
     <ClInclude Include="..\..\include\ui\entity.hpp" />
     <ClInclude Include="..\..\include\ui\loop.hpp" />
     <ClInclude Include="..\..\include\ui\pile.hpp" />
