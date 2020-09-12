@@ -71,10 +71,9 @@ clap::ui::detail::glfw::window_handle clap::ui::detail::glfw::create_window(std:
 	if (auto out = glfwCreateWindow(signed_width, signed_height, (char const *) title.c_str(), monitor, share); out) {
 		log::message::major << "New window was created with dimentions (" << width << ", " << height << ").";
 
-		essential::guard guard(out,
-							   [](auto handle) { glfwMakeContextCurrent(handle); },
-							   [](auto handle) { /*glfwMakeContextCurrent(nullptr);*/ });
+		glfwMakeContextCurrent(out);
 		clap::gl::detail::load_gl();
+		glfwMakeContextCurrent(nullptr);
 
 		return window_handle(out);
 	} else {
@@ -383,4 +382,11 @@ void clap::ui::detail::glfw::window_handle::set_event_handler(clap::ui::detail::
 			clap::ui::detail::event::detail::impl::pop(*handle);
 			event_handler = nullptr;
 		}
+}
+
+void clap::ui::detail::glfw::detail::lock_context_callable::operator()() {
+	glfwMakeContextCurrent(context_owner);
+}
+void clap::ui::detail::glfw::detail::unlock_context_callable::operator()() {
+	glfwMakeContextCurrent(nullptr);
 }
