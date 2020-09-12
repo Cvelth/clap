@@ -13,8 +13,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gl", "project\gl\gl.vcxproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "essential", "project\essential\essential.vcxproj", "{CCC41C95-0F48-4B27-9B42-F3EF8BAB60AC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "window", "project\window\window.vcxproj", "{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "resource", "project\resource\resource.vcxproj", "{31D0519B-362B-481C-9408-A9635E955737}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "render", "project\render\render.vcxproj", "{8EE84B2B-1292-4AC5-BDC6-D4DE3CC12C30}"
@@ -59,14 +57,6 @@ Global
 		{CCC41C95-0F48-4B27-9B42-F3EF8BAB60AC}.Release|x64.Build.0 = Release|x64
 		{CCC41C95-0F48-4B27-9B42-F3EF8BAB60AC}.Release|x86.ActiveCfg = Release|Win32
 		{CCC41C95-0F48-4B27-9B42-F3EF8BAB60AC}.Release|x86.Build.0 = Release|Win32
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Debug|x64.ActiveCfg = Debug|x64
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Debug|x64.Build.0 = Debug|x64
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Debug|x86.ActiveCfg = Debug|Win32
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Debug|x86.Build.0 = Debug|Win32
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Release|x64.ActiveCfg = Release|x64
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Release|x64.Build.0 = Release|x64
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Release|x86.ActiveCfg = Release|Win32
-		{7AD5AE88-BF73-4E51-BA1B-FB624659B69F}.Release|x86.Build.0 = Release|Win32
 		{31D0519B-362B-481C-9408-A9635E955737}.Debug|x64.ActiveCfg = Debug|x64
 		{31D0519B-362B-481C-9408-A9635E955737}.Debug|x64.Build.0 = Debug|x64
 		{31D0519B-362B-481C-9408-A9635E955737}.Debug|x86.ActiveCfg = Debug|Win32
