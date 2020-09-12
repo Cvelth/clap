@@ -14,6 +14,9 @@
     <ClInclude Include="..\..\include\essential\log.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\essential\guard.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\essential\log.cpp">

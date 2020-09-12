@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\essential\guard.hpp" />
     <ClInclude Include="..\..\include\essential\log.hpp" />
   </ItemGroup>
   <ItemGroup>
