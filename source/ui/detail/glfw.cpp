@@ -136,15 +136,15 @@ clap::ui::detail::glfw::window_handle clap::ui::detail::glfw::create_window_bord
 	}
 }
 
-static void clap::ui::detail::glfw::poll_events() {
+void clap::ui::detail::glfw::poll_events() {
 	ensure_initialized();
 	glfwPollEvents();
 }
-static void clap::ui::detail::glfw::wait_events() {
+void clap::ui::detail::glfw::wait_events() {
 	ensure_initialized();
 	glfwWaitEvents();
 }
-static void clap::ui::detail::glfw::wait_events(double seconds) {
+void clap::ui::detail::glfw::wait_events(double seconds) {
 	ensure_initialized();
 	glfwWaitEventsTimeout(seconds);
 }
@@ -258,14 +258,15 @@ namespace clap::ui::detail::event::detail {
 				<< ")\' has no handler installed.";
 		}
 		static void on_mouse_hover(GLFWwindow *w, int enter_flag_raw) {
-			auto action = clap::ui::detail::event::convert::to_mouse_hover_action(enter_flag_raw);
 			if (auto handler = get(w); handler) {
-				if (!handler->on_mouse_hover(action))
-					clap::log::warning::minor << "Mouse event \'Hovering "
-					<< (enter_flag_raw ? "in" : "out") << "\' wasn't handled (handler returned 'false').";
+				if (enter_flag_raw) {
+					if (!handler->on_mouse_entering())
+						clap::log::warning::minor << "Mouse event \'Entering\' wasn't handled (handler returned 'false').";
+				} else
+					if (!handler->on_mouse_leaving())
+						clap::log::warning::minor << "Mouse event \'Leaving\' wasn't handled (handler returned 'false').";
 			} else
-				clap::log::warning::minor << "Mouse event \'Hovering "
-				<< (enter_flag_raw ? "in" : "out") << "\' has no handler installed.";
+				clap::log::warning::minor << "Mouse events \'Entering\' and \'Leaving\' have no handler installed.";
 		}
 		static void on_scroll(GLFWwindow *w, double dx, double dy) {
 			if (auto handler = get(w); handler) {
@@ -276,10 +277,10 @@ namespace clap::ui::detail::event::detail {
 				clap::log::warning::minor << "Scroll event \'Delta is (" << dx << ", " << dy
 				<< "\' has no handler installed.";
 		}
-		static void on_resize(GLFWwindow *w, int x_raw, int y_raw) {
+		static void on_window_resize(GLFWwindow *w, int x_raw, int y_raw) {
 			size_t x = x_raw, y = y_raw;
 			if (auto handler = get(w); handler) {
-				if (!handler->on_resize(x, y))
+				if (!handler->on_window_resize(x, y))
 					clap::log::warning::minor << "Resize event \'New size is (" << x << ", " << y
 					<< ")\' wasn't handled (handler returned 'false').";
 			} else
@@ -302,6 +303,57 @@ namespace clap::ui::detail::event::detail {
 					clap::log::info::minor << i << ": '" << paths[i] << "'.";
 			}
 		}
+
+		static void on_window_move(GLFWwindow *w, int x_raw, int y_raw) {
+			size_t x = x_raw, y = y_raw;
+			if (auto handler = get(w); handler) {
+				if (!handler->on_window_move(x, y))
+					clap::log::warning::minor << "Move event \'New position is (" << x << ", " << y
+					<< ")\' wasn't handled (handler returned 'false').";
+			} else
+				clap::log::warning::minor << "Move event \'New position is (" << x << ", " << y
+				<< "\' has no handler installed.";
+		}
+		static void on_window_close(GLFWwindow *w) {
+			if (auto handler = get(w); handler) {
+				if (!handler->on_window_close())
+					clap::log::warning::minor << "Close event wasn't handled (handler returned 'false').";
+			} else
+				clap::log::warning::minor << "Close event has no handler installed.";
+		}
+		static void on_window_focus(GLFWwindow *w, int focus_flag_raw) {
+			if (auto handler = get(w); handler) {
+				if (focus_flag_raw) {
+					if (!handler->on_window_focus_gain())
+						clap::log::warning::minor << "Focus gaining event wasn't handled (handler returned 'false').";
+				} else
+					if (!handler->on_window_focus_loss())
+						clap::log::warning::minor << "Focus lossing event wasn't handled (handler returned 'false').";
+			} else
+				clap::log::warning::minor << "Focus events have no handler installed.";
+		}
+		static void on_window_minimize(GLFWwindow *w, int flag_raw) {
+			if (auto handler = get(w); handler) {
+				if (flag_raw) {
+					if (!handler->on_window_minimize())
+						clap::log::warning::minor << "Minimization event wasn't handled (handler returned 'false').";
+				} else
+					if (!handler->on_restore_minimized())
+						clap::log::warning::minor << "Minimization event wasn't handled (handler returned 'false').";
+			} else
+				clap::log::warning::minor << "Minimization events have no handler installed.";
+		}
+		static void on_window_maximize(GLFWwindow *w, int flag_raw) {
+			if (auto handler = get(w); handler) {
+				if (flag_raw) {
+					if (!handler->on_window_maximize())
+						clap::log::warning::minor << "Minimization event wasn't handled (handler returned 'false').";
+				} else
+					if (!handler->on_restore_maximized())
+						clap::log::warning::minor << "Minimization event wasn't handled (handler returned 'false').";
+			} else
+				clap::log::warning::minor << "Minimization events have no handler installed.";
+		}
 	};
 }
 std::unordered_map<GLFWwindow *, clap::ui::detail::event::handler_interface *> clap::ui::detail::event::detail::impl::mapping = {};
@@ -319,7 +371,12 @@ void clap::ui::detail::glfw::window_handle::set_event_handler(clap::ui::detail::
 		glfwSetCursorPosCallback(*handle, clap::ui::detail::event::detail::impl::on_mouse_move);
 		glfwSetDropCallback(*handle, clap::ui::detail::event::detail::impl::on_file_drop);
 		glfwSetScrollCallback(*handle, clap::ui::detail::event::detail::impl::on_scroll);
-		glfwSetFramebufferSizeCallback(*handle, clap::ui::detail::event::detail::impl::on_resize);
+		glfwSetFramebufferSizeCallback(*handle, clap::ui::detail::event::detail::impl::on_window_resize);
+		glfwSetWindowPosCallback(*handle, clap::ui::detail::event::detail::impl::on_window_move);
+		glfwSetWindowCloseCallback(*handle, clap::ui::detail::event::detail::impl::on_window_close);
+		glfwSetWindowFocusCallback(*handle, clap::ui::detail::event::detail::impl::on_window_focus);
+		glfwSetWindowIconifyCallback(*handle, clap::ui::detail::event::detail::impl::on_window_minimize);
+		glfwSetWindowMaximizeCallback(*handle, clap::ui::detail::event::detail::impl::on_window_maximize);
 
 	} else
 		if (event_handler) {

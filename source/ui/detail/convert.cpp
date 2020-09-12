@@ -337,22 +337,6 @@ clap::ui::detail::event::mouse_button_action clap::ui::detail::event::convert::t
 	clap::log::error::critical << "Unsupported enum value.";
 }
 
-int clap::ui::detail::event::convert::to_glfw(clap::ui::detail::event::mouse_hover_action v) {
-	switch (v) {
-		case clap::ui::detail::event::mouse_hover_action::enter: return GLFW_TRUE;
-		case clap::ui::detail::event::mouse_hover_action::leave: return GLFW_FALSE;
-	}
-	clap::log::error::critical << "Unsupported enum value.";
-
-}
-clap::ui::detail::event::mouse_hover_action clap::ui::detail::event::convert::to_mouse_hover_action(int v) {
-	switch (v) {
-		case GLFW_TRUE: return clap::ui::detail::event::mouse_hover_action::enter;
-		case GLFW_FALSE: return clap::ui::detail::event::mouse_hover_action::leave;
-	}
-	clap::log::error::critical << "Unsupported enum value.";
-}
-
 int clap::ui::detail::event::convert::to_glfw(clap::ui::detail::event::modificator_mask v) {
 	return static_cast<int>(static_cast<underlying>(v));
 }
@@ -515,14 +499,6 @@ std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::mouse_button_
 	switch (v) {
 		case clap::ui::detail::event::mouse_button_action::press: return s << "pressed";
 		case clap::ui::detail::event::mouse_button_action::release: return s << "released";
-	}
-	clap::log::warning::critical << "Unsupported enum value.";
-	return s;
-}
-std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::mouse_hover_action v) {
-	switch (v) {
-		case clap::ui::detail::event::mouse_hover_action::enter: return s << "entered";
-		case clap::ui::detail::event::mouse_hover_action::leave: return s << "left";
 	}
 	clap::log::warning::critical << "Unsupported enum value.";
 	return s;

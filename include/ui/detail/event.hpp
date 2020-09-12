@@ -35,9 +35,6 @@ namespace clap::ui::detail::event {
 	enum class mouse_button_action {
 		press, release
 	};
-	enum class mouse_hover_action {
-		enter, leave
-	};
 
 	enum class modificator_mask {
 		none = 0x0, shift = 0x1,
@@ -86,16 +83,44 @@ namespace clap::ui::detail::event {
 		inline virtual bool on_mouse_move(double x, double y) {
 			return false;
 		}
-		inline virtual bool on_mouse_hover(event::mouse_hover_action action) {
+		inline virtual bool on_mouse_entering() {
+			return false;
+		}
+		inline virtual bool on_mouse_leaving() {
 			return false;
 		}
 		inline virtual bool on_scroll(double dx, double dy) {
 			return false;
 		}
-		inline virtual bool on_resize(size_t x, size_t y) {
+		inline virtual bool on_window_resize(size_t x, size_t y) {
 			return false;
 		}
 		inline virtual bool on_file_drop(int count, const char8_t **paths) {
+			return false;
+		}
+
+		inline virtual bool on_window_close() {
+			return false;
+		}
+		inline virtual bool on_window_move(size_t x, size_t y) {
+			return false;
+		}
+		inline virtual bool on_window_focus_gain() {
+			return false;
+		}
+		inline virtual bool on_window_focus_loss() {
+			return false;
+		}
+		inline virtual bool on_window_minimize() {
+			return false;
+		}
+		inline virtual bool on_restore_minimized() {
+			return false;
+		}
+		inline virtual bool on_window_maximize() {
+			return false;
+		}
+		inline virtual bool on_restore_maximized() {
 			return false;
 		}
 	};
@@ -113,8 +138,6 @@ namespace clap::ui::detail::event::convert {
 	mouse_button to_mouse_button(int v);
 	int to_glfw(mouse_button_action v);
 	mouse_button_action to_mouse_button_action(int v);
-	int to_glfw(mouse_hover_action v);
-	mouse_hover_action to_mouse_hover_action(int v);
 
 	int to_glfw(modificator_mask v);
 	modificator_mask to_modificator_mask(int v);
@@ -125,5 +148,4 @@ std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::key v);
 std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::key_action v);
 std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::mouse_button v);
 std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::mouse_button_action v);
-std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::mouse_hover_action v);
 std::ostream &operator<<(std::ostream &s, clap::ui::detail::event::modificator_mask v);
