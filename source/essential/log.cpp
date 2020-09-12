@@ -70,6 +70,8 @@ void clap::log::detail::stream::finish_entry() {
 	}
 }
 
+std::mutex clap::log::detail::stream::mutex;
+
 clap::log::detail::logger_state_t &clap::logger() {
 	static log::detail::logger_state_t object;
 	return object;

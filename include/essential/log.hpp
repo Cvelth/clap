@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <filesystem>
+#include <mutex>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -155,7 +156,10 @@ namespace clap::log::detail {
 		template <clap::log::detail::severity level> friend class log_t;
 
 	public:
-		~stream() { finish_entry(); }
+		~stream() {
+			finish_entry();
+			mutex.unlock();
+		}
 
 	private:
 		/**
@@ -164,6 +168,7 @@ namespace clap::log::detail {
 		 * @param severity describes type and level of given log entry.
 		*/
 		stream(logger_state_t &logger_state, severity severity) : logger_state_ref(logger_state), severity(severity) {
+			mutex.lock();
 			initialize_entry();
 		}
 
@@ -209,6 +214,11 @@ namespace clap::log::detail {
 		 * @brief A severity level of the entry processed by the stream
 		*/
 		log::detail::severity severity;
+
+		/**
+		 * @brief Mutex used to ensure that only one thread is writing a log entry at a time.
+		*/
+		static std::mutex mutex;
 	};
 
 	/**
@@ -336,37 +346,39 @@ namespace clap::log {
 }
 
 namespace clap::log::detail {
-	template <typename interface_t, typename actual_t, 
+	template <typename interface_t, typename actual_t,
 		typename destructor_t = std::default_delete<typename actual_t>>
-	class basic_polymorphic_wrapper {
-	public:
-		template <typename ...Ts>
-		basic_polymorphic_wrapper(Ts const &...ts) : pointer(new actual_t{ts...}) {}
-		basic_polymorphic_wrapper() : pointer(new actual_t{}) {}
-		~basic_polymorphic_wrapper() { if (pointer) destructor_t{}((actual_t *) pointer); }
+		class basic_polymorphic_wrapper {
+		public:
+			template <typename ...Ts>
+			basic_polymorphic_wrapper(Ts const &...ts) : pointer(new actual_t{ ts... }) {}
+			basic_polymorphic_wrapper() : pointer(new actual_t{}) {}
+			~basic_polymorphic_wrapper() { if (pointer) destructor_t{}((actual_t *) pointer); }
 
-		basic_polymorphic_wrapper(basic_polymorphic_wrapper const &) = delete;
-		basic_polymorphic_wrapper(basic_polymorphic_wrapper &&other) noexcept 
-			: pointer(other.pointer) { other.pointer = nullptr; }
+			basic_polymorphic_wrapper(basic_polymorphic_wrapper const &) = delete;
+			basic_polymorphic_wrapper(basic_polymorphic_wrapper &&other) noexcept
+				: pointer(other.pointer) {
+				other.pointer = nullptr;
+			}
 
-		operator interface_t *() { return pointer; }
-		operator interface_t &() { return *pointer; }
+			operator interface_t *() { return pointer; }
+			operator interface_t &() { return *pointer; }
 
-		interface_t *operator->() { return pointer; };
-		interface_t *operator->() const { return pointer; };
-		interface_t &operator*() { return *pointer; };
-		interface_t &operator*() const { return *pointer; };
-		actual_t &operator&() { return *(actual_t *) pointer; };
-		actual_t &operator&() const { return *(actual_t *) pointer; };
-	private:
-		interface_t *pointer;
+			interface_t *operator->() { return pointer; };
+			interface_t *operator->() const { return pointer; };
+			interface_t &operator*() { return *pointer; };
+			interface_t &operator*() const { return *pointer; };
+			actual_t &operator&() { return *(actual_t *) pointer; };
+			actual_t &operator&() const { return *(actual_t *) pointer; };
+		private:
+			interface_t *pointer;
 	};
 
 	struct nowide_ofstream_destructor_callable {
 		void operator()(nowide::ofstream *ptr);
 	};
 	using file_wrapper = basic_polymorphic_wrapper<
-		std::ostream, nowide::ofstream, 
+		std::ostream, nowide::ofstream,
 		nowide_ofstream_destructor_callable
 	>;
 
@@ -387,7 +399,7 @@ namespace clap::log::detail {
 
 		stream_wrapper(stream_wrapper const &) = delete;
 		stream_wrapper(stream_wrapper &&other) noexcept
-			: stream(std::move(other.stream)), mask(other.mask), 
+			: stream(std::move(other.stream)), mask(other.mask),
 			write_next_info(other.write_next_info) {}
 
 		/**
@@ -602,15 +614,15 @@ namespace clap {
 }
 
 inline clap::log::detail::severity_mask operator|(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) | 
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) |
 														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator&(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) & 
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) &
 														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator^(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) ^ 
+	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) ^
 														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
 }
 inline clap::log::detail::severity_mask operator~(clap::log::detail::severity_mask const lhs) {
