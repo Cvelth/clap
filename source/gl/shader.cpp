@@ -10,7 +10,7 @@
 #include "essential/log.hpp"
 
 clap::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	id = glCreateShader(gl::detail::convert::to_gl(type));
 	if (id == 0 || id == -1)
@@ -50,7 +50,7 @@ clap::gl::shader::detail::object::object(type type, std::string source) : object
 }
 
 clap::gl::shader::detail::object::object(uint32_t id) : id(id) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	if (id == 0 || !glIsShader(id))
 		log::warning::critical << "Unable to perform a shader object move operation. "
@@ -157,7 +157,7 @@ clap::gl::shader::detail::variable::variable(std::string const &name, uint32_t c
 }
 
 clap::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	id = glCreateProgram();
 	if (id == 0 || id == -1)
@@ -439,7 +439,7 @@ void clap::gl::shader::program::set(detail::variable const &variable, size_t n, 
 }
 
 clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	if (id == 0 || !glIsProgram(id))
 		log::warning::critical << "Unable to perform a shader program move operation. "

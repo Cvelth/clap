@@ -7,12 +7,12 @@
 namespace clap::gl::shader {
 	class program;
 }
-
 namespace clap::gl::detail {
+	void load_gl();
 	class state {
+		friend void load_gl();
 	public:
-		static bool load();
-		static void ensure_loaded();
+		static void verify_loaded();
 
 		static void bind(buffer::target const &target, buffer::detail::indexed &&buffer);
 		static std::optional<buffer::detail::indexed> const unbind(buffer::target const &target);
@@ -29,15 +29,17 @@ namespace clap::gl::detail {
 		static bool is_used(shader::program *program);
 
 		static void bind(texture::target const &target, texture::detail::interface *texture);
-		static texture::detail::interface* unbind(texture::target const &target);
-		static texture::detail::interface const*const bound(texture::target const &target);
-		static std::optional<texture::target> is_bound(texture::detail::interface const*const texture);
+		static texture::detail::interface *unbind(texture::target const &target);
+		static texture::detail::interface const *const bound(texture::target const &target);
+		static std::optional<texture::target> is_bound(texture::detail::interface const *const texture);
 
 		state() = delete;
 		state(state const &other) = delete;
 		state(state &&other) = delete;
 
 	private:
+		static bool was_loaded;
+
 		static constexpr size_t buffer_target_count = 14;
 		static std::optional<buffer::detail::indexed> bound_buffers[buffer_target_count];
 		static std::optional<vertex_array::detail::indexed> bound_vertex_array;

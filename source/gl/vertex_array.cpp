@@ -9,7 +9,7 @@
 
 clap::gl::vertex_array::multiple::multiple(size_t count)
 	: count(count) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	ids = new uint32_t[count];
 	glGenVertexArrays(GLsizei(count), ids);
@@ -30,7 +30,7 @@ clap::gl::vertex_array::detail::indexed clap::gl::vertex_array::multiple::id(siz
 }
 
 clap::gl::vertex_array::multiple::multiple(size_t count, uint32_t *ids) : count(count), ids(ids) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	for (size_t i = 0; i < count; i++)
 		if (!glIsVertexArray(ids[i])) {

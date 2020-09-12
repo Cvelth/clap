@@ -8,7 +8,7 @@
 clap::gl::texture::detail::interface::interface(texture::target target,
 												texture::internal_format internal_format)
 	: target(target), internal_format(internal_format) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	glGenTextures(1, &id);
 	log::message::minor << "A new texture of type \"" << target << "\" was created.";

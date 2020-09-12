@@ -7,7 +7,7 @@
 
 clap::gl::buffer::multiple::multiple(size_t count)
 	: count(count), currently_mapped_id(size_t(-1)), currently_mapped_pointer(nullptr) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	ids = new uint32_t[count];
 	glGenBuffers(GLsizei(count), ids);
@@ -39,7 +39,7 @@ clap::gl::buffer::multiple::multiple(size_t count, uint32_t *ids, size_t current
 									   void *currently_mapped_pointer) : count(count), ids(ids),
 										currently_mapped_id(currently_mapped_id),
 										currently_mapped_pointer(currently_mapped_pointer) {
-	gl::detail::state::ensure_loaded();
+	gl::detail::state::verify_loaded();
 
 	for (size_t i = 0; i < count; i++)
 		if (!glIsBuffer(ids[i])) {

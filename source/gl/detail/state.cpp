@@ -1,38 +1,15 @@
 ﻿#include "gl/detail/state.hpp"
 
 #include "glad/glad.h"
-#include "glfw/glfw3.h"
 
-#include "window/detail/glfw.hpp"
 #include "gl/shader.hpp"
 #include "essential/log.hpp"
 
-bool clap::gl::detail::state::load() {
-	static bool was_loaded = false;
-	if (!was_loaded) {
-		if (!clap::detail::glfw::is_context_selected) {
-			log::error::critical << "An attempt to load GL before a context was created. "
-				"Call 'make_current' on a window handle first.";
-			return false;
-		}
-
-		bool out = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-		if (!out)
-			log::error::critical << "Unable to load GL. 'glad' returns false.";
-		was_loaded = true;
-
-		log::message::critical << "GL was loaded using 'glad'.";
-		log::info::critical << "GL Version: " << glGetString(GL_VERSION);
-		log::info::negligible << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-		log::info::negligible << "Vendor: " << glGetString(GL_VENDOR);
-		log::info::major << "Renderer: " << glGetString(GL_RENDERER);
-
-		return out;
-	} else
-		return true;
+bool clap::gl::detail::state::was_loaded = false;
+void clap::gl::detail::state::verify_loaded() { 
+	if (!was_loaded)
+		clap::log::error::critical << "An attempt to use OpenGL before it was loaded.";
 }
-
-void clap::gl::detail::state::ensure_loaded() { load(); }
 
 std::optional<clap::gl::buffer::detail::indexed> clap::gl::detail::state::bound_buffers[buffer_target_count];
 void clap::gl::detail::state::bind(buffer::target const &target, buffer::detail::indexed &&buffer) {
