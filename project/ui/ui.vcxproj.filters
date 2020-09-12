@@ -7,6 +7,12 @@
     <Filter Include="source">
       <UniqueIdentifier>{08675981-6e61-4d3c-9e30-c69602abe6a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\detail">
+      <UniqueIdentifier>{d2f1b03e-b3aa-4ec6-a497-08b0be5812d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\detail">
+      <UniqueIdentifier>{f6d89072-6781-4805-8dac-78922109ddff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\ui\entity.hpp">
@@ -25,6 +31,15 @@
     <ClInclude Include="..\..\include\ui\compound.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\ui\detail\state.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ui\detail\glfw.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ui\detail\event.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp">
@@ -38,6 +53,15 @@
     </ClCompile>
     <ClCompile Include="..\..\source\ui\pile.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\ui\detail\state.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\ui\detail\glfw.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\ui\detail\convert.cpp">
+      <Filter>source\detail</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
