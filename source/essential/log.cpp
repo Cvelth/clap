@@ -197,3 +197,5 @@ clap::log::detail::stream_wrapper::operator bool() const {
 void clap::log::detail::nowide_ofstream_destructor_callable::operator()(nowide::ofstream *ptr) {
 	delete ptr;
 }
+
+template std::basic_string<char8_t> nowide::utf::convert_string(const char32_t *begin, const char32_t *end);
