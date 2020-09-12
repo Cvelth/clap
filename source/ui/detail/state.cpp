@@ -1,4 +1,5 @@
 ﻿#include "ui/detail/state.hpp"
+#include "ui/detail/glfw.hpp"
 
 #include "essential/log.hpp"
 #include "gl/detail/state.hpp"
@@ -33,4 +34,11 @@ clap::ui::detail::glfw::window_handle &clap::ui::detail::state::add(ui::zone *zo
 		}
 	} else
 		clap::log::error::critical << "Cannot created window for a 'nulltpr' zone.";
+}
+
+bool clap::ui::detail::state::should_close() {
+	for (auto &pair : zone_window_map)
+		if (!pair.second.should_close())
+			return false;
+	return true;
 }
