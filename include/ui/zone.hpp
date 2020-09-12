@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ui/entity.hpp"
 
+#include <chrono>
 #include <memory>
 #include <string>
 
@@ -41,6 +42,15 @@ namespace clap::ui {
 	public:
 		explicit zone(compound::interface *owner) noexcept;
 		zone(std::u8string name, size_t width, size_t height) noexcept;
+
+		virtual void initialize() {}
+		virtual bool draw(std::chrono::nanoseconds time_step) { 
+			return time_step != std::chrono::nanoseconds(0); 
+		}
+		virtual void clean_up() {}
+
+		auto const& get_name() const { return name; }
+		bool is_owned() const { return owner; }
 
 	protected:
 		std::u8string name;
