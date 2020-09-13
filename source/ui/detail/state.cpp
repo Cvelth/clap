@@ -78,10 +78,10 @@ void clap::ui::detail::state::update_removals() {
 		bool found = (iterator != zone_context_map.end());
 		mutex.unlock_shared();
 
-		std::shared_lock guard(mutex);
-		if (found)
+		if (found) {
+			std::unique_lock guard(mutex);
 			zone_context_map.erase(iterator);
-		else
+		} else
 			clap::log::warning::critical << "Requested zone wasn't found in the map.";
 
 		removing_queue.pop_back();
