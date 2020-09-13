@@ -4,7 +4,7 @@
 #include "essential/log.hpp"
 #include "gl/detail/state.hpp"
 
-std::map<clap::ui::zone *, clap::ui::detail::glfw::window_handle> clap::ui::detail::state::zone_window_map;
+std::map<clap::ui::zone *, clap::ui::detail::context> clap::ui::detail::state::zone_context_map;
 std::shared_mutex clap::ui::detail::state::mutex;
 
 std::vector<clap::ui::zone *> adding_queue;
@@ -12,25 +12,28 @@ std::mutex adding_mutex;
 std::vector<clap::ui::zone *> removing_queue;
 std::mutex removing_mutex;
 
-clap::ui::detail::glfw::window_handle &clap::ui::detail::state::get(ui::zone *zone_ptr) {
+clap::ui::detail::context::context(std::u8string name, size_t width, size_t height)
+	: window(clap::ui::detail::glfw::create_window_windowed(name, width, height)) {}
+
+clap::ui::detail::context &clap::ui::detail::state::get(ui::zone *zone_ptr) {
 	std::shared_lock guard(mutex);
-	auto ret_iterator = zone_window_map.find(zone_ptr);
-	if (ret_iterator != zone_window_map.end())
+	auto ret_iterator = zone_context_map.find(zone_ptr);
+	if (ret_iterator != zone_context_map.end())
 		return ret_iterator->second;
 	else
 		clap::log::error::critical << "Trying to get a window for a zone without one.";
 }
 
-clap::ui::detail::glfw::window_handle &clap::ui::detail::state::add(ui::zone *zone_ptr) {
+clap::ui::detail::context &clap::ui::detail::state::add(ui::zone *zone_ptr) {
 	if (zone_ptr) {
 		if (!zone_ptr->owner) {
 			std::unique_lock guard(mutex);
-			auto iterator_pair = zone_window_map.insert(
+			auto iterator_pair = zone_context_map.insert(
 				std::pair(
 					zone_ptr,
-					clap::ui::detail::glfw::create_window_windowed(zone_ptr->name,
-																   zone_ptr->size.w(),
-																   zone_ptr->size.h())
+					context(zone_ptr->name,
+							zone_ptr->size.w(),
+							zone_ptr->size.h())
 				));
 			if (iterator_pair.second) {
 				std::lock_guard guard(adding_mutex);
@@ -51,12 +54,12 @@ void clap::ui::detail::state::remove(ui::zone *zone_ptr) {
 	removing_queue.push_back(zone_ptr);
 }
 
-void clap::ui::detail::state::update_additions(std::function<void(ui::zone *, glfw::window_handle &)> on_added) {
+void clap::ui::detail::state::update_additions(std::function<void(ui::zone *, context &)> on_added) {
 	std::lock_guard guard(adding_mutex);
 	while (!adding_queue.empty()) {
 		mutex.lock_shared();
-		auto iterator = zone_window_map.find(adding_queue.back());
-		bool found = (iterator != zone_window_map.end());
+		auto iterator = zone_context_map.find(adding_queue.back());
+		bool found = (iterator != zone_context_map.end());
 		mutex.unlock_shared();
 
 		if (found)
@@ -71,12 +74,13 @@ void clap::ui::detail::state::update_removals() {
 	std::lock_guard guard(removing_mutex);
 	while (!removing_queue.empty()) {
 		mutex.lock_shared();
-		auto iterator = zone_window_map.find(removing_queue.back());
-		bool found = (iterator != zone_window_map.end());
+		auto iterator = zone_context_map.find(removing_queue.back());
+		bool found = (iterator != zone_context_map.end());
 		mutex.unlock_shared();
 
-		if (found) 
-			zone_window_map.erase(iterator);
+		std::shared_lock guard(mutex);
+		if (found)
+			zone_context_map.erase(iterator);
 		else
 			clap::log::warning::critical << "Requested zone wasn't found in the map.";
 
@@ -85,9 +89,10 @@ void clap::ui::detail::state::update_removals() {
 }
 
 bool clap::ui::detail::state::should_close() {
-	std::shared_lock guard(mutex);
-	for (auto &pair : zone_window_map)
-		if (!pair.second.should_close())
-			return false;
-	return true;
+	//std::shared_lock guard(mutex);
+	return zone_context_map.empty();
+	//for (auto &pair : zone_context_map)
+	//	if (!pair.second.window.should_close())
+	//		return false;
+	//return true;
 }
