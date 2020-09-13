@@ -1,13 +1,17 @@
 ﻿#include "ui/zone.hpp"
-
 #include "ui/detail/state.hpp"
+
+#include "essential/log.hpp"
 
 clap::ui::zone::zone(std::u8string name, size_t width, size_t height) noexcept 
 	: name(name), owner(nullptr), size(width, height) {
 	detail::state::add(this);
 }
 clap::ui::zone::zone(clap::ui::compound::interface *owner) noexcept
-	: owner(owner) {}
+	: owner(owner) {
+	if (!owner)
+		clap::log::warning::critical << "Owned zone was created without an explicit owner.";
+}
 
 clap::ui::detail::size_constraits::size_constraits() noexcept : size_constraits(0u, 0u) {}
 
