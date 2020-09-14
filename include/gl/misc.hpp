@@ -29,7 +29,6 @@ namespace clap::gl::enable {
 	void multisample();
 	void polygon_smooth();
 	void scissor_test();
-	void stencil_test();
 }
 namespace clap::gl::disable {
 	void blend();
@@ -42,7 +41,6 @@ namespace clap::gl::disable {
 	void multisample();
 	void polygon_smooth();
 	void scissor_test();
-	void stencil_test();
 }
 
 namespace clap::gl {
