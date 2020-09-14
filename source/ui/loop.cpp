@@ -10,6 +10,8 @@
 #include "essential/guard.hpp"
 #include "essential/log.hpp"
 
+#include "resource/resource.hpp"
+
 static constexpr auto iteration_interval = std::chrono::milliseconds(size_t(1000.f / 30));
 
 int clap::ui::loop(int argc, char **argv) {
@@ -17,6 +19,8 @@ int clap::ui::loop(int argc, char **argv) {
 	log::message::minor << "Passed arguments (" << argc << "):";
 	for (int i = 0; i < argc; i++)
 		log::info::critical << i << ": " << argv[i] << ".";
+
+	clap::resource::identify();
 
 	std::vector<std::thread> threads;
 	auto on_add_lambda = [&threads](ui::zone *zone, detail::context &context) {
@@ -63,6 +67,7 @@ int clap::ui::loop(int argc, char **argv) {
 	threads.clear();
 
 	detail::glfw::terminate();
+	clap::resource::clear();
 
 	return 0;
 }
