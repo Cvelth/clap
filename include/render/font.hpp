@@ -37,17 +37,12 @@ namespace clap::render {
 		static font load(std::filesystem::path const &filename);
 
 	private:
-		font(detail::font_file_handle *file_handle, 
-			 size_t bitmap_width = gl::texture::_2d::maximum_width(), 
-			 size_t bitmap_height = gl::texture::_2d::maximum_height()) 
-			: file_handle(file_handle), 
-			bitmap_width(bitmap_width), bitmap_height(bitmap_height) {}
+		font(detail::font_file_handle *file_handle) 
+			: file_handle(file_handle) {}
 
 	private:
 		detail::font_file_handle *file_handle;
 		
 		std::unordered_map<size_t, detail::size_data> data;
-
-		const size_t bitmap_width, bitmap_height;
 	};
 }
