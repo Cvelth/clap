@@ -109,6 +109,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 				<< "x" << gl::texture::_2d::maximum_height() << ".";
 			clap::log::info::minor << "'settings::font_bitmap_size_multiplier':"
 				<< settings::font_bitmap_size_multiplier << ".";
+			clap::log::info::minor << "Font size: " << height << ".";
 		}
 		font_handle.data.emplace(
 			height,
@@ -190,7 +191,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 					}
 					target.bitmap.data(font_face->glyph->bitmap.buffer, target.offset_x, target.offset_y,
 									   font_face->glyph->bitmap.width, font_face->glyph->bitmap.rows,
-									   true, 0, clap::gl::texture::external_format::red);
+									   false, 0, clap::gl::texture::external_format::red);
 					iterator = target.coordinates.emplace(code_point,
 														  detail::bitmap_coordinates{
 															  target.offset_x, target.offset_y,
