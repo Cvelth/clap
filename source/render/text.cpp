@@ -1,10 +1,58 @@
 ﻿#include "render/text.hpp"
 #include "render/font.hpp"
-#include "render/detail/state.hpp"
+
+#include "essential/log.hpp"
 
 #include "nowide/convert.hpp"
 
 #include <fstream>
+
+#include "ft2build.h"
+#include FT_FREETYPE_H
+
+#include "glad/glad.h"
+
+namespace clap::render::detail {
+	class library {
+	public:
+		static void initialize();
+		static void clean_up();
+		static void ensure_initialized();
+
+		static auto is_initialized() {
+			return was_initialized;
+		}
+		static auto const &handle() {
+			return freetype_handle;
+		}
+
+	protected:
+		static bool was_initialized;
+		static FT_Library freetype_handle;
+	};
+}
+
+bool clap::render::detail::library::was_initialized = false;
+FT_Library clap::render::detail::library::freetype_handle{};
+
+void clap::render::detail::library::initialize() {
+	if (!was_initialized) {
+		if (FT_Init_FreeType(&clap::render::detail::library::freetype_handle))
+			clap::log::error::critical << "Unable to initialize freetype.";
+		clap::render::detail::library::was_initialized = true;
+	}
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+void clap::render::detail::library::clean_up() {
+	if (was_initialized) {
+		if (FT_Done_FreeType(clap::render::detail::library::freetype_handle))
+			clap::log::error::critical << "Unable to finalize freetype.";
+		clap::render::detail::library::was_initialized = false;
+	}
+}
+void clap::render::detail::library::ensure_initialized() { initialize(); }
 
 //Temporary. To be updated after full c++20 <bit> support arrives.
 namespace nonstd {
@@ -40,7 +88,7 @@ clap::render::font::~font() {
 }
 
 clap::render::font clap::render::font::load(std::filesystem::path const &filename) {
-	detail::state::ensure_initialized();
+	detail::library::ensure_initialized();
 
 	auto *handle = new detail::font_file_handle{};
 
@@ -54,7 +102,7 @@ clap::render::font clap::render::font::load(std::filesystem::path const &filenam
 		log::info::critical << "Path: " << filename << ".";
 	}
 
-	auto error = FT_New_Memory_Face(clap::render::detail::state::library(),
+	auto error = FT_New_Memory_Face(clap::render::detail::library::handle(),
 									(FT_Byte const *) handle->buffer.data(),
 									(FT_Long) file_size, 0, &handle->face);
 	if (error == FT_Err_Unknown_File_Format) {

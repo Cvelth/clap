@@ -147,11 +147,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\render\detail\state.cpp" />
     <ClCompile Include="..\..\source\render\text.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\render\detail\state.hpp" />
     <ClInclude Include="..\..\include\render\font.hpp" />
     <ClInclude Include="..\..\include\render\text.hpp" />
   </ItemGroup>

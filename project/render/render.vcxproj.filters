@@ -9,19 +9,10 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="include\detail">
-      <UniqueIdentifier>{1c07ba24-9284-446b-9b9a-08d4b37d343e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\detail">
-      <UniqueIdentifier>{be885987-1824-4c22-9712-d741c599fdf5}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\render\text.cpp">
       <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\render\detail\state.cpp">
-      <Filter>source\detail</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -30,9 +21,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\render\font.hpp">
       <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\render\detail\state.hpp">
-      <Filter>include\detail</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
