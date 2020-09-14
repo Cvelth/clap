@@ -12,6 +12,8 @@
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
 
+#include "lodepng/lodepng.h"
+
 bool was_identified = false;
 
 template <typename resource_t>
@@ -19,7 +21,7 @@ struct resource {
 	std::filesystem::directory_entry path;
 	std::shared_ptr<resource_t> pointer;
 
-	resource(std::filesystem::directory_entry const &path) 
+	resource(std::filesystem::directory_entry const &path)
 		: path(path), pointer(nullptr) {}
 };
 using shader_program_data = std::map<clap::gl::shader::type, std::filesystem::path>;
@@ -37,9 +39,9 @@ void identify_shaders(std::filesystem::directory_entry path) {
 				if (!entry.is_directory()) {
 					auto identificator = entry.path().lexically_relative(folder).replace_extension().u8string();
 
-					clap::log::message::negligible << "A " << type << " shader was identified.";
-					clap::log::info::minor << "Identificator: '" << identificator << "'.";
-					clap::log::info::minor << "Path: '" << entry.path() << "'.";
+					//clap::log::message::negligible << "A " << type << " shader was identified.";
+					//clap::log::info::minor << "Identificator: '" << identificator << "'.";
+					//clap::log::info::minor << "Path: '" << entry.path() << "'.";
 
 					shader_programs[identificator].emplace(type, entry);
 				}
@@ -54,32 +56,11 @@ void identify_textures(std::filesystem::directory_entry path) {
 		if (!subpath.is_directory()) {
 			auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
 
-			clap::log::message::negligible << "A texture was identified.";
-			clap::log::info::minor << "Identificator: '" << identificator << "'.";
-			clap::log::info::minor << "Path: '" << subpath.path() << "'.";
+			//clap::log::message::negligible << "A texture was identified.";
+			//clap::log::info::minor << "Identificator: '" << identificator << "'.";
+			//clap::log::info::minor << "Path: '" << subpath.path() << "'.";
 
 			textures.emplace(identificator, subpath);
-
-			/*
-			std::vector<unsigned char> image_data;
-			unsigned width, height;
-			unsigned error_code = lodepng::decode(image_data, width, height, subpath.path());
-			if (error_code != 0) {
-				clap::log::warning::major << "Error while trying to decode a texture file.";
-				clap::log::info::critical << "Error code: " << error_code << '.';
-				clap::log::info::critical << lodepng_error_text(error_code);
-				return;
-			} else {
-				clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded.";
-				clap::log::info::major << "Path: '" << subpath.path() << "'.";
-			}
-
-			clap::resource::detail::load_resource(
-				subpath.path().lexically_relative(path).replace_extension().u8string(),
-				clap::resource::texture::_2d,
-				new clap::gl::texture::_2d(image_data.data(), width, height)
-			);
-			*/
 		}
 }
 void identify_fonts(std::filesystem::directory_entry path) {
@@ -87,21 +68,11 @@ void identify_fonts(std::filesystem::directory_entry path) {
 		if (!subpath.is_directory()) {
 			auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
 
-			clap::log::message::negligible << "A font was identified.";
-			clap::log::info::minor << "Identificator: '" << identificator << "'.";
-			clap::log::info::minor << "Path: '" << subpath.path() << "'.";
+			//clap::log::message::negligible << "A font was identified.";
+			//clap::log::info::minor << "Identificator: '" << identificator << "'.";
+			//clap::log::info::minor << "Path: '" << subpath.path() << "'.";
 
 			fonts.emplace(identificator, subpath);
-
-			/*
-			clap::resource::detail::load_resource(
-				subpath.path().lexically_relative(path).replace_extension().u8string(),
-				clap::resource::font,
-				new clap::render::font{ clap::render::font::load(subpath.path()) }
-			);
-			clap::log::message::minor << "A font was loaded.";
-			clap::log::info::major << "Path: '" << subpath.path() << "'.";
-			*/
 		}
 }
 void identify_unknown(std::filesystem::directory_entry path) {
@@ -109,9 +80,9 @@ void identify_unknown(std::filesystem::directory_entry path) {
 		if (!subpath.is_directory()) {
 			auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
 
-			clap::log::message::negligible << "An unknown resource was identified.";
-			clap::log::info::minor << "Identificator: '" << identificator << "'.";
-			clap::log::info::minor << "Path: '" << subpath.path() << "'.";
+			//clap::log::message::negligible << "An unknown resource was identified.";
+			//clap::log::info::minor << "Identificator: '" << identificator << "'.";
+			//clap::log::info::minor << "Path: '" << subpath.path() << "'.";
 
 			unknown.emplace(identificator, subpath);
 		}
@@ -205,8 +176,8 @@ void clap::resource::identify() {
 	log::info::major << "Font count: " << fonts.size() << ".";
 	for (auto &entry : fonts)
 		log::info::minor << '\t' << entry.first;
-	log::info::major << "Unknown resource count: " << unknown.size() << ".";
-	for (auto &entry : unknown)
+	log::info::major << "Unknown resource count: " << ::unknown.size() << ".";
+	for (auto &entry : ::unknown)
 		log::info::minor << '\t' << entry.first;
 	was_identified = true;
 }
@@ -214,7 +185,95 @@ void clap::resource::clear() {
 	shader_programs.clear();
 	textures.clear();
 	fonts.clear();
-	unknown.clear();
+	::unknown.clear();
 	log::message::major << "Resources were cleared.";
 	was_identified = false;
+}
+
+namespace clap::resource {
+	detail::shader_storage shader;
+	detail::texture_storage texture;
+	detail::font_storage font;
+	detail::unknown_storage unknown;
+}
+
+std::shared_ptr<clap::gl::shader::program> clap::resource::detail::shader_storage::operator[](std::u8string const &identificator) {
+	auto iterator = ::shader_programs.find(identificator);
+	if (iterator != ::shader_programs.end()) {
+		auto out = std::make_shared<gl::shader::program>();
+
+		std::vector<clap::gl::shader::detail::object *> ptrs;
+		for (auto &pair : iterator->second) {
+			ptrs.emplace_back(new clap::gl::shader::detail::object(
+				clap::gl::shader::from_file(pair.first, pair.second)
+			));
+			out->add(*ptrs.back());
+		}
+		out->link();
+
+		clap::log::message::minor << "A shader program (" << iterator->first << ") was loaded.";
+		clap::log::info::major << "Shader count: " << iterator->second.size() << ".";
+		for (auto &pair : iterator->second)
+			clap::log::info::minor << '\t' << pair.first << "\t(" << pair.second << ").";
+		for (auto ptr : ptrs)
+			delete ptr;
+		return out;
+	} else {
+		clap::log::warning::major << "Requested shaders aren't present in resource directories.";
+		clap::log::info::major << "Identificator: '" << identificator << "'.";
+		return nullptr;
+	}
+	return nullptr;
+}
+
+std::shared_ptr<clap::gl::texture::_2d> clap::resource::detail::texture_storage::operator[](std::u8string const &identificator) {
+	auto iterator = ::textures.find(identificator);
+	if (iterator != ::textures.end()) {
+		if (!iterator->second.pointer) {
+			std::vector<unsigned char> image_data;
+			unsigned width, height;
+			unsigned error_code = lodepng::decode(image_data, width, height, iterator->second.path.path());
+			if (error_code != 0) {
+				clap::log::warning::major << "Error while trying to decode a texture file.";
+				clap::log::info::critical << "Error code: " << error_code << '.';
+				clap::log::info::critical << lodepng_error_text(error_code);
+				return nullptr;
+			}
+
+			iterator->second.pointer = std::make_shared<clap::gl::texture::_2d>(image_data.data(), width, height);
+			clap::log::message::minor << "A texture (" << image_data.size() << " bytes) was loaded.";
+			clap::log::info::major << "Identificator: '" << iterator->first << "'.";
+			clap::log::info::minor << "Path: '" << iterator->second.path.path() << "'.";
+		}
+		return iterator->second.pointer;
+	} else {
+		clap::log::warning::major << "Requested texture isn't present in resource directories.";
+		clap::log::info::minor << "Identificator: '" << identificator << "'.";
+		return nullptr;
+	}
+}
+
+std::shared_ptr<clap::render::font> clap::resource::detail::font_storage::operator[](std::u8string const &identificator) {
+	auto iterator = ::fonts.find(identificator);
+	if (iterator != ::fonts.end()) {
+		if (!iterator->second.pointer) {
+			auto ptr = new clap::render::font{ clap::render::font::load(iterator->second.path.path()) };
+			iterator->second.pointer = std::shared_ptr<clap::render::font>(ptr);
+			clap::log::message::minor << "A font (" << iterator->first << ") was loaded.";
+			clap::log::info::minor << "Path: '" << iterator->second.path.path() << "'.";
+		}
+		return iterator->second.pointer;
+	} else {
+		clap::log::warning::major << "Requested font isn't present in resource directories.";
+		clap::log::info::major << "Identificator: '" << identificator << "'.";
+		return nullptr;
+	}
+}
+
+std::filesystem::directory_entry const *clap::resource::detail::unknown_storage::operator[](std::u8string const &identificator) {
+	auto iterator = ::unknown.find(identificator);
+	if (iterator != ::unknown.end())
+		return &iterator->second.path;
+	else
+		return nullptr;
 }
