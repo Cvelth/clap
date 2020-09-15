@@ -172,571 +172,305 @@ clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum clap::gl::detail::convert::to_gl(shader::detail::variable_type const &type) {
-	switch (type.structure) {
-		case shader::detail::variable_type_t::structure::data:
-			switch (type.datatype) {
-				case shader::detail::variable_type_t::datatype::_float:
-					switch (type.dimentions.x) {
-						case 1:
-							switch (type.dimentions.y) {
-								case 1: return GL_FLOAT;
-								case 2: return GL_FLOAT_VEC2;
-								case 3: return GL_FLOAT_VEC3;
-								case 4: return GL_FLOAT_VEC4;
-							}
-							break;
-						case 2:
-							switch (type.dimentions.y) {
-								case 2: return GL_FLOAT_MAT2;
-								case 3: return GL_FLOAT_MAT2x3;
-								case 4: return GL_FLOAT_MAT2x4;
-							}
-							break;
-						case 3:
-							switch (type.dimentions.y) {
-								case 2: return GL_FLOAT_MAT3x2;
-								case 3: return GL_FLOAT_MAT3;
-								case 4: return GL_FLOAT_MAT3x4;
-							}
-							break;
-						case 4:
-							switch (type.dimentions.y) {
-								case 2: return GL_FLOAT_MAT4x2;
-								case 3: return GL_FLOAT_MAT4x3;
-								case 4: return GL_FLOAT_MAT4;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_double:
-					switch (type.dimentions.x) {
-						case 1:
-							switch (type.dimentions.y) {
-								case 1: return GL_DOUBLE;
-								case 2: return GL_DOUBLE_VEC2;
-								case 3: return GL_DOUBLE_VEC3;
-								case 4: return GL_DOUBLE_VEC4;
-							}
-							break;
-						case 2:
-							switch (type.dimentions.y) {
-								case 2: return GL_DOUBLE_MAT2;
-								case 3: return GL_DOUBLE_MAT2x3;
-								case 4: return GL_DOUBLE_MAT2x4;
-							}
-							break;
-						case 3:
-							switch (type.dimentions.y) {
-								case 2: return GL_DOUBLE_MAT3x2;
-								case 3: return GL_DOUBLE_MAT3;
-								case 4: return GL_DOUBLE_MAT3x4;
-							}
-							break;
-						case 4:
-							switch (type.dimentions.y) {
-								case 2: return GL_DOUBLE_MAT4x2;
-								case 3: return GL_DOUBLE_MAT4x3;
-								case 4: return GL_DOUBLE_MAT4;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_int:
-					switch (type.dimentions.x) {
-						case 1:
-							switch (type.dimentions.y) {
-								case 1: return GL_INT;
-								case 2: return GL_INT_VEC2;
-								case 3: return GL_INT_VEC3;
-								case 4: return GL_INT_VEC4;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_unsigned:
-					switch (type.dimentions.x) {
-						case 1:
-							switch (type.dimentions.y) {
-								case 1: return GL_UNSIGNED_INT;
-								case 2: return GL_UNSIGNED_INT_VEC2;
-								case 3: return GL_UNSIGNED_INT_VEC3;
-								case 4: return GL_UNSIGNED_INT_VEC4;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_bool:
-					switch (type.dimentions.x) {
-						case 1:
-							switch (type.dimentions.y) {
-								case 1: return GL_BOOL;
-								case 2: return GL_BOOL_VEC2;
-								case 3: return GL_BOOL_VEC3;
-								case 4: return GL_BOOL_VEC4;
-							}
-							break;
-					}
-					break;
-			}
-			break;
-
-		case shader::detail::variable_type_t::structure::sampler:
-			switch (type.datatype) {
-				case shader::detail::variable_type_t::datatype::_float:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_SAMPLER_1D;
-								case 2: return GL_SAMPLER_2D;
-								case 3: return GL_SAMPLER_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_SAMPLER_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_SAMPLER_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_SAMPLER_1D_ARRAY;
-								case 2: return GL_SAMPLER_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_SAMPLER_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_SAMPLER_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_SAMPLER_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_int:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_INT_SAMPLER_1D;
-								case 2: return GL_INT_SAMPLER_2D;
-								case 3: return GL_INT_SAMPLER_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_INT_SAMPLER_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_SAMPLER_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_INT_SAMPLER_1D_ARRAY;
-								case 2: return GL_INT_SAMPLER_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_INT_SAMPLER_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_SAMPLER_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_unsigned:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_UNSIGNED_INT_SAMPLER_1D;
-								case 2: return GL_UNSIGNED_INT_SAMPLER_2D;
-								case 3: return GL_UNSIGNED_INT_SAMPLER_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_UNSIGNED_INT_SAMPLER_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_SAMPLER_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_UNSIGNED_INT_SAMPLER_1D_ARRAY;
-								case 2: return GL_UNSIGNED_INT_SAMPLER_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_UNSIGNED_INT_SAMPLER_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-			}
-			break;
-
-		case shader::detail::variable_type_t::structure::shadow_sampler:
-			switch (type.datatype) {
-				case shader::detail::variable_type_t::datatype::_float:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_SAMPLER_1D_SHADOW;
-								case 2: return GL_SAMPLER_2D_SHADOW;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_SAMPLER_CUBE_SHADOW;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_SAMPLER_2D_RECT_SHADOW;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_SAMPLER_1D_ARRAY_SHADOW;
-								case 2: return GL_SAMPLER_2D_ARRAY_SHADOW;
-							}
-							break;
-					}
-					break;
-			}
-			break;
-		case shader::detail::variable_type_t::structure::image:
-			switch (type.datatype) {
-				case shader::detail::variable_type_t::datatype::_float:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_IMAGE_1D;
-								case 2: return GL_IMAGE_2D;
-								case 3: return GL_IMAGE_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_IMAGE_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_IMAGE_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_IMAGE_1D_ARRAY;
-								case 2: return GL_IMAGE_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_IMAGE_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_IMAGE_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_IMAGE_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_int:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_INT_IMAGE_1D;
-								case 2: return GL_INT_IMAGE_2D;
-								case 3: return GL_INT_IMAGE_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_INT_IMAGE_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_IMAGE_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_INT_IMAGE_1D_ARRAY;
-								case 2: return GL_INT_IMAGE_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_INT_IMAGE_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_IMAGE_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-				case shader::detail::variable_type_t::datatype::_unsigned:
-					switch (type.specific) {
-						case shader::detail::variable_type_t::specific::none:
-							switch (type.dimentions.x) {
-								case 1: return GL_UNSIGNED_INT_IMAGE_1D;
-								case 2: return GL_UNSIGNED_INT_IMAGE_2D;
-								case 3: return GL_UNSIGNED_INT_IMAGE_3D;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::cube:
-							switch (type.dimentions.x) {
-								case 0: return GL_UNSIGNED_INT_IMAGE_CUBE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::rect:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_IMAGE_2D_RECT;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::array:
-							switch (type.dimentions.x) {
-								case 1: return GL_UNSIGNED_INT_IMAGE_1D_ARRAY;
-								case 2: return GL_UNSIGNED_INT_IMAGE_2D_ARRAY;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::buffer:
-							switch (type.dimentions.x) {
-								case 0: return GL_UNSIGNED_INT_IMAGE_BUFFER;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
-							}
-							break;
-						case shader::detail::variable_type_t::specific::multisample_array:
-							switch (type.dimentions.x) {
-								case 2: return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
-							}
-							break;
-					}
-					break;
-			}
-			break;
+struct attribute_type_visitor {
+	GLenum operator()(float v) { return GL_FLOAT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec2<float> v) { return GL_FLOAT_VEC2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec3<float> v) { return GL_FLOAT_VEC3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec4<float> v) { return GL_FLOAT_VEC4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2<float> v) { return GL_FLOAT_MAT2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3<float> v) { return GL_FLOAT_MAT3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4<float> v) { return GL_FLOAT_MAT4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2x3<float> v) { return GL_FLOAT_MAT2x3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2x4<float> v) { return GL_FLOAT_MAT2x4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3x2<float> v) { return GL_FLOAT_MAT3x2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3x4<float> v) { return GL_FLOAT_MAT3x4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4x2<float> v) { return GL_FLOAT_MAT4x2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4x3<float> v) { return GL_FLOAT_MAT4x3; }
+	GLenum operator()(int v) { return GL_INT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec2<int> v) { return GL_INT_VEC2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec3<int> v) { return GL_INT_VEC3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec4<int> v) { return GL_INT_VEC4; }
+	GLenum operator()(unsigned v) { return GL_UNSIGNED_INT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec2<unsigned> v) { return GL_UNSIGNED_INT_VEC2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec3<unsigned> v) { return GL_UNSIGNED_INT_VEC3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec4<unsigned> v) { return GL_UNSIGNED_INT_VEC4; }
+	GLenum operator()(double v) { return GL_DOUBLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec2<double> v) { return GL_DOUBLE_VEC2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec3<double> v) { return GL_DOUBLE_VEC3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec4<double> v) { return GL_DOUBLE_VEC4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2<double> v) { return GL_DOUBLE_MAT2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3<double> v) { return GL_DOUBLE_MAT3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4<double> v) { return GL_DOUBLE_MAT4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2x3<double> v) { return GL_DOUBLE_MAT2x3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat2x4<double> v) { return GL_DOUBLE_MAT2x4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3x2<double> v) { return GL_DOUBLE_MAT3x2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat3x4<double> v) { return GL_DOUBLE_MAT3x4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4x2<double> v) { return GL_DOUBLE_MAT4x2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat4x3<double> v) { return GL_DOUBLE_MAT4x3; }
+};
+struct attribute_simple_type_visitor {
+	template<typename variable_t, size_t vector_size> 
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec<variable_t, vector_size> const &input) { 
+		return impl<variable_t>(); 
 	}
-	log::error::critical << "Unsupported enum value.";
+	template<typename variable_t, size_t width, size_t height> 
+	GLenum operator()(clap::gl::shader::variable::type::detail::mat<variable_t, width, height> const &input) { 
+		return impl<variable_t>(); 
+	}
+	template <typename variable_t> GLenum operator()(variable_t const &input) {
+		return impl<variable_t>(); 
+	}
+
+private:
+	template <typename variable_t>
+	GLenum impl();
+};
+template<> GLenum attribute_simple_type_visitor::impl<float>() { return GL_FLOAT; }
+template<> GLenum attribute_simple_type_visitor::impl<int>() { return GL_INT; }
+template<> GLenum attribute_simple_type_visitor::impl<unsigned>() { return GL_UNSIGNED_INT; }
+template<> GLenum attribute_simple_type_visitor::impl<double>() { return GL_DOUBLE; }
+
+GLenum clap::gl::detail::convert::to_gl(shader::variable::type::attribute const &variant) {
+	return std::visit(attribute_type_visitor{}, variant);
 }
-
-clap::gl::shader::detail::variable_type clap::gl::detail::convert::to_variable_type(GLenum v) {
-	using namespace shader::detail;
-	using namespace shader::detail::variable_type_t;
-
-	auto make = [](structure _structure, datatype _datatype, specific _specific, unsigned x, unsigned y) -> variable_type {
-		return variable_type(_structure, _datatype, _specific, dimentions{ x, y });
-	};
-
+GLenum clap::gl::detail::convert::to_gl_type(shader::variable::type::attribute const &variant) {
+	return std::visit(attribute_simple_type_visitor{}, variant);
+}
+clap::gl::shader::variable::type::attribute clap::gl::detail::convert::to_attribute(GLenum v) {
 	switch (v) {
-		case GL_FLOAT: return make(structure::data, datatype::_float, specific::none, 1, 1);
-		case GL_FLOAT_VEC2: return make(structure::data, datatype::_float, specific::none, 1, 2);
-		case GL_FLOAT_VEC3: return make(structure::data, datatype::_float, specific::none, 1, 3);
-		case GL_FLOAT_VEC4: return make(structure::data, datatype::_float, specific::none, 1, 4);
-
-		case GL_DOUBLE: return make(structure::data, datatype::_double, specific::none, 1, 1);
-		case GL_DOUBLE_VEC2: return make(structure::data, datatype::_double, specific::none, 1, 2);
-		case GL_DOUBLE_VEC3: return make(structure::data, datatype::_double, specific::none, 1, 3);
-		case GL_DOUBLE_VEC4: return make(structure::data, datatype::_double, specific::none, 1, 4);
-
-		case GL_INT: return make(structure::data, datatype::_int, specific::none, 1, 1);
-		case GL_INT_VEC2: return make(structure::data, datatype::_int, specific::none, 1, 2);
-		case GL_INT_VEC3: return make(structure::data, datatype::_int, specific::none, 1, 3);
-		case GL_INT_VEC4: return make(structure::data, datatype::_int, specific::none, 1, 4);
-
-		case GL_UNSIGNED_INT: return make(structure::data, datatype::_unsigned, specific::none, 1, 1);
-		case GL_UNSIGNED_INT_VEC2: return make(structure::data, datatype::_unsigned, specific::none, 1, 2);
-		case GL_UNSIGNED_INT_VEC3: return make(structure::data, datatype::_unsigned, specific::none, 1, 3);
-		case GL_UNSIGNED_INT_VEC4: return make(structure::data, datatype::_unsigned, specific::none, 1, 4);
-
-		case GL_BOOL: return make(structure::data, datatype::_bool, specific::none, 1, 1);
-		case GL_BOOL_VEC2: return make(structure::data, datatype::_bool, specific::none, 1, 2);
-		case GL_BOOL_VEC3: return make(structure::data, datatype::_bool, specific::none, 1, 3);
-		case GL_BOOL_VEC4: return make(structure::data, datatype::_bool, specific::none, 1, 4);
-
-		case GL_FLOAT_MAT2: return make(structure::data, datatype::_float, specific::none, 2, 2);
-		case GL_FLOAT_MAT3: return make(structure::data, datatype::_float, specific::none, 3, 3);
-		case GL_FLOAT_MAT4: return make(structure::data, datatype::_float, specific::none, 4, 4);
-
-		case GL_FLOAT_MAT2x3: return make(structure::data, datatype::_float, specific::none, 2, 3);
-		case GL_FLOAT_MAT3x2: return make(structure::data, datatype::_float, specific::none, 3, 2);
-		case GL_FLOAT_MAT4x2: return make(structure::data, datatype::_float, specific::none, 4, 2);
-
-		case GL_FLOAT_MAT2x4: return make(structure::data, datatype::_float, specific::none, 2, 4);
-		case GL_FLOAT_MAT3x4: return make(structure::data, datatype::_float, specific::none, 3, 4);
-		case GL_FLOAT_MAT4x3: return make(structure::data, datatype::_float, specific::none, 4, 3);
-
-		case GL_DOUBLE_MAT2: return make(structure::data, datatype::_double, specific::none, 2, 2);
-		case GL_DOUBLE_MAT3: return make(structure::data, datatype::_double, specific::none, 3, 3);
-		case GL_DOUBLE_MAT4: return make(structure::data, datatype::_double, specific::none, 4, 4);
-
-		case GL_DOUBLE_MAT2x3: return make(structure::data, datatype::_double, specific::none, 2, 3);
-		case GL_DOUBLE_MAT3x2: return make(structure::data, datatype::_double, specific::none, 3, 2);
-		case GL_DOUBLE_MAT4x2: return make(structure::data, datatype::_double, specific::none, 4, 2);
-
-		case GL_DOUBLE_MAT2x4: return make(structure::data, datatype::_double, specific::none, 2, 4);
-		case GL_DOUBLE_MAT3x4: return make(structure::data, datatype::_double, specific::none, 3, 4);
-		case GL_DOUBLE_MAT4x3: return make(structure::data, datatype::_double, specific::none, 4, 3);
-
-		case GL_SAMPLER_1D: return make(structure::sampler, datatype::_float, specific::none, 1, 0);
-		case GL_SAMPLER_2D: return make(structure::sampler, datatype::_float, specific::none, 2, 0);
-		case GL_SAMPLER_3D: return make(structure::sampler, datatype::_float, specific::none, 3, 0);
-		case GL_SAMPLER_CUBE: return make(structure::sampler, datatype::_float, specific::cube, 0, 0);
-		case GL_SAMPLER_1D_ARRAY: return make(structure::sampler, datatype::_float, specific::array, 1, 0);
-		case GL_SAMPLER_2D_ARRAY: return make(structure::sampler, datatype::_float, specific::array, 2, 0);
-		case GL_SAMPLER_2D_MULTISAMPLE: return make(structure::sampler, datatype::_float, specific::multisample, 2, 0);
-		case GL_SAMPLER_2D_MULTISAMPLE_ARRAY: return make(structure::sampler, datatype::_float, specific::multisample_array, 2, 0);
-		case GL_SAMPLER_BUFFER: return make(structure::sampler, datatype::_float, specific::buffer, 0, 0);
-		case GL_SAMPLER_2D_RECT: return make(structure::sampler, datatype::_float, specific::rect, 2, 0);
-
-		case GL_SAMPLER_1D_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::none, 1, 0);
-		case GL_SAMPLER_2D_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::none, 2, 0);
-		case GL_SAMPLER_1D_ARRAY_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::array, 1, 0);
-		case GL_SAMPLER_2D_ARRAY_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::array, 2, 0);
-		case GL_SAMPLER_CUBE_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::cube, 0, 0);
-		case GL_SAMPLER_2D_RECT_SHADOW: return make(structure::shadow_sampler, datatype::_float, specific::rect, 2, 0);
-
-		case GL_INT_SAMPLER_1D: return make(structure::sampler, datatype::_int, specific::none, 1, 0);
-		case GL_INT_SAMPLER_2D: return make(structure::sampler, datatype::_int, specific::none, 2, 0);
-		case GL_INT_SAMPLER_3D: return make(structure::sampler, datatype::_int, specific::none, 3, 0);
-		case GL_INT_SAMPLER_CUBE: return make(structure::sampler, datatype::_int, specific::cube, 0, 0);
-		case GL_INT_SAMPLER_1D_ARRAY: return make(structure::sampler, datatype::_int, specific::array, 1, 0);
-		case GL_INT_SAMPLER_2D_ARRAY: return make(structure::sampler, datatype::_int, specific::array, 2, 0);
-		case GL_INT_SAMPLER_2D_MULTISAMPLE: return make(structure::sampler, datatype::_int, specific::multisample, 2, 0);
-		case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return make(structure::sampler, datatype::_int, specific::multisample_array, 2, 0);
-		case GL_INT_SAMPLER_BUFFER: return make(structure::sampler, datatype::_int, specific::buffer, 0, 0);
-		case GL_INT_SAMPLER_2D_RECT: return make(structure::sampler, datatype::_int, specific::rect, 2, 0);
-
-		case GL_UNSIGNED_INT_SAMPLER_1D: return make(structure::sampler, datatype::_unsigned, specific::none, 1, 0);
-		case GL_UNSIGNED_INT_SAMPLER_2D: return make(structure::sampler, datatype::_unsigned, specific::none, 2, 0);
-		case GL_UNSIGNED_INT_SAMPLER_3D: return make(structure::sampler, datatype::_unsigned, specific::none, 3, 0);
-		case GL_UNSIGNED_INT_SAMPLER_CUBE: return make(structure::sampler, datatype::_unsigned, specific::cube, 0, 0);
-		case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY: return make(structure::sampler, datatype::_unsigned, specific::array, 1, 0);
-		case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return make(structure::sampler, datatype::_unsigned, specific::array, 2, 0);
-		case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE: return make(structure::sampler, datatype::_unsigned, specific::multisample, 2, 0);
-		case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return make(structure::sampler, datatype::_unsigned, specific::multisample_array, 2, 0);
-		case GL_UNSIGNED_INT_SAMPLER_BUFFER: return make(structure::sampler, datatype::_unsigned, specific::buffer, 0, 0);
-		case GL_UNSIGNED_INT_SAMPLER_2D_RECT: return make(structure::sampler, datatype::_unsigned, specific::rect, 2, 0);
-
-		case GL_IMAGE_1D: return make(structure::image, datatype::_float, specific::none, 1, 0);
-		case GL_IMAGE_2D: return make(structure::image, datatype::_float, specific::none, 2, 0);
-		case GL_IMAGE_3D: return make(structure::image, datatype::_float, specific::none, 3, 0);
-		case GL_IMAGE_CUBE: return make(structure::image, datatype::_float, specific::cube, 0, 0);
-		case GL_IMAGE_1D_ARRAY: return make(structure::image, datatype::_float, specific::array, 1, 0);
-		case GL_IMAGE_2D_ARRAY: return make(structure::image, datatype::_float, specific::array, 2, 0);
-		case GL_IMAGE_2D_MULTISAMPLE: return make(structure::image, datatype::_float, specific::multisample, 2, 0);
-		case GL_IMAGE_2D_MULTISAMPLE_ARRAY: return make(structure::image, datatype::_float, specific::multisample_array, 2, 0);
-		case GL_IMAGE_BUFFER: return make(structure::image, datatype::_float, specific::buffer, 0, 0);
-		case GL_IMAGE_2D_RECT: return make(structure::image, datatype::_float, specific::rect, 2, 0);
-
-		case GL_INT_IMAGE_1D: return make(structure::image, datatype::_int, specific::none, 1, 0);
-		case GL_INT_IMAGE_2D: return make(structure::image, datatype::_int, specific::none, 2, 0);
-		case GL_INT_IMAGE_3D: return make(structure::image, datatype::_int, specific::none, 3, 0);
-		case GL_INT_IMAGE_CUBE: return make(structure::image, datatype::_int, specific::cube, 0, 0);
-		case GL_INT_IMAGE_1D_ARRAY: return make(structure::image, datatype::_int, specific::array, 1, 0);
-		case GL_INT_IMAGE_2D_ARRAY: return make(structure::image, datatype::_int, specific::array, 2, 0);
-		case GL_INT_IMAGE_2D_MULTISAMPLE: return make(structure::image, datatype::_int, specific::multisample, 2, 0);
-		case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return make(structure::image, datatype::_int, specific::multisample_array, 2, 0);
-		case GL_INT_IMAGE_BUFFER: return make(structure::image, datatype::_int, specific::buffer, 0, 0);
-		case GL_INT_IMAGE_2D_RECT: return make(structure::image, datatype::_int, specific::rect, 2, 0);
-
-		case GL_UNSIGNED_INT_IMAGE_1D: return make(structure::image, datatype::_unsigned, specific::none, 1, 0);
-		case GL_UNSIGNED_INT_IMAGE_2D: return make(structure::image, datatype::_unsigned, specific::none, 2, 0);
-		case GL_UNSIGNED_INT_IMAGE_3D: return make(structure::image, datatype::_unsigned, specific::none, 3, 0);
-		case GL_UNSIGNED_INT_IMAGE_CUBE: return make(structure::image, datatype::_unsigned, specific::cube, 0, 0);
-		case GL_UNSIGNED_INT_IMAGE_1D_ARRAY: return make(structure::image, datatype::_unsigned, specific::array, 1, 0);
-		case GL_UNSIGNED_INT_IMAGE_2D_ARRAY: return make(structure::image, datatype::_unsigned, specific::array, 2, 0);
-		case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE: return make(structure::image, datatype::_unsigned, specific::multisample, 2, 0);
-		case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return make(structure::image, datatype::_unsigned, specific::multisample_array, 2, 0);
-		case GL_UNSIGNED_INT_IMAGE_BUFFER: return make(structure::image, datatype::_unsigned, specific::buffer, 0, 0);
-		case GL_UNSIGNED_INT_IMAGE_2D_RECT: return make(structure::image, datatype::_unsigned, specific::rect, 2, 0);
+		case GL_FLOAT: return float{};
+		case GL_FLOAT_VEC2: return clap::gl::shader::variable::type::detail::vec2<float>{};
+		case GL_FLOAT_VEC3: return clap::gl::shader::variable::type::detail::vec3<float>{};
+		case GL_FLOAT_VEC4: return clap::gl::shader::variable::type::detail::vec4<float>{};
+		case GL_FLOAT_MAT2: return clap::gl::shader::variable::type::detail::mat2<float>{};
+		case GL_FLOAT_MAT3: return clap::gl::shader::variable::type::detail::mat3<float>{};
+		case GL_FLOAT_MAT4: return clap::gl::shader::variable::type::detail::mat4<float>{};
+		case GL_FLOAT_MAT2x3: return clap::gl::shader::variable::type::detail::mat2x3<float>{};
+		case GL_FLOAT_MAT2x4: return clap::gl::shader::variable::type::detail::mat2x4<float>{};
+		case GL_FLOAT_MAT3x2: return clap::gl::shader::variable::type::detail::mat3x2<float>{};
+		case GL_FLOAT_MAT3x4: return clap::gl::shader::variable::type::detail::mat3x4<float>{};
+		case GL_FLOAT_MAT4x2: return clap::gl::shader::variable::type::detail::mat4x2<float>{};
+		case GL_FLOAT_MAT4x3: return clap::gl::shader::variable::type::detail::mat4x3<float>{};
+		case GL_INT: return int{};
+		case GL_INT_VEC2: return clap::gl::shader::variable::type::detail::vec2<int>{};
+		case GL_INT_VEC3: return clap::gl::shader::variable::type::detail::vec3<int>{};
+		case GL_INT_VEC4: return clap::gl::shader::variable::type::detail::vec4<int>{};
+		case GL_UNSIGNED_INT: return unsigned{};
+		case GL_UNSIGNED_INT_VEC2: return clap::gl::shader::variable::type::detail::vec2<unsigned>{};
+		case GL_UNSIGNED_INT_VEC3: return clap::gl::shader::variable::type::detail::vec3<unsigned>{};
+		case GL_UNSIGNED_INT_VEC4: return clap::gl::shader::variable::type::detail::vec4<unsigned>{};
+		case GL_DOUBLE: return double{};
+		case GL_DOUBLE_VEC2: return clap::gl::shader::variable::type::detail::vec2<double>{};
+		case GL_DOUBLE_VEC3: return clap::gl::shader::variable::type::detail::vec3<double>{};
+		case GL_DOUBLE_VEC4: return clap::gl::shader::variable::type::detail::vec4<double>{};
+		case GL_DOUBLE_MAT2: return clap::gl::shader::variable::type::detail::mat2<double>{};
+		case GL_DOUBLE_MAT3: return clap::gl::shader::variable::type::detail::mat3<double>{};
+		case GL_DOUBLE_MAT4: return clap::gl::shader::variable::type::detail::mat4<double>{};
+		case GL_DOUBLE_MAT2x3: return clap::gl::shader::variable::type::detail::mat2x3<double>{};
+		case GL_DOUBLE_MAT2x4: return clap::gl::shader::variable::type::detail::mat2x4<double>{};
+		case GL_DOUBLE_MAT3x2: return clap::gl::shader::variable::type::detail::mat3x2<double>{};
+		case GL_DOUBLE_MAT3x4: return clap::gl::shader::variable::type::detail::mat3x4<double>{};
+		case GL_DOUBLE_MAT4x2: return clap::gl::shader::variable::type::detail::mat4x2<double>{};
+		case GL_DOUBLE_MAT4x3: return clap::gl::shader::variable::type::detail::mat4x3<double>{};
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum clap::gl::detail::convert::to_gl(shader::detail::variable_type_t::datatype datatype) {
-	switch (datatype) {
-		case shader::detail::variable_type_t::datatype::_float: return GL_FLOAT;
-		case shader::detail::variable_type_t::datatype::_double: return GL_DOUBLE;
-		case shader::detail::variable_type_t::datatype::_int: return GL_INT;
-		case shader::detail::variable_type_t::datatype::_unsigned: return GL_UNSIGNED_INT;
-		case shader::detail::variable_type_t::datatype::_bool: return GL_BOOL;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
+struct uniform_type_visitor : public attribute_type_visitor {
+	using attribute_type_visitor::operator();
 
-size_t clap::gl::detail::convert::to_size(shader::detail::variable_type_t::datatype datatype) {
-	switch (datatype) {
-		case shader::detail::variable_type_t::datatype::_float: return sizeof(float);
-		case shader::detail::variable_type_t::datatype::_double: return sizeof(double);
-		case shader::detail::variable_type_t::datatype::_int: return sizeof(int);
-		case shader::detail::variable_type_t::datatype::_unsigned: return sizeof(unsigned);
-		case shader::detail::variable_type_t::datatype::_bool: return sizeof(bool);
+	GLenum operator()(bool v) { return GL_BOOL; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec2<bool> v) { return GL_BOOL_VEC2; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec3<bool> v) { return GL_BOOL_VEC3; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::vec4<bool> v) { return GL_BOOL_VEC4; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d<float> v) { return GL_SAMPLER_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d<float> v) { return GL_SAMPLER_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_3d<float> v) { return GL_SAMPLER_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_cube<float> v) { return GL_SAMPLER_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_cube_shadow<float> v) { return GL_SAMPLER_CUBE_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d_shadow<float> v) { return GL_SAMPLER_1D_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_shadow<float> v) { return GL_SAMPLER_2D_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d_array<float> v) { return GL_SAMPLER_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_array<float> v) { return GL_SAMPLER_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d_array_shadow<float> v) { return GL_SAMPLER_1D_ARRAY_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_array_shadow<float> v) { return GL_SAMPLER_2D_ARRAY_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample<float> v) { return GL_SAMPLER_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<float> v) { return GL_SAMPLER_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_buffer<float> v) { return GL_SAMPLER_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_rect<float> v) { return GL_SAMPLER_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_rect_shadow<float> v) { return GL_SAMPLER_2D_RECT_SHADOW; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d<int> v) { return GL_INT_SAMPLER_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d<int> v) { return GL_INT_SAMPLER_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_3d<int> v) { return GL_INT_SAMPLER_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_cube<int> v) { return GL_INT_SAMPLER_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d_array<int> v) { return GL_INT_SAMPLER_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_array<int> v) { return GL_INT_SAMPLER_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample<int> v) { return GL_INT_SAMPLER_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<int> v) { return GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_buffer<int> v) { return GL_INT_SAMPLER_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_rect<int> v) { return GL_INT_SAMPLER_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_3d<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_cube<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_1d_array<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_array<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_buffer<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::sampler_rect<unsigned> v) { return GL_UNSIGNED_INT_SAMPLER_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d<float> v) { return GL_IMAGE_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d<float> v) { return GL_IMAGE_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_3d<float> v) { return GL_IMAGE_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_rect<float> v) { return GL_IMAGE_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_cube<float> v) { return GL_IMAGE_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_buffer<float> v) { return GL_IMAGE_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d_array<float> v) { return GL_IMAGE_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_array<float> v) { return GL_IMAGE_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample<float> v) { return GL_IMAGE_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample_array<float> v) { return GL_IMAGE_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d<int> v) { return GL_INT_IMAGE_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d<int> v) { return GL_INT_IMAGE_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_3d<int> v) { return GL_INT_IMAGE_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_rect<int> v) { return GL_INT_IMAGE_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_cube<int> v) { return GL_INT_IMAGE_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_buffer<int> v) { return GL_INT_IMAGE_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d_array<int> v) { return GL_INT_IMAGE_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_array<int> v) { return GL_INT_IMAGE_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample<int> v) { return GL_INT_IMAGE_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample_array<int> v) { return GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_1D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_2D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_3d<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_3D; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_rect<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_2D_RECT; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_cube<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_CUBE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_buffer<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_BUFFER; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_1d_array<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_1D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_array<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_2D_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::image_2d_multisample_array<unsigned> v) { return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY; }
+	GLenum operator()(clap::gl::shader::variable::type::detail::atomic_counter<unsigned> v) { return GL_UNSIGNED_INT_ATOMIC_COUNTER; }
+};
+GLenum clap::gl::detail::convert::to_gl(shader::variable::type::uniform const &variant) {
+	return std::visit(uniform_type_visitor{}, variant);
+}
+clap::gl::shader::variable::type::uniform clap::gl::detail::convert::to_uniform(GLenum v) {
+	switch (v) {
+		case GL_FLOAT: return float{};
+		case GL_FLOAT_VEC2: return clap::gl::shader::variable::type::detail::vec2<float>{};
+		case GL_FLOAT_VEC3: return clap::gl::shader::variable::type::detail::vec3<float>{};
+		case GL_FLOAT_VEC4: return clap::gl::shader::variable::type::detail::vec4<float>{};
+		case GL_FLOAT_MAT2: return clap::gl::shader::variable::type::detail::mat2<float>{};
+		case GL_FLOAT_MAT3: return clap::gl::shader::variable::type::detail::mat3<float>{};
+		case GL_FLOAT_MAT4: return clap::gl::shader::variable::type::detail::mat4<float>{};
+		case GL_FLOAT_MAT2x3: return clap::gl::shader::variable::type::detail::mat2x3<float>{};
+		case GL_FLOAT_MAT2x4: return clap::gl::shader::variable::type::detail::mat2x4<float>{};
+		case GL_FLOAT_MAT3x2: return clap::gl::shader::variable::type::detail::mat3x2<float>{};
+		case GL_FLOAT_MAT3x4: return clap::gl::shader::variable::type::detail::mat3x4<float>{};
+		case GL_FLOAT_MAT4x2: return clap::gl::shader::variable::type::detail::mat4x2<float>{};
+		case GL_FLOAT_MAT4x3: return clap::gl::shader::variable::type::detail::mat4x3<float>{};
+		case GL_INT: return int{};
+		case GL_INT_VEC2: return clap::gl::shader::variable::type::detail::vec2<int>{};
+		case GL_INT_VEC3: return clap::gl::shader::variable::type::detail::vec3<int>{};
+		case GL_INT_VEC4: return clap::gl::shader::variable::type::detail::vec4<int>{};
+		case GL_UNSIGNED_INT: return unsigned{};
+		case GL_UNSIGNED_INT_VEC2: return clap::gl::shader::variable::type::detail::vec2<unsigned>{};
+		case GL_UNSIGNED_INT_VEC3: return clap::gl::shader::variable::type::detail::vec3<unsigned>{};
+		case GL_UNSIGNED_INT_VEC4: return clap::gl::shader::variable::type::detail::vec4<unsigned>{};
+		case GL_DOUBLE: return double{};
+		case GL_DOUBLE_VEC2: return clap::gl::shader::variable::type::detail::vec2<double>{};
+		case GL_DOUBLE_VEC3: return clap::gl::shader::variable::type::detail::vec3<double>{};
+		case GL_DOUBLE_VEC4: return clap::gl::shader::variable::type::detail::vec4<double>{};
+		case GL_DOUBLE_MAT2: return clap::gl::shader::variable::type::detail::mat2<double>{};
+		case GL_DOUBLE_MAT3: return clap::gl::shader::variable::type::detail::mat3<double>{};
+		case GL_DOUBLE_MAT4: return clap::gl::shader::variable::type::detail::mat4<double>{};
+		case GL_DOUBLE_MAT2x3: return clap::gl::shader::variable::type::detail::mat2x3<double>{};
+		case GL_DOUBLE_MAT2x4: return clap::gl::shader::variable::type::detail::mat2x4<double>{};
+		case GL_DOUBLE_MAT3x2: return clap::gl::shader::variable::type::detail::mat3x2<double>{};
+		case GL_DOUBLE_MAT3x4: return clap::gl::shader::variable::type::detail::mat3x4<double>{};
+		case GL_DOUBLE_MAT4x2: return clap::gl::shader::variable::type::detail::mat4x2<double>{};
+		case GL_DOUBLE_MAT4x3: return clap::gl::shader::variable::type::detail::mat4x3<double>{};
+
+		case GL_BOOL: return bool{};
+		case GL_BOOL_VEC2: return clap::gl::shader::variable::type::detail::vec2<bool>{};
+		case GL_BOOL_VEC3: return clap::gl::shader::variable::type::detail::vec3<bool>{};
+		case GL_BOOL_VEC4: return clap::gl::shader::variable::type::detail::vec4<bool>{};
+		case GL_SAMPLER_1D: return clap::gl::shader::variable::type::detail::sampler_1d<float>{};
+		case GL_SAMPLER_2D: return clap::gl::shader::variable::type::detail::sampler_2d<float>{};
+		case GL_SAMPLER_3D: return clap::gl::shader::variable::type::detail::sampler_3d<float>{};
+		case GL_SAMPLER_CUBE: return clap::gl::shader::variable::type::detail::sampler_cube<float>{};
+		case GL_SAMPLER_CUBE_SHADOW: return clap::gl::shader::variable::type::detail::sampler_cube_shadow<float>{};
+		case GL_SAMPLER_1D_SHADOW: return clap::gl::shader::variable::type::detail::sampler_1d_shadow<float>{};
+		case GL_SAMPLER_2D_SHADOW: return clap::gl::shader::variable::type::detail::sampler_2d_shadow<float>{};
+		case GL_SAMPLER_1D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_1d_array<float>{};
+		case GL_SAMPLER_2D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_array<float>{};
+		case GL_SAMPLER_1D_ARRAY_SHADOW: return clap::gl::shader::variable::type::detail::sampler_1d_array_shadow<float>{};
+		case GL_SAMPLER_2D_ARRAY_SHADOW: return clap::gl::shader::variable::type::detail::sampler_2d_array_shadow<float>{};
+		case GL_SAMPLER_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::sampler_2d_multisample<float>{};
+		case GL_SAMPLER_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<float>{};
+		case GL_SAMPLER_BUFFER: return clap::gl::shader::variable::type::detail::sampler_buffer<float>{};
+		case GL_SAMPLER_2D_RECT: return clap::gl::shader::variable::type::detail::sampler_rect<float>{};
+		case GL_SAMPLER_2D_RECT_SHADOW: return clap::gl::shader::variable::type::detail::sampler_rect_shadow<float>{};
+		case GL_INT_SAMPLER_1D: return clap::gl::shader::variable::type::detail::sampler_1d<int>{};
+		case GL_INT_SAMPLER_2D: return clap::gl::shader::variable::type::detail::sampler_2d<int>{};
+		case GL_INT_SAMPLER_3D: return clap::gl::shader::variable::type::detail::sampler_3d<int>{};
+		case GL_INT_SAMPLER_CUBE: return clap::gl::shader::variable::type::detail::sampler_cube<int>{};
+		case GL_INT_SAMPLER_1D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_1d_array<int>{};
+		case GL_INT_SAMPLER_2D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_array<int>{};
+		case GL_INT_SAMPLER_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::sampler_2d_multisample<int>{};
+		case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<int>{};
+		case GL_INT_SAMPLER_BUFFER: return clap::gl::shader::variable::type::detail::sampler_buffer<int>{};
+		case GL_INT_SAMPLER_2D_RECT: return clap::gl::shader::variable::type::detail::sampler_rect<int>{};
+		case GL_UNSIGNED_INT_SAMPLER_1D: return clap::gl::shader::variable::type::detail::sampler_1d<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_2D: return clap::gl::shader::variable::type::detail::sampler_2d<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_3D: return clap::gl::shader::variable::type::detail::sampler_3d<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_CUBE: return clap::gl::shader::variable::type::detail::sampler_cube<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_1d_array<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_array<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::sampler_2d_multisample<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::sampler_2d_multisample_array<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_BUFFER: return clap::gl::shader::variable::type::detail::sampler_buffer<unsigned>{};
+		case GL_UNSIGNED_INT_SAMPLER_2D_RECT: return clap::gl::shader::variable::type::detail::sampler_rect<unsigned>{};
+		case GL_IMAGE_1D: return clap::gl::shader::variable::type::detail::image_1d<float>{};
+		case GL_IMAGE_2D: return clap::gl::shader::variable::type::detail::image_2d<float>{};
+		case GL_IMAGE_3D: return clap::gl::shader::variable::type::detail::image_3d<float>{};
+		case GL_IMAGE_2D_RECT: return clap::gl::shader::variable::type::detail::image_rect<float>{};
+		case GL_IMAGE_CUBE: return clap::gl::shader::variable::type::detail::image_cube<float>{};
+		case GL_IMAGE_BUFFER: return clap::gl::shader::variable::type::detail::image_buffer<float>{};
+		case GL_IMAGE_1D_ARRAY: return clap::gl::shader::variable::type::detail::image_1d_array<float>{};
+		case GL_IMAGE_2D_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_array<float>{};
+		case GL_IMAGE_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::image_2d_multisample<float>{};
+		case GL_IMAGE_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_multisample_array<float>{};
+		case GL_INT_IMAGE_1D: return clap::gl::shader::variable::type::detail::image_1d<int>{};
+		case GL_INT_IMAGE_2D: return clap::gl::shader::variable::type::detail::image_2d<int>{};
+		case GL_INT_IMAGE_3D: return clap::gl::shader::variable::type::detail::image_3d<int>{};
+		case GL_INT_IMAGE_2D_RECT: return clap::gl::shader::variable::type::detail::image_rect<int>{};
+		case GL_INT_IMAGE_CUBE: return clap::gl::shader::variable::type::detail::image_cube<int>{};
+		case GL_INT_IMAGE_BUFFER: return clap::gl::shader::variable::type::detail::image_buffer<int>{};
+		case GL_INT_IMAGE_1D_ARRAY: return clap::gl::shader::variable::type::detail::image_1d_array<int>{};
+		case GL_INT_IMAGE_2D_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_array<int>{};
+		case GL_INT_IMAGE_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::image_2d_multisample<int>{};
+		case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_multisample_array<int>{};
+		case GL_UNSIGNED_INT_IMAGE_1D: return clap::gl::shader::variable::type::detail::image_1d<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_2D: return clap::gl::shader::variable::type::detail::image_2d<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_3D: return clap::gl::shader::variable::type::detail::image_3d<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_2D_RECT: return clap::gl::shader::variable::type::detail::image_rect<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_CUBE: return clap::gl::shader::variable::type::detail::image_cube<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_BUFFER: return clap::gl::shader::variable::type::detail::image_buffer<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_1D_ARRAY: return clap::gl::shader::variable::type::detail::image_1d_array<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_2D_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_array<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE: return clap::gl::shader::variable::type::detail::image_2d_multisample<unsigned>{};
+		case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_multisample_array<unsigned>{};
+		case GL_UNSIGNED_INT_ATOMIC_COUNTER: return clap::gl::shader::variable::type::detail::atomic_counter<unsigned>{};
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
 std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
 	switch (type) {
-		case clap::gl::shader::type::fragment:				stream << "fragment"; break;
+		case clap::gl::shader::type::fragment:					stream << "fragment"; break;
 		case clap::gl::shader::type::vertex:					stream << "vertex"; break;
-		case clap::gl::shader::type::geometry:				stream << "geometry"; break;
+		case clap::gl::shader::type::geometry:					stream << "geometry"; break;
 		case clap::gl::shader::type::compute:					stream << "compute"; break;
 		case clap::gl::shader::type::tesselation_control:		stream << "tesselation control"; break;
 		case clap::gl::shader::type::tesselation_evaluation:	stream << "tesselation evaluation"; break;

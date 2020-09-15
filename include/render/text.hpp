@@ -8,11 +8,13 @@ namespace clap::render {
 
 	class text {
 	public:
-		inline text(std::basic_string<char8_t> const &string, font &font, clap::gl::shader::program &program, size_t size = 16)
-			: font_handle(font), height(size), program(program), count(0ull), uniforms(std::move(program.getUniforms())) {
+		inline text(std::basic_string<char8_t> const &string, font &font, 
+					std::shared_ptr<clap::gl::shader::program> program, size_t size = 16)
+			: font_handle(font), height(size), program(program), count(0ull) {
 			update(string);
 		}
-		inline text(std::string const &string, font &font, clap::gl::shader::program &program, size_t size = 16)
+		inline text(std::string const &string, font &font, 
+					std::shared_ptr<clap::gl::shader::program> program, size_t size = 16)
 			: text((char8_t const *) string.c_str(), font, program, size) {}
 
 		auto const &data() const { return string; }
@@ -31,8 +33,7 @@ namespace clap::render {
 		std::basic_string<char8_t> string;
 		size_t height;
 
-		clap::gl::shader::program &program;
-		clap::gl::shader::variables uniforms;
+		std::shared_ptr<clap::gl::shader::program> program;
 		mutable clap::gl::vertex_array::single vertex_array;
 		size_t count;
 	};

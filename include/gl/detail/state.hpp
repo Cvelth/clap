@@ -24,10 +24,6 @@ namespace clap::gl::detail {
 		static std::optional<vertex_array::detail::indexed> const &bound();
 		static bool is_bound(vertex_array::detail::indexed const &vertex_array);
 
-		static void use(shader::program *program);
-		static shader::program *being_used();
-		static bool is_used(shader::program *program);
-
 		static void bind(texture::target const &target, texture::detail::interface *texture);
 		static texture::detail::interface *unbind(texture::target const &target);
 		static texture::detail::interface const *const bound(texture::target const &target);

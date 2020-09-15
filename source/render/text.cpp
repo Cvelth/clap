@@ -283,9 +283,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 	clap::gl::buffer::single buffer;
 	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), clap::gl::buffer::usage::static_draw);
 
-	auto variables = program.getAttributes();
-	vertex_array.attribute_pointer(buffer, variables["position"], 4, 0);
-	vertex_array.attribute_pointer(buffer, variables["texture_coordinates"], 4, 2);
+	vertex_array.attribute_pointer(buffer, program->attribute["position"], 4, 0);
+	vertex_array.attribute_pointer(buffer, program->attribute["texture_coordinates"], 4, 2);
 	count = buffer_data.size() / 4;
 
 	clap::log::message::minor << "Text object was updated.";
@@ -297,8 +296,9 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 }
 
 void clap::render::text::render(int x, int y) const {
-	program.use();
-	program.set(uniforms["offset"], { float(x), float(y) });
+	program->uniform["offset"] = { float(x), float(y) };
+
+	auto guard = program->use();
 	font_handle.data.at(height).bitmap.bind();
 	vertex_array.draw(clap::gl::vertex_array::connection::lines, count);
 }

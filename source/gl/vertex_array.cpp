@@ -46,58 +46,67 @@ void clap::gl::vertex_array::detail::indexed::bind() {
 	gl::detail::state::bind(std::move(*this));
 }
 
-void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																shader::detail::variable const &variable,
-																size_t stride, size_t shift) {
-	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
-		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_pointer'";
-		return;
-	}
-	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
-		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_pointer'";
-		return;
-	}
+template <typename lambda_t>
+struct vertex_array_variable_visitor {
+	lambda_t lambda;
 
+	vertex_array_variable_visitor(lambda_t lambda) : lambda(lambda) {}
+
+	template <typename T>
+	inline void operator()(T v) {
+		lambda(1, 1, sizeof(T));
+	}
+	template<typename T, size_t N>
+	inline void operator()(clap::gl::shader::variable::type::detail::vec<T, N> v) {
+		lambda(N, 1, sizeof(T));
+	}
+	template<typename T, size_t W, size_t H>
+	inline void operator()(clap::gl::shader::variable::type::detail::mat<T, W, H> v) {
+		lambda(W, H, sizeof(T));
+	}
+};
+
+void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
+																shader::variable::attribute const &variable,
+																size_t stride, size_t shift) {
 	this->bind();
 	buffer.bind();
-	for (size_t i = 0; i < variable.type.dimentions.x; i++) {
-		glVertexAttribPointer(GLuint(variable.location + i),
-							  GLint(variable.type.dimentions.x * variable.type.dimentions.y),
-							  gl::detail::convert::to_gl(variable.type.datatype),
-							  GL_FALSE, GLsizei(stride * variable.datatype_size()),
-							  (const void *) (shift * variable.datatype_size()));
-		glEnableVertexAttribArray(GLuint(variable.location + i));
-
-		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
-		log::message::minor << "Variable '" << variable.name << index_string
-			<< "' uses data stored in buffer currently bound to '"
-			<< buffer::target::array << "'.";
-	}
+	std::visit(
+		vertex_array_variable_visitor{
+			[&](size_t width, size_t height, size_t size) {
+				for (size_t i = 0; i < height; i++) {
+					glVertexAttribPointer(GLuint(variable.location + i), 
+										  GLint(width * height),
+										  gl::detail::convert::to_gl_type(variable),
+										  GL_FALSE, GLsizei(stride * size),
+										  (const void *) (shift * size));
+					glEnableVertexAttribArray(GLuint(variable.location + i));
+				}
+			}
+		}, variable
+	);
+	log::message::minor << "A " << variable << " was bound to a "
+		<< "(to replace with operator<<(ostream, buffer)!) buffer" << ".";
+	log::info::minor << "Stride: " << stride << ".";
+	log::info::minor << "Shift: " << shift << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::detail::variable const &variable,
+void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::variable::attribute const &variable,
 																size_t divisor) {
-	if (variable.storage != shader::detail::variable_type_t::storage::attribute) {
-		log::warning::critical << "Cannot pass a non-attribute variable to 'vertex_array::attribute_divisor'";
-		return;
-	}
-	if (variable.type.structure != shader::detail::variable_type_t::structure::data) {
-		log::warning::critical << "Cannot pass a non-data variable to 'vertex_array::attribute_divisor'";
-		return;
-	}
-
 	this->bind();
-	for (int i = 0; i < variable.type.dimentions.x; i++) {
-		glVertexAttribDivisor(variable.location, GLuint(divisor));
-
-		std::string index_string = variable.type.dimentions.x != 1 ? ('[' + std::to_string(i) + ']') : "";
-		log::message::minor << "Variable '" << variable.name << index_string << "' uses a divisor: "
-			<< divisor << ".";
-	}
+	std::visit(
+		vertex_array_variable_visitor{
+			[&](size_t width, size_t height, size_t size) {
+				for (size_t i = 0; i < height; i++)
+					glVertexAttribDivisor(GLuint(variable.location + i), GLuint(divisor));
+			}
+		}, variable
+	);
+	log::message::minor << "A " << variable << " uses a divisor: " << divisor << ".";
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																shader::detail::variable const &variable,
+																shader::variable::attribute const &variable,
 																size_t stride, size_t shift,
 																size_t divisor) {
 	attribute_pointer(std::move(buffer), variable, stride, shift);
@@ -105,14 +114,27 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::
 }
 
 void clap::gl::vertex_array::detail::indexed::attribute_pointer(buffer::detail::indexed &&buffer,
-																shader::variables const &variables) {
+																std::initializer_list<shader::variable::attribute> const &variables) {
 	size_t stride = 0;
 	for (auto variable : variables)
-		stride += variable.second.size();
+		std::visit(
+			vertex_array_variable_visitor{
+				[&](size_t width, size_t height, size_t size) {
+					stride += size * width * height;
+				}
+			}, variable
+		);
+
 	size_t shift = 0;
 	for (auto &variable : variables) {
-		attribute_pointer(std::move(buffer), variable.second, stride, shift);
-		shift += variable.second.size();
+		attribute_pointer(std::move(buffer), variable, stride, shift);
+		std::visit(
+			vertex_array_variable_visitor{
+				[&](size_t width, size_t height, size_t size) {
+					shift += size * width * height;
+				}
+			}, variable
+		);
 	}
 }
 

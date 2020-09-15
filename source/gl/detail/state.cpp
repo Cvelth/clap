@@ -63,25 +63,6 @@ bool clap::gl::detail::state::is_bound(vertex_array::detail::indexed const &vert
 	return bound_vertex_array && **bound_vertex_array == *vertex_array;
 }
 
-clap::gl::shader::program *clap::gl::detail::state::program_used = nullptr;
-void clap::gl::detail::state::use(shader::program *program) {
-	if (!program) {
-		glUseProgram(0);
-		program_used = nullptr;
-		log::message::minor << "A shader::program is no longer used.";
-	} else if (!program_used || program_used->id != program->id) {
-		glUseProgram(program->id);
-		program_used = program;
-		log::message::minor << "A new shader::program is used.";
-	} 
-}
-clap::gl::shader::program *clap::gl::detail::state::being_used() {
-	return program_used;
-}
-bool clap::gl::detail::state::is_used(shader::program *program) {
-	return program_used && program_used->id == program->id;
-}
-
 clap::gl::texture::detail::interface *clap::gl::detail::state::bound_textures[texture_target_count]{ nullptr };
 void clap::gl::detail::state::bind(texture::target const &target, texture::detail::interface *texture) {
 	if (!bound_textures[size_t(target)] || bound_textures[size_t(target)] != texture)
