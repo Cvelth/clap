@@ -42,6 +42,9 @@
     <ProjectReference Include="..\gl\gl.vcxproj">
       <Project>{d377c27b-a289-4be4-9c82-f1fc300aabfc}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\resource\resource.vcxproj">
+      <Project>{31d0519b-362b-481c-9408-a9635e955737}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
