@@ -9,6 +9,8 @@
 
 #include "essential/guard.hpp"
 
+#include "gl/interface.hpp"
+
 typedef unsigned int GLenum;
 namespace clap::gl::vertex_array::detail {
 	class indexed;
@@ -36,7 +38,7 @@ namespace clap::gl::shader {
 	std::optional<detail::object> from_file(type type, std::filesystem::path path);
 
 	namespace detail {
-		class object {
+		class object : public gl::detail::object_interface {
 			friend std::optional<object> shader::from_source(type type, std::string_view source);
 			friend linker;
 		public:
@@ -54,7 +56,7 @@ namespace clap::gl::shader {
 			unsigned id;
 		};
 
-		class linker {
+		class linker : public gl::detail::object_interface {
 		public:
 			linker();
 
@@ -378,12 +380,9 @@ namespace clap::gl::shader {
 
 		protected:
 			template <typename param_t>
-			uniform const &set(param_t const *ptr, size_t count) const {
-				std::visit(detail::set_uniform_visitor(*this, ptr, count), *this);
-				return *this;
-			}
+			uniform const &set(param_t const *ptr, size_t count) const;
 		};
-	}
+}
 	namespace detail {
 		template <typename T>
 		T const &unknown_variable_error(std::string_view const &name);
@@ -427,7 +426,7 @@ namespace clap::gl::shader {
 		};
 	}
 
-	class program {
+	class program : public gl::detail::object_interface {
 		friend detail::linker;
 		friend detail::lock_program_callable;
 		friend detail::unlock_program_callable;
@@ -483,6 +482,12 @@ namespace clap::gl::detail::convert {
 }
 std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type target);
 
+template<typename param_t>
+inline clap::gl::shader::variable::uniform const &clap::gl::shader::variable::uniform::set(param_t const *ptr, size_t count) const {
+	if (!gl::detail::verify_context(program_ref)) return *this;
+	std::visit(detail::set_uniform_visitor(*this, ptr, count), *this);
+	return *this;
+}
 template<typename param_t>
 template<typename destination_t, size_t datatype_size>
 inline void clap::gl::shader::variable::detail::set_uniform_visitor<param_t>::impl(void(*callable)(int, unsigned, destination_t const *)) {

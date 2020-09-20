@@ -77,6 +77,8 @@ clap::gl::shader::detail::linker::linker() : id(0u) {
 }
 
 clap::gl::shader::detail::linker::~linker() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a shader program object when its context it was created in is not current.";
 	if (id) {
 		glDeleteProgram(id);
 		log::warning::major << "A " << *this << " was destroyed.";
@@ -84,14 +86,20 @@ clap::gl::shader::detail::linker::~linker() {
 }
 
 void clap::gl::shader::detail::linker::add(detail::object const &object) {
+	if (!verify_context()) return;
 	if (id) {
-		glAttachShader(id, object.id);
-		log::message::negligible << "A " << object << " was attached to a " << *this << ".";
+		if (context != object.context)
+			log::warning::critical << "Cannot add a shader object to a shader program as they belong to different contexts.";
+		else {
+			glAttachShader(id, object.id);
+			log::message::negligible << "A " << object << " was attached to a " << *this << ".";
+		}
 	} else
 		log::warning::major << "Cannot add new shaders to an invalid linker object.";
 }
 
 clap::gl::shader::detail::linker::operator clap::gl::shader::program() {
+	if (!verify_context()) return program(0);
 	if (id) {
 		glLinkProgram(id);
 
@@ -163,6 +171,8 @@ clap::gl::shader::program::program(unsigned id) : id(id) {
 		log::warning::major << "An attempt to create a shader program object with id = 0.";
 }
 clap::gl::shader::program::~program() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a shader program object when its context it was created in is not current.";
 	if (id) {
 		glDeleteProgram(id);
 		log::message::minor << "A " << *this << " was destroyed.";
@@ -170,9 +180,11 @@ clap::gl::shader::program::~program() {
 }
 
 void clap::gl::shader::detail::lock_program_callable::operator()() {
+	//To define context interactions.
 	glUseProgram(context_owner.id);
 }
 void clap::gl::shader::detail::unlock_program_callable::operator()() {
+	//To define context interactions.
 	glUseProgram(0);
 }
 
