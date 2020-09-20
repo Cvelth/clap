@@ -27,6 +27,7 @@ int clap::ui::loop(int argc, char **argv) {
 	auto on_add_lambda = [&threads](ui::zone *zone, gl::detail::context &context) {
 		threads.emplace_back(
 			[zone, &context]() {
+				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' was created. Calling 'initialize()'...";
 				{
 					auto guard = context.make_current();
 					zone->initialize();
@@ -47,12 +48,13 @@ int clap::ui::loop(int argc, char **argv) {
 					std::this_thread::sleep_until(iteration_end_point);
 				}
 
+				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' is to be closed. Calling 'clean_up()'...";
 				{
 					auto guard = context.make_current();
 					zone->clean_up();
 				}
-
 				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' was cleaned up.";
+
 				clap::ui::detail::state::remove(zone);
 			}
 		);
