@@ -5,7 +5,7 @@
 #include <set>
 
 #include "ui/zone.hpp"
-#include "ui/detail/glfw.hpp"
+#include "gl/detail/window.hpp"
 
 namespace clap::gl::shader {
 	class program;
@@ -16,7 +16,7 @@ namespace clap::ui::detail {
 
 	};
 	struct context {
-		glfw::window_handle window;
+		gl::detail::window::object window;
 		shader_program_pool programs;
 	public:
 		context(std::u8string name, size_t width, size_t height);

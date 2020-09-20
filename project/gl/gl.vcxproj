@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\gl\buffer.hpp" />
     <ClInclude Include="..\..\include\gl\detail\state.hpp" />
+    <ClInclude Include="..\..\include\gl\detail\window.hpp" />
     <ClInclude Include="..\..\include\gl\gl.hpp" />
     <ClInclude Include="..\..\include\gl\misc.hpp" />
     <ClInclude Include="..\..\include\gl\shader.hpp" />
@@ -171,6 +172,7 @@
     <ClCompile Include="..\..\source\gl\buffer.cpp" />
     <ClCompile Include="..\..\source\gl\detail\convert.cpp" />
     <ClCompile Include="..\..\source\gl\detail\state.cpp" />
+    <ClCompile Include="..\..\source\gl\detail\window.cpp" />
     <ClCompile Include="..\..\source\gl\misc.cpp" />
     <ClCompile Include="..\..\source\gl\shader.cpp" />
     <ClCompile Include="..\..\source\gl\texture.cpp" />

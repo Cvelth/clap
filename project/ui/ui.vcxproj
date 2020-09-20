@@ -21,8 +21,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\ui.hpp" />
     <ClInclude Include="..\..\include\ui\compound.hpp" />
-    <ClInclude Include="..\..\include\ui\detail\event.hpp" />
-    <ClInclude Include="..\..\include\ui\detail\glfw.hpp" />
     <ClInclude Include="..\..\include\ui\detail\state.hpp" />
     <ClInclude Include="..\..\include\ui\entity.hpp" />
     <ClInclude Include="..\..\include\ui\loop.hpp" />
@@ -30,8 +28,6 @@
     <ClInclude Include="..\..\include\ui\zone.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\ui\detail\convert.cpp" />
-    <ClCompile Include="..\..\source\ui\detail\glfw.cpp" />
     <ClCompile Include="..\..\source\ui\detail\state.cpp" />
     <ClCompile Include="..\..\source\ui\entity.cpp" />
     <ClCompile Include="..\..\source\ui\loop.cpp" />

@@ -1,8 +1,9 @@
 ﻿#include "ui/detail/state.hpp"
-#include "ui/detail/glfw.hpp"
 
 #include "essential/log.hpp"
+
 #include "gl/detail/state.hpp"
+#include "gl/detail/window.hpp"
 
 std::map<clap::ui::zone *, clap::ui::detail::context> clap::ui::detail::state::zone_context_map;
 std::shared_mutex clap::ui::detail::state::mutex;
@@ -13,7 +14,7 @@ std::vector<clap::ui::zone *> removing_queue;
 std::mutex removing_mutex;
 
 clap::ui::detail::context::context(std::u8string name, size_t width, size_t height)
-	: window(clap::ui::detail::glfw::create_window_windowed(name, width, height)) {}
+	: window(clap::gl::detail::window::create_windowed(name, width, height)) {}
 
 clap::ui::detail::context &clap::ui::detail::state::get(ui::zone *zone_ptr) {
 	std::shared_lock guard(mutex);

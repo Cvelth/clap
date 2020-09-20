@@ -36,6 +36,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\gl\gl.hpp" />
+    <ClInclude Include="..\..\include\gl\detail\window.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\buffer.cpp">
@@ -57,6 +60,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\gl\detail\convert.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\detail\window.cpp">
       <Filter>source\detail</Filter>
     </ClCompile>
   </ItemGroup>

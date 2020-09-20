@@ -1,5 +1,4 @@
 ﻿#include "ui/loop.hpp"
-#include "ui/detail/glfw.hpp"
 #include "ui/detail/state.hpp"
 
 #include <chrono>
@@ -9,6 +8,8 @@
 
 #include "essential/guard.hpp"
 #include "essential/log.hpp"
+
+#include "gl/detail/window.hpp"
 
 #include "resource/resource.hpp"
 
@@ -27,7 +28,7 @@ int clap::ui::loop(int argc, char **argv) {
 		threads.emplace_back(
 			[zone, &context]() {
 				{
-					clap::ui::detail::glfw::context_guard guard(context.window);
+					clap::gl::detail::window::context_guard guard(context.window);
 					zone->initialize();
 				}
 				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' was initialized.";
@@ -39,7 +40,7 @@ int clap::ui::loop(int argc, char **argv) {
 					auto time_step = current_time_point - last_iteration_time_point;
 					last_iteration_time_point = current_time_point;
 					{
-						clap::ui::detail::glfw::context_guard guard(context.window);
+						clap::gl::detail::window::context_guard guard(context.window);
 						if (zone->draw(time_step))
 							context.window.swap_buffers();
 					}
@@ -47,7 +48,7 @@ int clap::ui::loop(int argc, char **argv) {
 				}
 
 				{
-					clap::ui::detail::glfw::context_guard guard(context.window);
+					clap::gl::detail::window::context_guard guard(context.window);
 					zone->clean_up();
 				}
 
@@ -59,14 +60,14 @@ int clap::ui::loop(int argc, char **argv) {
 
 	while (!detail::state::should_close()) {
 		detail::state::update(on_add_lambda);
-		detail::glfw::wait_events();
+		gl::detail::window::wait_events();
 	}
 
 	for (auto &thread : threads)
 		thread.join();
 	threads.clear();
 
-	detail::glfw::terminate();
+	gl::detail::window::terminate();
 	clap::resource::clear();
 
 	return 0;
