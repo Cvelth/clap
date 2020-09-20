@@ -24,11 +24,11 @@ int clap::ui::loop(int argc, char **argv) {
 	clap::resource::identify();
 
 	std::vector<std::thread> threads;
-	auto on_add_lambda = [&threads](ui::zone *zone, detail::context &context) {
+	auto on_add_lambda = [&threads](ui::zone *zone, gl::detail::context &context) {
 		threads.emplace_back(
 			[zone, &context]() {
 				{
-					clap::gl::detail::window::context_guard guard(context.window);
+					auto guard = context.make_current();
 					zone->initialize();
 				}
 				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' was initialized.";
@@ -40,7 +40,7 @@ int clap::ui::loop(int argc, char **argv) {
 					auto time_step = current_time_point - last_iteration_time_point;
 					last_iteration_time_point = current_time_point;
 					{
-						clap::gl::detail::window::context_guard guard(context.window);
+						auto guard = context.make_current();
 						if (zone->draw(time_step))
 							context.window.swap_buffers();
 					}
@@ -48,7 +48,7 @@ int clap::ui::loop(int argc, char **argv) {
 				}
 
 				{
-					clap::gl::detail::window::context_guard guard(context.window);
+					auto guard = context.make_current();
 					zone->clean_up();
 				}
 

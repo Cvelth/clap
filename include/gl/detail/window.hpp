@@ -8,7 +8,7 @@ struct GLFWwindow;
 struct GLFWmonitor;
 struct GLFWvidmode;
 namespace clap::gl::detail {
-	class state;
+	class context_guard;
 }
 namespace clap::gl::detail::window::event {
 	class handler_interface;
@@ -30,7 +30,6 @@ namespace clap::gl::detail::window {
 	};
 
 	class object;
-	class context_guard;
 
 	void initialize();
 	void terminate();
@@ -56,7 +55,7 @@ namespace clap::gl::detail::window {
 		friend object create(std::u8string title, size_t width, size_t height,
 							 struct_handle<GLFWmonitor> monitor,
 							 struct_handle<GLFWwindow> share);
-		friend class context_guard;
+		friend context_guard;
 
 	public:
 		~object();
@@ -96,26 +95,6 @@ namespace clap::gl::detail::window {
 		clap::gl::detail::window::event::handler_interface *event_handler;
 
 		std::mutex mutex;
-	};
-
-	namespace detail {
-		struct lock_context_callable {
-			object &context_owner;
-			void operator()();
-		};
-		struct unlock_context_callable {
-			object &context_owner;
-			void operator()();
-		};
-	}
-	class context_guard
-		: public essential::guard<std::mutex, detail::lock_context_callable, detail::unlock_context_callable> {
-	public:
-		context_guard(object &context_owner) :
-			essential::guard<std::mutex, detail::lock_context_callable, detail::unlock_context_callable>(
-				context_owner.mutex,
-				detail::lock_context_callable{ context_owner },
-				detail::unlock_context_callable{ context_owner }) {}
 	};
 
 	namespace event {

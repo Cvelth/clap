@@ -2,10 +2,7 @@
 
 #include "essential/log.hpp"
 
-#include "gl/detail/state.hpp"
-#include "gl/detail/window.hpp"
-
-std::map<clap::ui::zone *, clap::ui::detail::context> clap::ui::detail::state::zone_context_map;
+std::map<clap::ui::zone *, clap::gl::detail::context> clap::ui::detail::state::zone_context_map;
 std::shared_mutex clap::ui::detail::state::mutex;
 
 std::vector<clap::ui::zone *> adding_queue;
@@ -13,10 +10,7 @@ std::mutex adding_mutex;
 std::vector<clap::ui::zone *> removing_queue;
 std::mutex removing_mutex;
 
-clap::ui::detail::context::context(std::u8string name, size_t width, size_t height)
-	: window(clap::gl::detail::window::create_windowed(name, width, height)) {}
-
-clap::ui::detail::context &clap::ui::detail::state::get(ui::zone *zone_ptr) {
+clap::gl::detail::context &clap::ui::detail::state::get(ui::zone *zone_ptr) {
 	std::shared_lock guard(mutex);
 	auto ret_iterator = zone_context_map.find(zone_ptr);
 	if (ret_iterator != zone_context_map.end())
@@ -25,17 +19,17 @@ clap::ui::detail::context &clap::ui::detail::state::get(ui::zone *zone_ptr) {
 		clap::log::error::critical << "Trying to get a window for a zone without one.";
 }
 
-clap::ui::detail::context &clap::ui::detail::state::add(ui::zone *zone_ptr) {
+clap::gl::detail::context &clap::ui::detail::state::add(ui::zone *zone_ptr) {
 	if (zone_ptr) {
 		if (!zone_ptr->owner) {
 			std::unique_lock guard(mutex);
-			auto iterator_pair = zone_context_map.insert(
-				std::pair(
-					zone_ptr,
-					context(zone_ptr->name,
-							zone_ptr->size.w(),
-							zone_ptr->size.h())
-				));
+			auto iterator_pair = zone_context_map.emplace(
+				std::piecewise_construct,
+				std::forward_as_tuple(zone_ptr),
+				std::forward_as_tuple(zone_ptr->name,
+									  zone_ptr->size.w(),
+									  zone_ptr->size.h())
+			);
 			if (iterator_pair.second) {
 				std::lock_guard guard(adding_mutex);
 				adding_queue.push_back(zone_ptr);
@@ -55,7 +49,7 @@ void clap::ui::detail::state::remove(ui::zone *zone_ptr) {
 	removing_queue.push_back(zone_ptr);
 }
 
-void clap::ui::detail::state::update_additions(std::function<void(ui::zone *, context &)> on_added) {
+void clap::ui::detail::state::update_additions(std::function<void(ui::zone *, clap::gl::detail::context &)> on_added) {
 	std::lock_guard guard(adding_mutex);
 	while (!adding_queue.empty()) {
 		mutex.lock_shared();

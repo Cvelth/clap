@@ -381,10 +381,3 @@ void clap::gl::detail::window::object::set_event_handler(clap::gl::detail::windo
 			event_handler = nullptr;
 		}
 }
-
-void clap::gl::detail::window::detail::lock_context_callable::operator()() {
-	glfwMakeContextCurrent(context_owner);
-}
-void clap::gl::detail::window::detail::unlock_context_callable::operator()() {
-	glfwMakeContextCurrent(nullptr);
-}
