@@ -144,10 +144,6 @@ namespace clap::gl::texture {
 			}
 			uint32_t operator*() const { return id; }
 
-			static size_t maximum_size();
-			static size_t maximum_layer_count();
-			static size_t maximum_3d_size();
-
 		protected:
 			target target;
 			internal_format internal_format;
@@ -156,6 +152,10 @@ namespace clap::gl::texture {
 			uint32_t id;
 		};
 	}
+
+	size_t maximum_size();
+	size_t maximum_layer_count();
+	size_t maximum_size_3d();
 
 	class _1d : public detail::interface {
 	public:
@@ -256,9 +256,9 @@ namespace clap::gl::texture {
 						 external_type external_type = external_type::unsigned_byte) {
 			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, external_format, external_type);
 		}
-		static size_t maximum_width() { return maximum_3d_size(); }
-		static size_t maximum_height() { return maximum_3d_size(); }
-		static size_t maximum_depth() { return maximum_3d_size(); }
+		static size_t maximum_width() { return maximum_size_3d(); }
+		static size_t maximum_height() { return maximum_size_3d(); }
+		static size_t maximum_depth() { return maximum_size_3d(); }
 		size_t get_width() const { return width; }
 		size_t get_height() const { return height; }
 		size_t get_depth() const { return depth; }
