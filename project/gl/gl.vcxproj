@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\gl\buffer.hpp" />
+    <ClInclude Include="..\..\include\gl\detail\context.hpp" />
     <ClInclude Include="..\..\include\gl\detail\state.hpp" />
     <ClInclude Include="..\..\include\gl\detail\window.hpp" />
     <ClInclude Include="..\..\include\gl\gl.hpp" />
@@ -170,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\buffer.cpp" />
+    <ClCompile Include="..\..\source\gl\detail\context.cpp" />
     <ClCompile Include="..\..\source\gl\detail\convert.cpp" />
     <ClCompile Include="..\..\source\gl\detail\state.cpp" />
     <ClCompile Include="..\..\source\gl\detail\window.cpp" />
