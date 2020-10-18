@@ -8,6 +8,7 @@
 #include <variant>
 
 #include "essential/guard.hpp"
+#include "essential/stack.hpp"
 
 #include "gl/interface.hpp"
 
@@ -140,13 +141,13 @@ namespace clap::gl::shader {
 					struct buffer {};
 					struct rect {};
 				}
-				template<typename T, size_t _dimentions, typename D = void, bool is_shadow = false> 
+				template<typename T, size_t _dimentions, typename D = void, bool is_shadow = false>
 				struct sampler {
 					using type = T;
 					using detail = D;
 					//constexpr size_t dimentions() { return _dimentions; }
 				};
-				template<typename T, size_t _dimentions, typename D = void> 
+				template<typename T, size_t _dimentions, typename D = void>
 				struct image {
 					using type = T;
 					using detail = D;
@@ -336,7 +337,7 @@ namespace clap::gl::shader {
 				static constexpr bool value = true;
 			};
 		}
-#pragma warning(pop)
+	#pragma warning(pop)
 
 		class attribute : public detail::variable_interface<type::attribute> {
 			friend program;
@@ -382,7 +383,7 @@ namespace clap::gl::shader {
 			template <typename param_t>
 			uniform const &set(param_t const *ptr, size_t count) const;
 		};
-}
+	}
 	namespace detail {
 		template <typename T>
 		T const &unknown_variable_error(std::string_view const &name);
@@ -407,22 +408,22 @@ namespace clap::gl::shader {
 		private:
 			storage() {}
 		};
-
+		
 		struct lock_program_callable {
-			program const &context_owner;
-			void operator()();
+			program const &program_ref;
+			essential::stack<clap::gl::shader::program const *>::iterator operator()();
 		};
 		struct unlock_program_callable {
-			program const &context_owner;
-			void operator()();
+			program const &program_ref;
+			void operator()(essential::stack<clap::gl::shader::program const *>::iterator);
 		};
 
 		class program_guard : essential::simple_guard<lock_program_callable, unlock_program_callable> {
 		public:
-			program_guard(program const &context_owner) :
+			program_guard(program const &program_ref) :
 				essential::simple_guard<lock_program_callable, unlock_program_callable>(
-					detail::lock_program_callable{ context_owner },
-					detail::unlock_program_callable{ context_owner }) {}
+					detail::lock_program_callable{ program_ref },
+					detail::unlock_program_callable{ program_ref }) {}
 		};
 	}
 

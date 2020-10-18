@@ -1,4 +1,5 @@
 ﻿#include "gl/shader.hpp"
+#include "gl/detail/context.hpp"
 
 #include <fstream>
 
@@ -179,13 +180,45 @@ clap::gl::shader::program::~program() {
 	}
 }
 
-void clap::gl::shader::detail::lock_program_callable::operator()() {
-	//To define context interactions.
-	glUseProgram(context_owner.id);
+clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::shader::detail::lock_program_callable::operator()() {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to use a " << program_ref << " without a context being active on the current thread.";
+	else if (context != program_ref.context)
+		log::error::critical << "Attempting to use a " << program_ref << " when active context is different from the context object was created with.";
+	else {
+		auto out = context->shader_program_stack.push(&program_ref);
+
+		log::message::negligible << "Using a " << program_ref << ".";
+		log::info::major << "It was added to the top of the stack.";
+		glUseProgram(program_ref.id);
+
+		return out;
+	}
 }
-void clap::gl::shader::detail::unlock_program_callable::operator()() {
-	//To define context interactions.
-	glUseProgram(0);
+void clap::gl::shader::detail::unlock_program_callable::operator()(clap::essential::stack<clap::gl::shader::program const *>::iterator iterator) {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to stop using a " << program_ref << " without a context being active on the current thread.";
+	else if (context != program_ref.context)
+		log::error::critical << "Attempting to stop using a " << program_ref << " when active context is different from the context object was created with.";
+	else if (context->shader_program_stack.is_front(iterator)) {
+		auto active = context->shader_program_stack.pop();
+
+		log::message::negligible << "Stopping usage of a " << *active << ".";
+		if (context->shader_program_stack.empty()) {
+			log::info::major << "Stack is empty.";
+			glUseProgram(0);
+		} else {
+			auto reactivated = context->shader_program_stack.peek();
+			log::info::major << "A previously used " << *reactivated << " is back to being active, as it's the next element on the stack.";
+			glUseProgram(reactivated->id);
+		}
+	} else {
+		log::message::negligible << "Removing a " << program_ref << " from used shader::program stack.";
+		log::info::major << "This doesn't affect active program in any way.";
+		context->shader_program_stack.erase(iterator);
+	}
 }
 
 #pragma warning(push)
