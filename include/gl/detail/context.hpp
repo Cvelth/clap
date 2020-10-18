@@ -30,8 +30,8 @@ namespace clap::gl::detail {
 	public:
 		context(std::u8string name, size_t width, size_t height);
 
-		static context* current();
-		context_guard make_current();
+		[[nodiscard]] static context* current();
+		[[nodiscard]] context_guard make_current();
 	protected:
 		void activate();
 		void deactivate();
