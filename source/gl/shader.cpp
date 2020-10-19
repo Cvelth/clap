@@ -173,7 +173,10 @@ clap::gl::shader::program::program(unsigned id) : id(id) {
 }
 clap::gl::shader::program::~program() {
 	if (!verify_context())
-		log::error::critical << "Unable to destroy a shader program object when its context it was created in is not current.";
+		log::error::critical << "Unable to destroy a shader program object when the context it was created in is not current.";
+	
+	// TODO: Stop using this program (and log a warning) if it's being used on deletion.
+	
 	if (id) {
 		glDeleteProgram(id);
 		log::message::minor << "A " << *this << " was destroyed.";
