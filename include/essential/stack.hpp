@@ -31,6 +31,9 @@ namespace clap::essential {
 		[[nodiscard]] element_t &peek() {
 			return std::forward_list<element_t>::front();
 		}
+		[[nodiscard]] element_t const &peek() const {
+			return std::forward_list<element_t>::front();
+		}
 
 		[[nodiscard]] element_t pop() {
 			std::scoped_lock guard(mutex);
