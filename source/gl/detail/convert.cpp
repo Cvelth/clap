@@ -1,10 +1,9 @@
 ﻿#include "essential/log.hpp"
 
-#include "gl/buffer.hpp"
 #include "gl/misc.hpp"
 #include "gl/shader.hpp"
 #include "gl/texture.hpp"
-#include "gl/vertex_array.hpp"
+#include "gl/vertex.hpp"
 #include "gl/detail/window.hpp"
 
 #include "glad/glad.h"

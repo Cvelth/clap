@@ -1,8 +1,7 @@
 ﻿#pragma once
 #include <optional>
-#include "gl/buffer.hpp"
 #include "gl/texture.hpp"
-#include "gl/vertex_array.hpp"
+#include "gl/vertex.hpp"
 
 namespace clap::gl::shader {
 	class program;

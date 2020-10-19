@@ -159,7 +159,6 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\gl\buffer.hpp" />
     <ClInclude Include="..\..\include\gl\detail\context.hpp" />
     <ClInclude Include="..\..\include\gl\detail\state.hpp" />
     <ClInclude Include="..\..\include\gl\detail\window.hpp" />
@@ -168,10 +167,9 @@
     <ClInclude Include="..\..\include\gl\misc.hpp" />
     <ClInclude Include="..\..\include\gl\shader.hpp" />
     <ClInclude Include="..\..\include\gl\texture.hpp" />
-    <ClInclude Include="..\..\include\gl\vertex_array.hpp" />
+    <ClInclude Include="..\..\include\gl\vertex.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\gl\buffer.cpp" />
     <ClCompile Include="..\..\source\gl\detail\context.cpp" />
     <ClCompile Include="..\..\source\gl\detail\convert.cpp" />
     <ClCompile Include="..\..\source\gl\detail\state.cpp" />
@@ -180,7 +178,7 @@
     <ClCompile Include="..\..\source\gl\misc.cpp" />
     <ClCompile Include="..\..\source\gl\shader.cpp" />
     <ClCompile Include="..\..\source\gl\texture.cpp" />
-    <ClCompile Include="..\..\source\gl\vertex_array.cpp" />
+    <ClCompile Include="..\..\source\gl\vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\essential\essential.vcxproj">
