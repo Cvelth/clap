@@ -12,121 +12,121 @@
 #pragma warning(push)
 #pragma warning(disable : 4715)
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::target v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer_target v) {
 	switch (v) {
-		case clap::gl::buffer::target::array: return GL_ARRAY_BUFFER;
-		case clap::gl::buffer::target::atomic_counter: return GL_ATOMIC_COUNTER_BUFFER;
-		case clap::gl::buffer::target::copy_read: return GL_COPY_READ_BUFFER;
-		case clap::gl::buffer::target::copy_write: return GL_COPY_WRITE_BUFFER;
-		case clap::gl::buffer::target::indirect_dispatch: return GL_DISPATCH_INDIRECT_BUFFER;
-		case clap::gl::buffer::target::indirect_draw: return GL_DRAW_INDIRECT_BUFFER;
-		case clap::gl::buffer::target::element_array: return GL_ELEMENT_ARRAY_BUFFER;
-		case clap::gl::buffer::target::pixel_pack: return GL_PIXEL_PACK_BUFFER;
-		case clap::gl::buffer::target::pixel_unpack: return GL_PIXEL_UNPACK_BUFFER;
-		case clap::gl::buffer::target::query: return GL_QUERY_BUFFER;
-		case clap::gl::buffer::target::shader_storage: return GL_SHADER_STORAGE_BUFFER;
-		case clap::gl::buffer::target::texture: return GL_TEXTURE_BUFFER;
-		case clap::gl::buffer::target::transform_feedback: return GL_TRANSFORM_FEEDBACK_BUFFER;
-		case clap::gl::buffer::target::uniform: return GL_UNIFORM_BUFFER;
+		case clap::gl::vertex::buffer_target::array: return GL_ARRAY_BUFFER;
+		case clap::gl::vertex::buffer_target::atomic_counter: return GL_ATOMIC_COUNTER_BUFFER;
+		case clap::gl::vertex::buffer_target::copy_read: return GL_COPY_READ_BUFFER;
+		case clap::gl::vertex::buffer_target::copy_write: return GL_COPY_WRITE_BUFFER;
+		case clap::gl::vertex::buffer_target::indirect_dispatch: return GL_DISPATCH_INDIRECT_BUFFER;
+		case clap::gl::vertex::buffer_target::indirect_draw: return GL_DRAW_INDIRECT_BUFFER;
+		case clap::gl::vertex::buffer_target::element_array: return GL_ELEMENT_ARRAY_BUFFER;
+		case clap::gl::vertex::buffer_target::pixel_pack: return GL_PIXEL_PACK_BUFFER;
+		case clap::gl::vertex::buffer_target::pixel_unpack: return GL_PIXEL_UNPACK_BUFFER;
+		case clap::gl::vertex::buffer_target::query: return GL_QUERY_BUFFER;
+		case clap::gl::vertex::buffer_target::shader_storage: return GL_SHADER_STORAGE_BUFFER;
+		case clap::gl::vertex::buffer_target::texture: return GL_TEXTURE_BUFFER;
+		case clap::gl::vertex::buffer_target::transform_feedback: return GL_TRANSFORM_FEEDBACK_BUFFER;
+		case clap::gl::vertex::buffer_target::uniform: return GL_UNIFORM_BUFFER;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
-clap::gl::buffer::target clap::gl::detail::convert::to_buffer_target(GLenum v) {
+clap::gl::vertex::buffer_target clap::gl::detail::convert::to_buffer_target(GLenum v) {
 	switch (v) {
-		case GL_ARRAY_BUFFER: return clap::gl::buffer::target::array;
-		case GL_ATOMIC_COUNTER_BUFFER: return clap::gl::buffer::target::atomic_counter;
-		case GL_COPY_READ_BUFFER: return clap::gl::buffer::target::copy_read;
-		case GL_COPY_WRITE_BUFFER: return clap::gl::buffer::target::copy_write;
-		case GL_DISPATCH_INDIRECT_BUFFER: return clap::gl::buffer::target::indirect_dispatch;
-		case GL_DRAW_INDIRECT_BUFFER: return clap::gl::buffer::target::indirect_draw;
-		case GL_ELEMENT_ARRAY_BUFFER: return clap::gl::buffer::target::element_array;
-		case GL_PIXEL_PACK_BUFFER: return clap::gl::buffer::target::pixel_pack;
-		case GL_PIXEL_UNPACK_BUFFER: return clap::gl::buffer::target::pixel_unpack;
-		case GL_QUERY_BUFFER: return clap::gl::buffer::target::query;
-		case GL_SHADER_STORAGE_BUFFER: return clap::gl::buffer::target::shader_storage;
-		case GL_TEXTURE_BUFFER: return clap::gl::buffer::target::texture;
-		case GL_TRANSFORM_FEEDBACK_BUFFER: return clap::gl::buffer::target::transform_feedback;
-		case GL_UNIFORM_BUFFER: return clap::gl::buffer::target::uniform;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-
-GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::access v) {
-	switch (v) {
-		case clap::gl::buffer::access::read_only: return GL_READ_ONLY;
-		case clap::gl::buffer::access::read_write: return GL_READ_WRITE;
-		case clap::gl::buffer::access::write_only: return GL_WRITE_ONLY;
-	}
-	log::error::critical << "Unsupported enum value.";
-}
-clap::gl::buffer::access clap::gl::detail::convert::to_access(GLenum v) {
-	switch (v) {
-		case GL_READ_ONLY: return clap::gl::buffer::access::read_only;
-		case GL_READ_WRITE: return clap::gl::buffer::access::read_write;
-		case GL_WRITE_ONLY: return clap::gl::buffer::access::write_only;
+		case GL_ARRAY_BUFFER: return clap::gl::vertex::buffer_target::array;
+		case GL_ATOMIC_COUNTER_BUFFER: return clap::gl::vertex::buffer_target::atomic_counter;
+		case GL_COPY_READ_BUFFER: return clap::gl::vertex::buffer_target::copy_read;
+		case GL_COPY_WRITE_BUFFER: return clap::gl::vertex::buffer_target::copy_write;
+		case GL_DISPATCH_INDIRECT_BUFFER: return clap::gl::vertex::buffer_target::indirect_dispatch;
+		case GL_DRAW_INDIRECT_BUFFER: return clap::gl::vertex::buffer_target::indirect_draw;
+		case GL_ELEMENT_ARRAY_BUFFER: return clap::gl::vertex::buffer_target::element_array;
+		case GL_PIXEL_PACK_BUFFER: return clap::gl::vertex::buffer_target::pixel_pack;
+		case GL_PIXEL_UNPACK_BUFFER: return clap::gl::vertex::buffer_target::pixel_unpack;
+		case GL_QUERY_BUFFER: return clap::gl::vertex::buffer_target::query;
+		case GL_SHADER_STORAGE_BUFFER: return clap::gl::vertex::buffer_target::shader_storage;
+		case GL_TEXTURE_BUFFER: return clap::gl::vertex::buffer_target::texture;
+		case GL_TRANSFORM_FEEDBACK_BUFFER: return clap::gl::vertex::buffer_target::transform_feedback;
+		case GL_UNIFORM_BUFFER: return clap::gl::vertex::buffer_target::uniform;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::buffer::usage v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::access v) {
 	switch (v) {
-		case clap::gl::buffer::usage::stream_draw: return GL_STREAM_DRAW;
-		case clap::gl::buffer::usage::stream_read: return GL_STREAM_READ;
-		case clap::gl::buffer::usage::stream_copy: return GL_STREAM_COPY;
-		case clap::gl::buffer::usage::static_draw: return GL_STATIC_DRAW;
-		case clap::gl::buffer::usage::static_read: return GL_STATIC_READ;
-		case clap::gl::buffer::usage::static_copy: return GL_STATIC_COPY;
-		case clap::gl::buffer::usage::dynamic_draw: return GL_DYNAMIC_DRAW;
-		case clap::gl::buffer::usage::dynamic_read: return GL_DYNAMIC_READ;
-		case clap::gl::buffer::usage::dynamic_copy: return GL_DYNAMIC_COPY;
+		case clap::gl::vertex::buffer::access::read_only: return GL_READ_ONLY;
+		case clap::gl::vertex::buffer::access::read_write: return GL_READ_WRITE;
+		case clap::gl::vertex::buffer::access::write_only: return GL_WRITE_ONLY;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
-clap::gl::buffer::usage clap::gl::detail::convert::to_usage(GLenum v) {
+clap::gl::vertex::buffer::access clap::gl::detail::convert::to_access(GLenum v) {
 	switch (v) {
-		case GL_STREAM_DRAW: return clap::gl::buffer::usage::stream_draw;
-		case GL_STREAM_READ: return clap::gl::buffer::usage::stream_read;
-		case GL_STREAM_COPY: return clap::gl::buffer::usage::stream_copy;
-		case GL_STATIC_DRAW: return clap::gl::buffer::usage::static_draw;
-		case GL_STATIC_READ: return clap::gl::buffer::usage::static_read;
-		case GL_STATIC_COPY: return clap::gl::buffer::usage::static_copy;
-		case GL_DYNAMIC_DRAW: return clap::gl::buffer::usage::dynamic_draw;
-		case GL_DYNAMIC_READ: return clap::gl::buffer::usage::dynamic_read;
-		case GL_DYNAMIC_COPY: return clap::gl::buffer::usage::dynamic_copy;
+		case GL_READ_ONLY: return clap::gl::vertex::buffer::access::read_only;
+		case GL_READ_WRITE: return clap::gl::vertex::buffer::access::read_write;
+		case GL_WRITE_ONLY: return clap::gl::vertex::buffer::access::write_only;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-std::ostream &operator<<(std::ostream &stream, clap::gl::buffer::target target) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::usage v) {
+	switch (v) {
+		case clap::gl::vertex::buffer::usage::stream_draw: return GL_STREAM_DRAW;
+		case clap::gl::vertex::buffer::usage::stream_read: return GL_STREAM_READ;
+		case clap::gl::vertex::buffer::usage::stream_copy: return GL_STREAM_COPY;
+		case clap::gl::vertex::buffer::usage::static_draw: return GL_STATIC_DRAW;
+		case clap::gl::vertex::buffer::usage::static_read: return GL_STATIC_READ;
+		case clap::gl::vertex::buffer::usage::static_copy: return GL_STATIC_COPY;
+		case clap::gl::vertex::buffer::usage::dynamic_draw: return GL_DYNAMIC_DRAW;
+		case clap::gl::vertex::buffer::usage::dynamic_read: return GL_DYNAMIC_READ;
+		case clap::gl::vertex::buffer::usage::dynamic_copy: return GL_DYNAMIC_COPY;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+clap::gl::vertex::buffer::usage clap::gl::detail::convert::to_usage(GLenum v) {
+	switch (v) {
+		case GL_STREAM_DRAW: return clap::gl::vertex::buffer::usage::stream_draw;
+		case GL_STREAM_READ: return clap::gl::vertex::buffer::usage::stream_read;
+		case GL_STREAM_COPY: return clap::gl::vertex::buffer::usage::stream_copy;
+		case GL_STATIC_DRAW: return clap::gl::vertex::buffer::usage::static_draw;
+		case GL_STATIC_READ: return clap::gl::vertex::buffer::usage::static_read;
+		case GL_STATIC_COPY: return clap::gl::vertex::buffer::usage::static_copy;
+		case GL_DYNAMIC_DRAW: return clap::gl::vertex::buffer::usage::dynamic_draw;
+		case GL_DYNAMIC_READ: return clap::gl::vertex::buffer::usage::dynamic_read;
+		case GL_DYNAMIC_COPY: return clap::gl::vertex::buffer::usage::dynamic_copy;
+	}
+	log::error::critical << "Unsupported enum value.";
+}
+
+std::ostream &operator<<(std::ostream &stream, clap::gl::vertex::buffer_target target) {
 	switch (target) {
-		case clap::gl::buffer::target::array:
-			stream << "buffer::target::array"; break;
-		case clap::gl::buffer::target::atomic_counter:
-			stream << "buffer::target::atomic_counter"; break;
-		case clap::gl::buffer::target::copy_read:
-			stream << "buffer::target::copy_read"; break;
-		case clap::gl::buffer::target::copy_write:
-			stream << "buffer::target::copy_write"; break;
-		case clap::gl::buffer::target::indirect_dispatch:
-			stream << "buffer::target::indirect_dispatch"; break;
-		case clap::gl::buffer::target::indirect_draw:
-			stream << "buffer::target::indirect_draw"; break;
-		case clap::gl::buffer::target::element_array:
-			stream << "buffer::target::element_array"; break;
-		case clap::gl::buffer::target::pixel_pack:
-			stream << "buffer::target::pixel_pack"; break;
-		case clap::gl::buffer::target::pixel_unpack:
-			stream << "buffer::target::pixel_unpack"; break;
-		case clap::gl::buffer::target::query:
-			stream << "buffer::target::query"; break;
-		case clap::gl::buffer::target::shader_storage:
-			stream << "buffer::target::shader_storage"; break;
-		case clap::gl::buffer::target::texture:
-			stream << "buffer::target::texture"; break;
-		case clap::gl::buffer::target::transform_feedback:
-			stream << "buffer::target::transform_feedback"; break;
-		case clap::gl::buffer::target::uniform:
-			stream << "buffer::target::uniform"; break;
+		case clap::gl::vertex::buffer_target::array:
+			stream << "vertex::buffer_target::array"; break;
+		case clap::gl::vertex::buffer_target::atomic_counter:
+			stream << "vertex::buffer_target::atomic_counter"; break;
+		case clap::gl::vertex::buffer_target::copy_read:
+			stream << "vertex::buffer_target::copy_read"; break;
+		case clap::gl::vertex::buffer_target::copy_write:
+			stream << "vertex::buffer_target::copy_write"; break;
+		case clap::gl::vertex::buffer_target::indirect_dispatch:
+			stream << "vertex::buffer_target::indirect_dispatch"; break;
+		case clap::gl::vertex::buffer_target::indirect_draw:
+			stream << "vertex::buffer_target::indirect_draw"; break;
+		case clap::gl::vertex::buffer_target::element_array:
+			stream << "vertex::buffer_target::element_array"; break;
+		case clap::gl::vertex::buffer_target::pixel_pack:
+			stream << "vertex::buffer_target::pixel_pack"; break;
+		case clap::gl::vertex::buffer_target::pixel_unpack:
+			stream << "vertex::buffer_target::pixel_unpack"; break;
+		case clap::gl::vertex::buffer_target::query:
+			stream << "vertex::buffer_target::query"; break;
+		case clap::gl::vertex::buffer_target::shader_storage:
+			stream << "vertex::buffer_target::shader_storage"; break;
+		case clap::gl::vertex::buffer_target::texture:
+			stream << "vertex::buffer_target::texture"; break;
+		case clap::gl::vertex::buffer_target::transform_feedback:
+			stream << "vertex::buffer_target::transform_feedback"; break;
+		case clap::gl::vertex::buffer_target::uniform:
+			stream << "vertex::buffer_target::uniform"; break;
 		default:
 			clap::log::warning::major << "Unsupported enum value.";
 	}

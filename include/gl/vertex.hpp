@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include <cstdint>
+#include <ostream>
 #include <set>
 #include <utility>
 
-typedef unsigned int GLenum;
+#include "gl/interface.hpp"
+#include "essential/guard.hpp"
+#include "essential/stack.hpp"
 
+typedef unsigned int GLenum;
 namespace clap::gl::detail {
 	class state;
 }
@@ -15,157 +19,87 @@ namespace clap::gl::shader::variable {
 	class attribute;
 }
 
-namespace clap::gl::buffer {
-	enum class target {
-		array, atomic_counter, copy_read, copy_write,
-		indirect_dispatch, indirect_draw, element_array,
-		pixel_pack, pixel_unpack, query, shader_storage,
-		texture, transform_feedback, uniform
+namespace clap::gl::vertex {
+	class buffer;
+	enum class buffer_target {
+		array = 0, atomic_counter = 1, copy_read = 2, copy_write = 3,
+		indirect_dispatch = 4, indirect_draw = 5, element_array = 6,
+		pixel_pack = 7, pixel_unpack = 8, query = 9, shader_storage = 10,
+		texture = 11, transform_feedback = 12, uniform = 13, LAST = uniform
 	};
-	enum class access {
-		read_only, write_only, read_write
-	};
-	enum class usage {
-		stream_draw, static_draw, dynamic_draw,
-		stream_read, static_read, dynamic_read,
-		stream_copy, static_copy, dynamic_copy
-	};
-	class multiple;
-	class single;
 
 	namespace detail {
-		class indexed {
-			friend multiple;
-			friend single;
-			friend gl::detail::state;
+		struct bind_buffer_callable {
+			buffer const &buffer_ref;
+			buffer_target const target;
+			essential::stack<clap::gl::vertex::buffer const *>::iterator operator()();
+		};
+		struct unbind_buffer_callable {
+			buffer const &buffer_ref;
+			buffer_target const target;
+			void operator()(essential::stack<clap::gl::vertex::buffer const *>::iterator);
+		};
+
+		class buffer_guard : essential::simple_guard<bind_buffer_callable, unbind_buffer_callable> {
 		public:
-			indexed(indexed const &other) = delete;
-			inline indexed(indexed &&other) noexcept : indexed(other.pointer, other.index) {}
-
-			indexed &operator=(indexed const &other) = delete;
-			inline indexed &operator=(indexed &&other) noexcept {
-				pointer = other.pointer;
-				index = other.index;
-				return *this;
-			}
-
-			void bind(target target = target::array);
-			void *map(access access, target target = target::array);
-			void unmap(target target = target::array);
-			void copy(indexed &source, size_t size, size_t read_offset = 0, size_t write_offset = 0);
-			void invalidate(size_t size, size_t offset = 0);
-			void invalidate();
-
-			void data(size_t size, usage usage, target target = target::array);
-			template <typename T>
-			inline void data(T *_data, size_t size, usage usage, target target = target::array) {
-				data((void *) _data, size, usage, target);
-			}
-			template <typename T>
-			inline void subdata(T *data, size_t size, size_t offset = 0,
-								target target = target::array) {
-				subdata((void *) data, size, offset, target);
-			}
-
-			operator bool() const;
-
-		protected:
-			explicit indexed(multiple *pointer = nullptr, size_t index = -1);
-			uint32_t operator *() const;
-
-			void data(void *data, size_t size, usage usage, target target = target::array);
-			void subdata(void *data, size_t size, size_t offset = 0, target target = target::array);
-
-		private:
-			multiple *pointer;
-			size_t index;
+			buffer_guard(buffer const &buffer_ref, buffer_target const target) :
+				essential::simple_guard<bind_buffer_callable, unbind_buffer_callable>(
+					detail::bind_buffer_callable{ buffer_ref, target },
+					detail::unbind_buffer_callable{ buffer_ref, target }) {}
 		};
 	}
 
-	class multiple {
-		friend detail::indexed;
+	class buffer : public gl::detail::object_interface {
+		friend detail::bind_buffer_callable;
+		friend detail::unbind_buffer_callable;
 	public:
-		explicit multiple(size_t count);
-		virtual ~multiple();
+		enum class access {
+			read_only, write_only, read_write
+		};
+		enum class usage {
+			stream_draw, static_draw, dynamic_draw,
+			stream_read, static_read, dynamic_read,
+			stream_copy, static_copy, dynamic_copy
+		};
 
-		multiple(multiple const &other) = delete;
-		multiple(multiple &&other) noexcept
-			: multiple(other.count, other.ids,
-					   other.currently_mapped_id, other.currently_mapped_pointer) {}
+		explicit buffer();
+		~buffer();
 
-		detail::indexed id(size_t index);
-		inline detail::indexed operator[](size_t index) {
-			return id(index);
+		buffer(buffer const &another) = delete;
+		buffer(buffer &&another) noexcept : id(another.id) { another.id = 0; }
+
+		inline detail::buffer_guard bind(buffer_target target = buffer_target::array) const {
+			return detail::buffer_guard(*this, target);
 		}
+		void copy_from(buffer const &another, size_t size, size_t read_offset = 0, size_t write_offset = 0);
+		void invalidate(size_t size, size_t offset = 0);
+		void invalidate();
 
-	private:
-		multiple(size_t count, uint32_t *ids,
-				 size_t currently_mapped_id, void *currently_mapped_pointer);
-
-	private:
-		size_t const count;
-		uint32_t *ids;
-
-		size_t currently_mapped_id;
-		void *currently_mapped_pointer;
-	};
-
-	class single : private multiple {
-	public:
-		inline single() : multiple(1) {}
-		inline virtual ~single() {}
-
-		single(single const &other) = delete;
-		single(single &&other) noexcept
-			: multiple(std::move(other)) {}
-
-		inline operator detail::indexed() {
-			return detail::indexed(this, 0);
-		}
-
-		inline void bind(target target = target::array) {
-			detail::indexed(this, 0).bind(target);
-		}
-		inline void *map(access access, target target = target::array) {
-			return detail::indexed(this, 0).map(access, target);
-		}
-		inline void unmap(target target = target::array) {
-			detail::indexed(this, 0).unmap(target);
-		}
-		inline void copy(detail::indexed &source, size_t size,
-						 size_t read_offset = 0, size_t write_offset = 0) {
-			detail::indexed(this, 0).copy(source, size, read_offset, write_offset);
-		}
-		inline void invalidate(size_t size, size_t offset = 0) {
-			detail::indexed(this, 0).invalidate(size, offset);
-		}
-		inline void invalidate() {
-			detail::indexed(this, 0).invalidate();
-		}
-
-		inline void data(size_t size, usage usage, target target = target::array) {
-			detail::indexed(this, 0).data(size, usage, target);
+		inline void data(size_t _size, usage usage, buffer_target target = buffer_target::array) {
+			data(nullptr, _size, usage, target);
 		}
 		template <typename T>
-		inline void data(T *data, size_t size, usage usage, target target = target::array) {
-			detail::indexed(this, 0).data(data, size, usage, target);
+		inline void data(T *_data, size_t _size, usage usage, buffer_target target = buffer_target::array) {
+			data((void *) _data, _size, usage, target);
 		}
 		template <typename T>
-		inline void subdata(T *data, size_t size, size_t offset = 0, target target = target::array) {
-			detail::indexed(this, 0).subdata((void *) data, size, offset, target);
+		inline void subdata(T *data, size_t _size, size_t offset = 0,
+							buffer_target target = buffer_target::array) {
+			subdata((void *) data, _size, offset, target);
 		}
+
+		friend inline std::ostream &operator<<(std::ostream &stream, buffer const &object) {
+			return stream << "vertex buffer object (vbo, with id = " << object.id << ")";
+		}
+
+	protected:
+		void data(void *data, size_t _size, usage usage, buffer_target target);
+		void subdata(void *data, size_t _size, size_t offset, buffer_target target);
+
+	private:
+		uint32_t id;
+		size_t size;
 	};
-
-}
-namespace clap::gl::detail::convert {
-	GLenum to_gl(clap::gl::buffer::target v);
-	clap::gl::buffer::target to_buffer_target(GLenum v);
-
-	GLenum to_gl(clap::gl::buffer::access v);
-	clap::gl::buffer::access to_access(GLenum v);
-
-	GLenum to_gl(clap::gl::buffer::usage v);
-	clap::gl::buffer::usage to_usage(GLenum v);
 }
 
 namespace clap::gl::vertex_array {
@@ -198,18 +132,16 @@ namespace clap::gl::vertex_array {
 			}
 
 			void bind();
-			void attribute_pointer(buffer::detail::indexed &&buffer,
-								   shader::variable::attribute const &variable,
+			void attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
 								   size_t stride, size_t shift);
-			inline void attribute_pointer(buffer::detail::indexed &&buffer,
+			inline void attribute_pointer(vertex::buffer &buffer,
 								   shader::variable::attribute const &variable) {
-				attribute_pointer(std::move(buffer), variable, 0, 0);
+				attribute_pointer(buffer, variable, 0, 0);
 			}
 			void attribute_divisor(shader::variable::attribute const &variable, size_t divisor);
-			void attribute_pointer(buffer::detail::indexed &&buffer,
-								   shader::variable::attribute const &variable,
+			void attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
 								   size_t stride, size_t shift, size_t divisor);
-			void attribute_pointer(buffer::detail::indexed &&buffer,
+			void attribute_pointer(vertex::buffer &buffer,
 								   std::initializer_list<shader::variable::attribute> const &variables);
 
 			void draw(connection connection, size_t count, size_t first = 0);
@@ -293,28 +225,24 @@ namespace clap::gl::vertex_array {
 		inline void bind() {
 			return detail::indexed(this, 0u).bind();
 		}
-		inline void attribute_pointer(buffer::detail::indexed &&buffer,
+		inline void attribute_pointer(vertex::buffer &buffer,
 									  shader::variable::attribute const &variable) {
-			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer), variable);
+			return detail::indexed(this, 0u).attribute_pointer(buffer, variable);
 		}
-		inline void attribute_pointer(buffer::detail::indexed &&buffer,
-									  shader::variable::attribute const &variable,
+		inline void attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
 									  size_t stride, size_t shift) {
-			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer),
-															   variable, stride, shift);
+			return detail::indexed(this, 0u).attribute_pointer(buffer, variable, stride, shift);
 		}
 		inline void attribute_divisor(shader::variable::attribute const &variable, size_t divisor) {
 			return detail::indexed(this, 0u).attribute_divisor(variable, divisor);
 		}
-		inline void attribute_pointer(buffer::detail::indexed &&buffer,
-									  shader::variable::attribute const &variable,
+		inline void attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
 									  size_t stride, size_t shift, size_t divisor) {
-			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer),
-															   variable, stride, shift, divisor);
+			return detail::indexed(this, 0u).attribute_pointer(buffer, variable, stride, shift, divisor);
 		}
-		inline void attribute_pointer(buffer::detail::indexed &&buffer,
+		inline void attribute_pointer(vertex::buffer &buffer,
 									  std::initializer_list<shader::variable::attribute> const &variables) {
-			return detail::indexed(this, 0u).attribute_pointer(std::move(buffer), variables);
+			return detail::indexed(this, 0u).attribute_pointer(buffer, variables);
 		}
 
 		inline void draw(connection connection, size_t _count, size_t first = 0) {
@@ -381,6 +309,15 @@ namespace clap::gl::vertex_array {
 	};
 }
 namespace clap::gl::detail::convert {
+	GLenum to_gl(clap::gl::vertex::buffer_target v);
+	clap::gl::vertex::buffer_target to_buffer_target(GLenum v);
+
+	GLenum to_gl(clap::gl::vertex::buffer::access v);
+	clap::gl::vertex::buffer::access to_access(GLenum v);
+
+	GLenum to_gl(clap::gl::vertex::buffer::usage v);
+	clap::gl::vertex::buffer::usage to_usage(GLenum v);
+
 	GLenum to_gl(clap::gl::vertex_array::connection v);
 	clap::gl::vertex_array::connection to_connection_type(GLenum v);
 
@@ -389,4 +326,4 @@ namespace clap::gl::detail::convert {
 }
 
 #include <ostream>
-std::ostream &operator<<(std::ostream &stream, clap::gl::buffer::target target);
+std::ostream &operator<<(std::ostream &stream, clap::gl::vertex::buffer_target target);

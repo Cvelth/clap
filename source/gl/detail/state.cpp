@@ -11,34 +11,6 @@ void clap::gl::detail::state::verify_loaded() {
 		clap::log::error::critical << "An attempt to use OpenGL before it was loaded.";
 }
 
-std::optional<clap::gl::buffer::detail::indexed> clap::gl::detail::state::bound_buffers[buffer_target_count];
-void clap::gl::detail::state::bind(buffer::target const &target, buffer::detail::indexed &&buffer) {
-	if (!bound_buffers[size_t(target)] || **bound_buffers[size_t(target)] != *buffer)
-		if (*buffer) {
-			log::message::minor << "A new buffer is bound to '" << target << "'.";
-			glBindBuffer(detail::convert::to_gl(target),
-						 **(bound_buffers[size_t(target)] = std::move(buffer)));
-		} else
-			log::warning::critical << "Buffer passed to 'gl::state::bind' is not a valid OpenGL vbo.";
-}
-std::optional<clap::gl::buffer::detail::indexed> const clap::gl::detail::state::unbind(buffer::target const &target) {
-	glBindBuffer(detail::convert::to_gl(target), 0);
-	auto out = std::move(bound_buffers[size_t(target)]);
-	bound_buffers[size_t(target)] = std::nullopt;
-	if (out)
-		log::message::minor << "\"" << target << "\" was unbound.";
-	return std::move(out);
-}
-std::optional<clap::gl::buffer::detail::indexed> const &clap::gl::detail::state::bound(buffer::target const &target) {
-	return bound_buffers[size_t(target)];
-}
-std::optional<clap::gl::buffer::target> clap::gl::detail::state::is_bound(clap::gl::buffer::detail::indexed const &buffer) {
-	for (size_t i = 0; i < buffer_target_count; i++)
-		if (bound_buffers[i] && **bound_buffers[i] == *buffer)
-			return clap::gl::buffer::target(i);
-	return std::nullopt;
-}
-
 std::optional<clap::gl::vertex_array::detail::indexed> clap::gl::detail::state::bound_vertex_array;
 void clap::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_array) {
 	if (!bound_vertex_array || **bound_vertex_array != *vertex_array)

@@ -4,6 +4,8 @@
 #include "essential/guard.hpp"
 #include "essential/stack.hpp"
 
+#include "gl/vertex.hpp"
+
 #include <memory>
 
 namespace clap::gl::shader {
@@ -12,6 +14,14 @@ namespace clap::gl::shader {
 		struct lock_program_callable;
 		struct unlock_program_callable;
 	}
+}
+namespace clap::gl::vertex {
+	class buffer;
+	namespace detail {
+		struct bind_buffer_callable;
+		struct unbind_buffer_callable;
+	}
+	enum class buffer_target;
 }
 namespace clap::gl::detail {
 	class context;
@@ -39,6 +49,8 @@ namespace clap::gl::detail {
 
 		friend clap::gl::shader::detail::lock_program_callable;
 		friend clap::gl::shader::detail::unlock_program_callable;
+		friend clap::gl::vertex::detail::bind_buffer_callable;
+		friend clap::gl::vertex::detail::unbind_buffer_callable;
 
 	public:
 		context(std::u8string name, size_t width, size_t height);
@@ -53,8 +65,21 @@ namespace clap::gl::detail {
 	public:
 		window::object window;
 
+		inline clap::gl::shader::program const *active_shader_program() const {
+			return !shader_program_stack.empty() 
+				? shader_program_stack.peek() 
+				: nullptr;
+		}
+		inline clap::gl::vertex::buffer const *bound_vertex_buffer(clap::gl::vertex::buffer_target target) const {
+			return !vertex_buffer_stack[size_t(target)].empty() 
+				? vertex_buffer_stack[size_t(target)].peek() 
+				: nullptr;
+		}
+
 	protected:
 		essential::stack<clap::gl::shader::program const*> shader_program_stack;
+		essential::stack<clap::gl::vertex::buffer const*> 
+			vertex_buffer_stack[size_t(gl::vertex::buffer_target::LAST)];
 
 	private:
 		std::mutex mutex;

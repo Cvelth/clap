@@ -280,8 +280,9 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 		}
 	}
 
-	clap::gl::buffer::single buffer;
-	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), clap::gl::buffer::usage::static_draw);
+	clap::gl::vertex::buffer buffer;
+	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), 
+				clap::gl::vertex::buffer::usage::static_draw);
 
 	vertex_array.attribute_pointer(buffer, program->attribute["position"], 4, 0);
 	vertex_array.attribute_pointer(buffer, program->attribute["texture_coordinates"], 4, 2);
