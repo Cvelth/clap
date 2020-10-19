@@ -17,9 +17,10 @@ static constexpr auto iteration_interval = std::chrono::milliseconds(size_t(1000
 
 int clap::ui::loop(int argc, char **argv) {
 	nowide::args _(argc, argv);
-	log::message::minor << "Passed arguments (" << argc << "):";
+	log::message::major << "Main thread loop has started.";
+	log::info::major << "Passed arguments (" << argc << "):";
 	for (int i = 0; i < argc; i++)
-		log::info::critical << i << ": " << argv[i] << ".";
+		log::info::major << '\t' << i << ": " << argv[i] << ".";
 
 	clap::resource::identify();
 
