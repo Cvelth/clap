@@ -437,11 +437,11 @@ namespace clap::gl::shader {
 		program(program const &another) = delete;
 		program(program &&another) noexcept : id(another.id) { another.id = 0; }
 
-		detail::program_guard use() const {
+		inline detail::program_guard use() const {
 			return detail::program_guard(*this);
 		}
 
-		friend std::ostream &operator<<(std::ostream &stream, program const &object) {
+		friend inline std::ostream &operator<<(std::ostream &stream, program const &object) {
 			return stream << "shader program (linked, with id = " << object.id << ")";
 		}
 	private:
