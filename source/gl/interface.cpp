@@ -26,6 +26,15 @@ clap::gl::detail::object_interface &clap::gl::detail::object_interface::operator
 	return *this;
 }
 
+bool clap::gl::detail::verify_context() {
+	if (context::current()) {
+		return true;
+	} else {
+		log::warning::major << "Attempting to access context when there is none activated.";
+		return false;
+	}
+}
+
 bool clap::gl::detail::verify_context(object_interface const &first, object_interface const &second) {
 	if (first.context != second.context) {
 		log::warning::major << "Any interfactions between two object created in different contexts are forbidden.";

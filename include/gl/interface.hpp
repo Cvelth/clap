@@ -1,6 +1,7 @@
 ﻿#pragma once
 namespace clap::gl::detail {
 	class object_interface;
+	bool verify_context();
 	bool verify_context(object_interface const &);
 	bool verify_context(object_interface const &, object_interface const &);
 
