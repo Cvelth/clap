@@ -142,7 +142,7 @@ void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essentia
 		}
 	} else {
 		log::message::negligible << "Removing a " << buffer_ref << " from bound vertex::buffer[" << target << "] stack.";
-		log::info::major << "This doesn't affect any currently bound buffer in any way.";
+		log::info::major << "This doesn't affect any currently bound buffers in any way.";
 		context->vertex_buffer_stack[size_t(target)].erase(iterator);
 	}
 }
@@ -514,7 +514,7 @@ void clap::gl::vertex::detail::unbind_array_callable::operator()(clap::essential
 		}
 	} else {
 		log::message::negligible << "Removing a " << array_ref << " from bound vertex::array stack.";
-		log::info::major << "This doesn't affect any currently bound array in any way.";
+		log::info::major << "This doesn't affect any currently bound arrays in any way.";
 		context->vertex_array_stack.erase(iterator);
 	}
 }
