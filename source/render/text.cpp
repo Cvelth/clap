@@ -301,7 +301,7 @@ void clap::render::text::render(int x, int y) const {
 
 	auto guard = program->use();
 	font_handle.data.at(height).bitmap.bind();
-	vertex_array.draw(clap::gl::vertex_array::connection::lines, count);
+	vertex_array.draw(clap::gl::vertex::array::connection::lines, count);
 }
 
 size_t clap::render::settings::font_bitmap_size_multiplier = 32;

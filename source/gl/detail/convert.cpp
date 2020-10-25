@@ -855,56 +855,56 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::texture::target target)
 	return stream;
 }
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex_array::connection v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::array::connection v) {
 	switch (v) {
-		case clap::gl::vertex_array::connection::points: return GL_POINTS;
-		case clap::gl::vertex_array::connection::lines: return GL_LINES;
-		case clap::gl::vertex_array::connection::lines_w_adjacency: return GL_LINES_ADJACENCY;
-		case clap::gl::vertex_array::connection::line_strip: return GL_LINE_STRIP;
-		case clap::gl::vertex_array::connection::line_strip_w_adjacency: return GL_LINE_STRIP_ADJACENCY;
-		case clap::gl::vertex_array::connection::line_loop: return GL_LINE_LOOP;
-		case clap::gl::vertex_array::connection::triangles: return GL_TRIANGLES;
-		case clap::gl::vertex_array::connection::triangles_w_adjacency: return GL_TRIANGLES_ADJACENCY;
-		case clap::gl::vertex_array::connection::triangle_strip: return GL_TRIANGLE_STRIP;
-		case clap::gl::vertex_array::connection::triangle_strip_w_adjacency: return GL_TRIANGLE_STRIP_ADJACENCY;;
-		case clap::gl::vertex_array::connection::triangle_fan: return GL_TRIANGLE_FAN;
-		case clap::gl::vertex_array::connection::patches: return GL_PATCHES;
+		case clap::gl::vertex::array::connection::points: return GL_POINTS;
+		case clap::gl::vertex::array::connection::lines: return GL_LINES;
+		case clap::gl::vertex::array::connection::lines_w_adjacency: return GL_LINES_ADJACENCY;
+		case clap::gl::vertex::array::connection::line_strip: return GL_LINE_STRIP;
+		case clap::gl::vertex::array::connection::line_strip_w_adjacency: return GL_LINE_STRIP_ADJACENCY;
+		case clap::gl::vertex::array::connection::line_loop: return GL_LINE_LOOP;
+		case clap::gl::vertex::array::connection::triangles: return GL_TRIANGLES;
+		case clap::gl::vertex::array::connection::triangles_w_adjacency: return GL_TRIANGLES_ADJACENCY;
+		case clap::gl::vertex::array::connection::triangle_strip: return GL_TRIANGLE_STRIP;
+		case clap::gl::vertex::array::connection::triangle_strip_w_adjacency: return GL_TRIANGLE_STRIP_ADJACENCY;;
+		case clap::gl::vertex::array::connection::triangle_fan: return GL_TRIANGLE_FAN;
+		case clap::gl::vertex::array::connection::patches: return GL_PATCHES;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-clap::gl::vertex_array::connection clap::gl::detail::convert::to_connection_type(GLenum v) {
+clap::gl::vertex::array::connection clap::gl::detail::convert::to_connection_type(GLenum v) {
 	switch (v) {
-		case GL_POINTS:						  return clap::gl::vertex_array::connection::points;
-		case GL_LINES:						  return clap::gl::vertex_array::connection::lines;
-		case GL_LINES_ADJACENCY:			  return clap::gl::vertex_array::connection::lines_w_adjacency;
-		case GL_LINE_STRIP:					  return clap::gl::vertex_array::connection::line_strip;
-		case GL_LINE_STRIP_ADJACENCY:		  return clap::gl::vertex_array::connection::line_strip_w_adjacency;
-		case GL_LINE_LOOP:					  return clap::gl::vertex_array::connection::line_loop;
-		case GL_TRIANGLES:					  return clap::gl::vertex_array::connection::triangles;
-		case GL_TRIANGLES_ADJACENCY:		  return clap::gl::vertex_array::connection::triangles_w_adjacency;
-		case GL_TRIANGLE_STRIP:				  return clap::gl::vertex_array::connection::triangle_strip;
-		case GL_TRIANGLE_STRIP_ADJACENCY:	  return clap::gl::vertex_array::connection::triangle_strip_w_adjacency;
-		case GL_TRIANGLE_FAN:				  return clap::gl::vertex_array::connection::triangle_fan;
-		case GL_PATCHES:					  return clap::gl::vertex_array::connection::patches;
+		case GL_POINTS:						  return clap::gl::vertex::array::connection::points;
+		case GL_LINES:						  return clap::gl::vertex::array::connection::lines;
+		case GL_LINES_ADJACENCY:			  return clap::gl::vertex::array::connection::lines_w_adjacency;
+		case GL_LINE_STRIP:					  return clap::gl::vertex::array::connection::line_strip;
+		case GL_LINE_STRIP_ADJACENCY:		  return clap::gl::vertex::array::connection::line_strip_w_adjacency;
+		case GL_LINE_LOOP:					  return clap::gl::vertex::array::connection::line_loop;
+		case GL_TRIANGLES:					  return clap::gl::vertex::array::connection::triangles;
+		case GL_TRIANGLES_ADJACENCY:		  return clap::gl::vertex::array::connection::triangles_w_adjacency;
+		case GL_TRIANGLE_STRIP:				  return clap::gl::vertex::array::connection::triangle_strip;
+		case GL_TRIANGLE_STRIP_ADJACENCY:	  return clap::gl::vertex::array::connection::triangle_strip_w_adjacency;
+		case GL_TRIANGLE_FAN:				  return clap::gl::vertex::array::connection::triangle_fan;
+		case GL_PATCHES:					  return clap::gl::vertex::array::connection::patches;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex_array::index_type v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::array::index_type v) {
 	switch (v) {
-		case clap::gl::vertex_array::index_type::unsigned_byte: return GL_UNSIGNED_BYTE;
-		case clap::gl::vertex_array::index_type::unsigned_short: return GL_UNSIGNED_SHORT;
-		case clap::gl::vertex_array::index_type::unsigned_int: return GL_UNSIGNED_INT;
+		case clap::gl::vertex::array::index_type::unsigned_byte: return GL_UNSIGNED_BYTE;
+		case clap::gl::vertex::array::index_type::unsigned_short: return GL_UNSIGNED_SHORT;
+		case clap::gl::vertex::array::index_type::unsigned_int: return GL_UNSIGNED_INT;
 	}
 	log::error::critical << "Unsupported enum value.";
 }
 
-clap::gl::vertex_array::index_type clap::gl::detail::convert::to_index_type(GLenum v) {
+clap::gl::vertex::array::index_type clap::gl::detail::convert::to_index_type(GLenum v) {
 	switch (v) {
-		case GL_UNSIGNED_BYTE: return clap::gl::vertex_array::index_type::unsigned_byte;
-		case GL_UNSIGNED_SHORT: return clap::gl::vertex_array::index_type::unsigned_short;
-		case GL_UNSIGNED_INT: return clap::gl::vertex_array::index_type::unsigned_int;
+		case GL_UNSIGNED_BYTE: return clap::gl::vertex::array::index_type::unsigned_byte;
+		case GL_UNSIGNED_SHORT: return clap::gl::vertex::array::index_type::unsigned_short;
+		case GL_UNSIGNED_INT: return clap::gl::vertex::array::index_type::unsigned_int;
 	}
 	log::error::critical << "Unsupported enum value.";
 }

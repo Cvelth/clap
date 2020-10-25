@@ -11,30 +11,6 @@ void clap::gl::detail::state::verify_loaded() {
 		clap::log::error::critical << "An attempt to use OpenGL before it was loaded.";
 }
 
-std::optional<clap::gl::vertex_array::detail::indexed> clap::gl::detail::state::bound_vertex_array;
-void clap::gl::detail::state::bind(vertex_array::detail::indexed &&vertex_array) {
-	if (!bound_vertex_array || **bound_vertex_array != *vertex_array)
-		if (*vertex_array) {
-			log::message::minor << "A new vertex array is bound.";
-			glBindVertexArray(**(bound_vertex_array = std::move(vertex_array)));
-		} else
-			log::warning::critical << "Vertex Array passed to 'gl::state::bind' is not a valid OpenGL vao.";
-}
-std::optional<clap::gl::vertex_array::detail::indexed> const clap::gl::detail::state::unbind() {
-	glBindVertexArray(0);
-	auto out = std::move(bound_vertex_array);
-	bound_vertex_array = std::nullopt;
-	if (out)
-		log::message::minor << "A vertex_array was unbound.";
-	return std::move(out);
-}
-std::optional<clap::gl::vertex_array::detail::indexed> const &clap::gl::detail::state::bound() {
-	return bound_vertex_array;
-}
-bool clap::gl::detail::state::is_bound(vertex_array::detail::indexed const &vertex_array) {
-	return bound_vertex_array && **bound_vertex_array == *vertex_array;
-}
-
 clap::gl::texture::detail::interface *clap::gl::detail::state::bound_textures[texture_target_count]{ nullptr };
 void clap::gl::detail::state::bind(texture::target const &target, texture::detail::interface *texture) {
 	if (!bound_textures[size_t(target)] || bound_textures[size_t(target)] != texture)

@@ -22,6 +22,12 @@ namespace clap::gl::vertex {
 		struct unbind_buffer_callable;
 	}
 	enum class buffer_target;
+
+	class array;
+	namespace detail {
+		struct bind_array_callable;
+		struct unbind_array_callable;
+	}
 }
 namespace clap::gl::detail {
 	class context;
@@ -51,6 +57,8 @@ namespace clap::gl::detail {
 		friend clap::gl::shader::detail::unlock_program_callable;
 		friend clap::gl::vertex::detail::bind_buffer_callable;
 		friend clap::gl::vertex::detail::unbind_buffer_callable;
+		friend clap::gl::vertex::detail::bind_array_callable;
+		friend clap::gl::vertex::detail::unbind_array_callable;
 
 	public:
 		context(std::u8string name, size_t width, size_t height);
@@ -75,11 +83,17 @@ namespace clap::gl::detail {
 				? vertex_buffer_stack[size_t(target)].peek() 
 				: nullptr;
 		}
+		inline clap::gl::vertex::array const *bound_vertex_array() const {
+			return !vertex_array_stack.empty()
+				? vertex_array_stack.peek()
+				: nullptr;
+		}
 
 	protected:
 		essential::stack<clap::gl::shader::program const*> shader_program_stack;
 		essential::stack<clap::gl::vertex::buffer const*> 
 			vertex_buffer_stack[size_t(gl::vertex::buffer_target::LAST)];
+		essential::stack<clap::gl::vertex::array const*> vertex_array_stack;
 
 	private:
 		std::mutex mutex;

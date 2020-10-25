@@ -3,11 +3,10 @@
 #include "glad/glad.h"
 
 #include "gl/detail/context.hpp"
-#include "gl/detail/state.hpp"
 #include "gl/shader.hpp"
 #include "essential/log.hpp"
 
-clap::gl::vertex::buffer::buffer() {
+clap::gl::vertex::buffer::buffer() : size(0) {
 	glGenBuffers(1, &id);
 	if (id == 0)
 		log::warning::critical << "Vertex Buffer Object creation failed.";
@@ -18,10 +17,14 @@ clap::gl::vertex::buffer::~buffer() {
 	if (!verify_context())
 		log::error::critical << "Unable to destroy a vertex buffer object when the context it was created in is not current.";
 
+	auto context = gl::detail::context::current();
+
 	// Stop using this buffer (and log a warning) if it's being used on deletion.
 	// Make sure no VAOs are bound when the buffer is deleted!
 
-	auto temp_vao = gl::detail::state::unbind();
+	auto temp_vao = context->bound_vertex_array();
+	if (temp_vao)
+		glBindVertexArray(0);
 
 	if (id) {
 		glDeleteBuffers(1, &id);
@@ -29,7 +32,7 @@ clap::gl::vertex::buffer::~buffer() {
 	}
 
 	if (temp_vao)
-		gl::detail::state::bind(std::move(*temp_vao));
+		glBindVertexArray(temp_vao->id);
 }
 
 void clap::gl::vertex::buffer::data(void *data, size_t _size, buffer::usage usage, buffer_target target) {
@@ -59,7 +62,7 @@ void clap::gl::vertex::buffer::subdata(void *data, size_t _size, size_t offset, 
 		<< target << "' with offset: " << offset << ".";
 }
 
-void clap::gl::vertex::buffer::copy_from(buffer const &another, size_t _size, 
+void clap::gl::vertex::buffer::copy_from(buffer const &another, size_t _size,
 										 size_t read_offset, size_t write_offset) {
 	if (!verify_context()) return;
 	auto source_guard = another.bind(buffer_target::copy_read);
@@ -78,7 +81,7 @@ void clap::gl::vertex::buffer::copy_from(buffer const &another, size_t _size,
 						gl::detail::convert::to_gl(buffer_target::copy_write),
 						read_offset, write_offset, size);
 
-	log::message::minor << size << " bytes of data were copied from a " << another << 
+	log::message::minor << size << " bytes of data were copied from a " << another <<
 		" with offset " << read_offset << " into a " << *this << " with offset " << write_offset << ".";
 }
 void clap::gl::vertex::buffer::invalidate(size_t size, size_t offset) {
@@ -129,7 +132,7 @@ void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essentia
 		auto active = context->vertex_buffer_stack[size_t(target)].pop();
 
 		log::message::negligible << "A " << *active << " was unbound from '" << target << "'.";
-		if (context->shader_program_stack.empty()) {
+		if (context->vertex_buffer_stack[size_t(target)].empty()) {
 			log::info::major << "Stack is empty.";
 			glBindBuffer(gl::detail::convert::to_gl(target), 0);
 		} else {
@@ -144,43 +147,23 @@ void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essentia
 	}
 }
 
-clap::gl::vertex_array::multiple::multiple(size_t count)
-	: count(count) {
-	gl::detail::state::verify_loaded();
-
-	ids = new uint32_t[count];
-	glGenVertexArrays(GLsizei(count), ids);
-	log::message::minor << "Vertex Arrays (" << count << ") were created.";
+clap::gl::vertex::array::array() {
+	glGenVertexArrays(1, &id);
+	if (id == 0)
+		log::warning::critical << "Vertex Array Object creation failed.";
+	else
+		log::message::minor << "A " << *this << " was created.";
 }
-clap::gl::vertex_array::multiple::~multiple() {
-	for (size_t i = 0; i < count; i++)
-		if (gl::detail::state::is_bound(id(i)))
-			gl::detail::state::unbind();
+clap::gl::vertex::array::~array() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a vertex array object when the context it was created in is not current.";
 
-	glDeleteVertexArrays(GLsizei(count), ids);
-	if (count) delete[] ids;
-	log::message::minor << "Vertex Arrays (" << count << ") were destroyed.";
-}
+	// Stop using this array (and log a warning) if it's being used on deletion.
 
-clap::gl::vertex_array::detail::indexed clap::gl::vertex_array::multiple::id(size_t index) {
-	return detail::indexed(this, index);
-}
-
-clap::gl::vertex_array::multiple::multiple(size_t count, uint32_t *ids) : count(count), ids(ids) {
-	gl::detail::state::verify_loaded();
-
-	for (size_t i = 0; i < count; i++)
-		if (!glIsVertexArray(ids[i])) {
-			log::warning::critical << "Unable to perform a vertex array move operation. "
-				"Passed vertex array seems to be corrupted.";
-			return;
-		}
-
-	log::message::negligible << "Vertex Arrays (" << count << ") were moved.";
-}
-
-void clap::gl::vertex_array::detail::indexed::bind() {
-	gl::detail::state::bind(std::move(*this));
+	if (id) {
+		glDeleteVertexArrays(1, &id);
+		log::message::minor << "A " << *this << " was destroyed.";
+	}
 }
 
 template <typename lambda_t>
@@ -203,11 +186,13 @@ struct vertex_array_variable_visitor {
 	}
 };
 
-void clap::gl::vertex_array::detail::indexed::attribute_pointer(vertex::buffer &buffer,
-																shader::variable::attribute const &variable,
-																size_t stride, size_t shift) {
-	this->bind();
-	auto guard = buffer.bind();
+void clap::gl::vertex::array::attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
+												size_t stride, size_t shift) {
+	if (!verify_context()) return;
+
+	auto array_guard = this->bind();
+	auto buffer_guard = buffer.bind();
+
 	std::visit(
 		vertex_array_variable_visitor{
 			[&](size_t width, size_t height, size_t size) {
@@ -222,15 +207,16 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(vertex::buffer &
 			}
 		}, variable
 	);
-	log::message::minor << "A " << variable << " was bound to a "
-		<< buffer << ".";
+	log::message::minor << "A " << variable << " uses " << buffer << " as inputs.";
+	log::info::minor << "State is stored in: " << *this << ".";
 	log::info::minor << "Stride: " << stride << ".";
 	log::info::minor << "Shift: " << shift << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::variable::attribute const &variable,
-																size_t divisor) {
-	this->bind();
+void clap::gl::vertex::array::attribute_divisor(shader::variable::attribute const &variable, size_t divisor) {
+	if (!verify_context()) return;
+
+	auto guard = this->bind();
 	std::visit(
 		vertex_array_variable_visitor{
 			[&](size_t width, size_t height, size_t size) {
@@ -240,18 +226,17 @@ void clap::gl::vertex_array::detail::indexed::attribute_divisor(shader::variable
 		}, variable
 	);
 	log::message::minor << "A " << variable << " uses a divisor: " << divisor << ".";
+	log::info::minor << "State is stored in: " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::attribute_pointer(vertex::buffer &buffer,
-																shader::variable::attribute const &variable,
-																size_t stride, size_t shift,
-																size_t divisor) {
+void clap::gl::vertex::array::attribute_pointer(vertex::buffer &buffer, shader::variable::attribute const &variable,
+												size_t stride, size_t shift, size_t divisor) {
 	attribute_pointer(buffer, variable, stride, shift);
 	attribute_divisor(variable, divisor);
 }
 
-void clap::gl::vertex_array::detail::indexed::attribute_pointer(vertex::buffer &buffer,
-																std::initializer_list<shader::variable::attribute> const &variables) {
+void clap::gl::vertex::array::attribute_pointer(vertex::buffer &buffer,
+												std::initializer_list<shader::variable::attribute> const &variables) {
 	size_t stride = 0;
 	for (auto variable : variables)
 		std::visit(
@@ -275,21 +260,25 @@ void clap::gl::vertex_array::detail::indexed::attribute_pointer(vertex::buffer &
 	}
 }
 
-void clap::gl::vertex_array::detail::indexed::draw(connection connection, size_t count, size_t first) {
-	this->bind();
+void clap::gl::vertex::array::draw(connection connection, size_t count, size_t first) {
+	if (!verify_context()) return;
+
+	auto guard = this->bind();
 	glDrawArrays(gl::detail::convert::to_gl(connection), GLint(first), GLint(count));
-	log::message::negligible << "Draw operation on currently bound Vertex Array with " << count << " vertices.";
+	log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t count,
-														   size_t first, int base_vertex,
-														   index_type type) {
+void clap::gl::vertex::array::draw_indexed(connection connection, size_t count, size_t first,
+										   int base_vertex, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer "
-			<< "with index data being bound to 'buffer::target::element_array'.";
+			"with index data being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	if (base_vertex)
 		glDrawElementsBaseVertex(gl::detail::convert::to_gl(connection), GLsizei(count),
 								 gl::detail::convert::to_gl(type), (void *) (first * size_t(type)),
@@ -297,18 +286,20 @@ void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection
 	else
 		glDrawElements(gl::detail::convert::to_gl(connection), GLsizei(count),
 					   gl::detail::convert::to_gl(type), (void *) (first * size_t(type)));
-	log::message::negligible << "Draw operation on currently bound Vertex Array with " << count << " vertices.";
+	log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection, size_t start,
-														   size_t end, size_t count, size_t first,
-														   int base_vertex, index_type type) {
+void clap::gl::vertex::array::draw_indexed(connection connection, size_t start, size_t end, size_t count,
+										   size_t first, int base_vertex, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	if (base_vertex)
 		glDrawRangeElementsBaseVertex(gl::detail::convert::to_gl(connection), GLuint(start), GLuint(end),
 									  GLsizei(count), gl::detail::convert::to_gl(type),
@@ -317,23 +308,26 @@ void clap::gl::vertex_array::detail::indexed::draw_indexed(connection connection
 		glDrawRangeElements(gl::detail::convert::to_gl(connection), GLuint(start), GLuint(end),
 							GLsizei(count), gl::detail::convert::to_gl(type),
 							(void *) (first * size_t(type)));
-	log::message::negligible << "Draw operation on currently bound Vertex Array with " << count << " vertices.";
+	log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_indirect(connection connection, size_t byte_offset) {
+void clap::gl::vertex::array::draw_indirect(connection connection, size_t byte_offset) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glDrawArraysIndirect(gl::detail::convert::to_gl(connection), (void *) (byte_offset));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_indexed_indirect(connection connection,
-																	size_t byte_offset,
-																	index_type type) {
+void clap::gl::vertex::array::draw_indexed_indirect(connection connection, size_t byte_offset, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_indexed_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
@@ -344,75 +338,78 @@ void clap::gl::vertex_array::detail::indexed::draw_indexed_indirect(connection c
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glDrawElementsIndirect(gl::detail::convert::to_gl(connection),
 						   gl::detail::convert::to_gl(type),
 						   (void *) (byte_offset));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_multiple(connection connection, size_t drawcount,
-															int const *counts, int const *firsts) {
-	this->bind();
+void clap::gl::vertex::array::draw_multiple(connection connection, size_t drawcount,
+											int const *counts, int const *firsts) {
+	if (!verify_context()) return;
+
+	auto guard = this->bind();
 	glMultiDrawArrays(gl::detail::convert::to_gl(connection), (GLint const *) firsts,
 					  (GLint const *) counts, GLsizei(drawcount));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection connection,
-																	size_t drawcount,
-																	int const *counts,
-																	int const *byte_offsets,
-																	index_type type) {
+void clap::gl::vertex::array::draw_multiple_indexed(connection connection, size_t drawcount, int const *counts,
+													int const *byte_offsets, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glMultiDrawElements(gl::detail::convert::to_gl(connection), (GLsizei *) counts,
 						gl::detail::convert::to_gl(type), (void **) (byte_offsets), GLsizei(drawcount));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed(connection connection,
-																	size_t drawcount,
-																	int const *counts,
-																	int const *byte_offsets,
-																	int const *base_vertices,
-																	index_type type) {
+void clap::gl::vertex::array::draw_multiple_indexed(connection connection, size_t drawcount,
+													int const *counts, int const *byte_offsets,
+													int const *base_vertices, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glMultiDrawElementsBaseVertex(gl::detail::convert::to_gl(connection), (GLsizei *) counts,
 								  gl::detail::convert::to_gl(type), (void **) (byte_offsets),
 								  GLsizei(drawcount), (GLint *) base_vertices);
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_multiple_indirect(connection connection,
-																	 size_t drawcount,
-																	 size_t byte_offset,
-																	 size_t stride) {
+void clap::gl::vertex::array::draw_multiple_indirect(connection connection, size_t drawcount,
+													 size_t byte_offset, size_t stride) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glMultiDrawArraysIndirect(gl::detail::convert::to_gl(connection), (void *) (byte_offset),
 							  GLsizei(drawcount), GLsizei(stride));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed_indirect(connection connection,
-																			 size_t drawcount,
-																			 size_t byte_offset,
-																			 size_t stride,
-																			 index_type type) {
+void clap::gl::vertex::array::draw_multiple_indexed_indirect(connection connection, size_t drawcount, size_t byte_offset,
+															 size_t stride, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
 		log::warning::critical << "'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with draw data "
 			"being bound to 'buffer::target::indirect_draw'.";
@@ -423,36 +420,39 @@ void clap::gl::vertex_array::detail::indexed::draw_multiple_indexed_indirect(con
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	glMultiDrawElementsIndirect(gl::detail::convert::to_gl(connection),
 								gl::detail::convert::to_gl(type),
 								(void *) (byte_offset), GLsizei(drawcount), GLsizei(stride));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_instanced(connection connection, size_t count,
-															 size_t draw_count, size_t first,
-															 int base_instance) {
-	this->bind();
+void clap::gl::vertex::array::draw_instanced(connection connection, size_t count, size_t draw_count,
+											 size_t first, int base_instance) {
+	if (!verify_context()) return;
+
+	auto guard = this->bind();
 	if (base_instance)
 		glDrawArraysInstancedBaseInstance(gl::detail::convert::to_gl(connection), GLint(first),
 										  GLsizei(count), GLsizei(draw_count), GLuint(base_instance));
 	else
 		glDrawArraysInstanced(gl::detail::convert::to_gl(connection), GLint(first),
 							  GLsizei(count), GLsizei(draw_count));
-	log::message::negligible << "Draw operation on currently bound Vertex Array with " << count << " vertices.";
+	log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
 }
 
-void clap::gl::vertex_array::detail::indexed::draw_instanced_indexed(connection connection, size_t count,
-																	 size_t draw_count, size_t first,
-																	 int base_vertex, int base_instance,
-																	 index_type type) {
+void clap::gl::vertex::array::draw_instanced_indexed(connection connection, size_t count, size_t draw_count, size_t first,
+													 int base_vertex, int base_instance, index_type type) {
+	if (!verify_context()) return;
+
 	if (!gl::detail::context::current()->bound_vertex_buffer(vertex::buffer_target::element_array)) {
 		log::warning::critical << "'vertex_array::draw_instanced_indexed' cannot be called without a buffer with index data "
 			"being bound to 'buffer::target::element_array'.";
 		return;
 	}
-	this->bind();
+
+	auto guard = this->bind();
 	if (base_instance)
 		if (base_vertex)
 			glDrawElementsInstancedBaseVertexBaseInstance(gl::detail::convert::to_gl(connection), GLsizei(count),
@@ -475,19 +475,46 @@ void clap::gl::vertex_array::detail::indexed::draw_instanced_indexed(connection 
 			glDrawElementsInstanced(gl::detail::convert::to_gl(connection), GLsizei(count),
 									gl::detail::convert::to_gl(type),
 									(void *) (first * size_t(type)), GLsizei(draw_count));
-	log::message::negligible << "Draw operation on currently bound Vertex Array.";
+	log::message::negligible << "Draw operation on " << *this << ".";
 }
 
-clap::gl::vertex_array::detail::indexed::operator bool() const {
-	return pointer && index < pointer->count;
-}
-uint32_t clap::gl::vertex_array::detail::indexed::operator*() const { return pointer->ids[index]; }
+clap::essential::stack<clap::gl::vertex::array const *>::iterator clap::gl::vertex::detail::bind_array_callable::operator()() {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to use a " << array_ref << " without a context being active on the current thread.";
+	else if (context != array_ref.context)
+		log::error::critical << "Attempting to use a " << array_ref << " when active context is different from the context object was created with.";
+	else {
+		auto out = context->vertex_array_stack.push(&array_ref);
 
-clap::gl::vertex_array::detail::indexed::indexed(multiple *pointer, size_t index)
-	: pointer(pointer), index(index) {
-	if (!*this) {
-		log::error::major << "Attempting to access an out of bounds vertex array.";
-		log::info::major << "Index is " << index << '.';
-		log::info::major << "Count is " << pointer->count << '.';
+		log::message::negligible << "A " << array_ref << " was bound.";
+		log::info::major << "It was added to the top of the stack.";
+		glBindVertexArray(array_ref.id);
+
+		return out;
+	}
+}
+void clap::gl::vertex::detail::unbind_array_callable::operator()(clap::essential::stack<clap::gl::vertex::array const *>::iterator iterator) {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to stop using a " << array_ref << " without a context being active on the current thread.";
+	else if (context != array_ref.context)
+		log::error::critical << "Attempting to stop using a " << array_ref << " when active context is different from the context object was created with.";
+	else if (context->vertex_array_stack.is_front(iterator)) {
+		auto active = context->vertex_array_stack.pop();
+
+		log::message::negligible << "A " << *active << " was unbound.";
+		if (context->vertex_array_stack.empty()) {
+			log::info::major << "Stack is empty.";
+			glBindVertexArray(0);
+		} else {
+			auto reactivated = context->vertex_array_stack.peek();
+			log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
+			glBindVertexArray(reactivated->id);
+		}
+	} else {
+		log::message::negligible << "Removing a " << array_ref << " from bound vertex::array stack.";
+		log::info::major << "This doesn't affect any currently bound array in any way.";
+		context->vertex_array_stack.erase(iterator);
 	}
 }

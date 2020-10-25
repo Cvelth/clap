@@ -34,7 +34,7 @@ namespace clap::render {
 		size_t height;
 
 		std::shared_ptr<clap::gl::shader::program> program;
-		mutable clap::gl::vertex_array::single vertex_array;
+		mutable clap::gl::vertex::array vertex_array;
 		size_t count;
 	};
 }

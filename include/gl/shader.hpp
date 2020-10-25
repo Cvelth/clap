@@ -13,8 +13,8 @@
 #include "gl/interface.hpp"
 
 typedef unsigned int GLenum;
-namespace clap::gl::vertex_array::detail {
-	class indexed;
+namespace clap::gl::vertex {
+	class array;
 }
 
 namespace clap::gl::shader {
@@ -341,7 +341,7 @@ namespace clap::gl::shader {
 
 		class attribute : public detail::variable_interface<type::attribute> {
 			friend program;
-			friend clap::gl::vertex_array::detail::indexed;
+			friend clap::gl::vertex::array;
 		public:
 			using detail::variable_interface<type::attribute>::variable_interface;
 			friend std::ostream &::operator<<(std::ostream &stream, attribute const &variable);
@@ -408,7 +408,7 @@ namespace clap::gl::shader {
 		private:
 			storage() {}
 		};
-		
+
 		struct lock_program_callable {
 			program const &program_ref;
 			essential::stack<clap::gl::shader::program const *>::iterator operator()();
