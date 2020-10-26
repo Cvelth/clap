@@ -160,7 +160,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\gl\detail\context.hpp" />
-    <ClInclude Include="..\..\include\gl\detail\state.hpp" />
     <ClInclude Include="..\..\include\gl\detail\window.hpp" />
     <ClInclude Include="..\..\include\gl\gl.hpp" />
     <ClInclude Include="..\..\include\gl\interface.hpp" />
@@ -172,7 +171,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\gl\detail\context.cpp" />
     <ClCompile Include="..\..\source\gl\detail\convert.cpp" />
-    <ClCompile Include="..\..\source\gl\detail\state.cpp" />
     <ClCompile Include="..\..\source\gl\detail\window.cpp" />
     <ClCompile Include="..\..\source\gl\interface.cpp" />
     <ClCompile Include="..\..\source\gl\misc.cpp" />
