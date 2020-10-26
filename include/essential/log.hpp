@@ -426,7 +426,7 @@ namespace clap::log::detail {
 		}
 		template <typename Elem, typename Traits>
 		inline stream_wrapper &operator<<(std::basic_string_view<Elem, Traits> const &rhs) {
-			return *this << nowide::utf::convert_string<char8_t>(rhs.c_str(), rhs.c_str() + rhs.size()).c_str();
+			return *this << nowide::utf::convert_string<char8_t>(rhs.data(), rhs.data() + rhs.size()).c_str();
 		}
 
 		inline stream_wrapper &operator<<(std::filesystem::path const &path) {

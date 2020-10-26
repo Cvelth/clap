@@ -52,6 +52,9 @@ namespace clap::ui {
 		auto const& get_name() const { return name; }
 		bool is_owned() const { return owner; }
 
+		size_t width() const { return size.current_w; }
+		size_t height() const { return size.current_h; }
+
 	protected:
 		std::u8string name;
 		compound::interface *owner;

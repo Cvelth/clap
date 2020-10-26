@@ -34,12 +34,6 @@
     <ClInclude Include="..\..\include\ui\detail\state.hpp">
       <Filter>include\detail</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\ui\detail\glfw.hpp">
-      <Filter>include\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\ui\detail\event.hpp">
-      <Filter>include\detail</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\ui\entity.cpp">
@@ -55,12 +49,6 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\ui\detail\state.cpp">
-      <Filter>source\detail</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\ui\detail\glfw.cpp">
-      <Filter>source\detail</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\ui\detail\convert.cpp">
       <Filter>source\detail</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,10 +1,58 @@
 ﻿#include "render/text.hpp"
 #include "render/font.hpp"
-#include "render/detail/state.hpp"
+
+#include "essential/log.hpp"
 
 #include "nowide/convert.hpp"
 
 #include <fstream>
+
+#include "ft2build.h"
+#include FT_FREETYPE_H
+
+#include "glad/glad.h"
+
+namespace clap::render::detail {
+	class library {
+	public:
+		static void initialize();
+		static void clean_up();
+		static void ensure_initialized();
+
+		static auto is_initialized() {
+			return was_initialized;
+		}
+		static auto const &handle() {
+			return freetype_handle;
+		}
+
+	protected:
+		static bool was_initialized;
+		static FT_Library freetype_handle;
+	};
+}
+
+bool clap::render::detail::library::was_initialized = false;
+FT_Library clap::render::detail::library::freetype_handle{};
+
+void clap::render::detail::library::initialize() {
+	if (!was_initialized) {
+		if (FT_Init_FreeType(&clap::render::detail::library::freetype_handle))
+			clap::log::error::critical << "Unable to initialize freetype.";
+		clap::render::detail::library::was_initialized = true;
+	}
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+void clap::render::detail::library::clean_up() {
+	if (was_initialized) {
+		if (FT_Done_FreeType(clap::render::detail::library::freetype_handle))
+			clap::log::error::critical << "Unable to finalize freetype.";
+		clap::render::detail::library::was_initialized = false;
+	}
+}
+void clap::render::detail::library::ensure_initialized() { initialize(); }
 
 //Temporary. To be updated after full c++20 <bit> support arrives.
 namespace nonstd {
@@ -40,7 +88,7 @@ clap::render::font::~font() {
 }
 
 clap::render::font clap::render::font::load(std::filesystem::path const &filename) {
-	detail::state::ensure_initialized();
+	detail::library::ensure_initialized();
 
 	auto *handle = new detail::font_file_handle{};
 
@@ -54,7 +102,7 @@ clap::render::font clap::render::font::load(std::filesystem::path const &filenam
 		log::info::critical << "Path: " << filename << ".";
 	}
 
-	auto error = FT_New_Memory_Face(clap::render::detail::state::library(),
+	auto error = FT_New_Memory_Face(clap::render::detail::library::handle(),
 									(FT_Byte const *) handle->buffer.data(),
 									(FT_Long) file_size, 0, &handle->face);
 	if (error == FT_Err_Unknown_File_Format) {
@@ -109,6 +157,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 				<< "x" << gl::texture::_2d::maximum_height() << ".";
 			clap::log::info::minor << "'settings::font_bitmap_size_multiplier':"
 				<< settings::font_bitmap_size_multiplier << ".";
+			clap::log::info::minor << "Font size: " << height << ".";
 		}
 		font_handle.data.emplace(
 			height,
@@ -190,7 +239,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 					}
 					target.bitmap.data(font_face->glyph->bitmap.buffer, target.offset_x, target.offset_y,
 									   font_face->glyph->bitmap.width, font_face->glyph->bitmap.rows,
-									   true, 0, clap::gl::texture::external_format::red);
+									   false, 0, clap::gl::texture::external_format::red);
 					iterator = target.coordinates.emplace(code_point,
 														  detail::bitmap_coordinates{
 															  target.offset_x, target.offset_y,
@@ -231,12 +280,12 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 		}
 	}
 
-	clap::gl::buffer::single buffer;
-	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), clap::gl::buffer::usage::static_draw);
+	clap::gl::vertex::buffer buffer;
+	buffer.data(buffer_data.data(), sizeof(decltype(buffer_data)::value_type) * buffer_data.size(), 
+				clap::gl::vertex::buffer::usage::static_draw);
 
-	auto variables = program.getAttributes();
-	vertex_array.attribute_pointer(buffer, variables["position"], 4, 0);
-	vertex_array.attribute_pointer(buffer, variables["texture_coordinates"], 4, 2);
+	vertex_array.attribute_pointer(buffer, program->attribute["position"], 4, 0);
+	vertex_array.attribute_pointer(buffer, program->attribute["texture_coordinates"], 4, 2);
 	count = buffer_data.size() / 4;
 
 	clap::log::message::minor << "Text object was updated.";
@@ -248,10 +297,11 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 }
 
 void clap::render::text::render(int x, int y) const {
-	program.use();
-	program.set(uniforms["offset"], { float(x), float(y) });
-	font_handle.data.at(height).bitmap.bind();
-	vertex_array.draw(clap::gl::vertex_array::connection::lines, count);
+	program->uniform["offset"] = { float(x), float(y) };
+
+	auto program_guard = program->use();
+	auto texture_guard = font_handle.data.at(height).bitmap.bind();
+	vertex_array.draw(clap::gl::vertex::array::connection::lines, count);
 }
 
 size_t clap::render::settings::font_bitmap_size_multiplier = 32;

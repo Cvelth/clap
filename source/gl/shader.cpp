@@ -1,219 +1,140 @@
 ﻿#include "gl/shader.hpp"
+#include "gl/detail/context.hpp"
 
 #include <fstream>
-#include <string>
-#include <vector>
+
+#include "essential/log.hpp"
 
 #include "glad/glad.h"
 
-#include "gl/detail/state.hpp"
-#include "essential/log.hpp"
-
-clap::gl::shader::detail::object::object(type type) : id(uint32_t(-1)) {
-	gl::detail::state::verify_loaded();
-
+clap::gl::shader::detail::object::object(type type) : id(0u) {
 	id = glCreateShader(gl::detail::convert::to_gl(type));
-	if (id == 0 || id == -1)
+	if (id == 0)
 		log::warning::critical << "Shader object creation failed.";
 	else
-		log::message::minor << "A " << type << " shader object was created.";
+		log::message::minor << "A '" << type << "' " << *this << " was created.";
 }
-
 clap::gl::shader::detail::object::~object() {
-	glDeleteShader(id);
-	log::message::minor << "A shader object was destroyed.";
+	if (id) {
+		glDeleteShader(id);
+		log::message::minor << "A " << *this << " was destroyed.";
+	}
 }
 
-clap::gl::shader::detail::object::object(type type, std::string source) : object(type) {
+std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_source(type type, std::string_view source) {
+	clap::gl::shader::detail::object out(type);
+
 	if (source == "") {
-		log::warning::critical << "Shader source is empty.";
-		return;
+		log::warning::critical << "Impossible to compile a shader with an empty source.";
+		log::message::major << "While compiling a " << out << " of type " << type << ".";
+		return std::nullopt;
 	}
 
-	const GLchar *_source = static_cast<const GLchar *>(source.c_str());
-	glShaderSource(id, 1, &_source, NULL);
-	glCompileShader(id);
+	auto const *glchar_source = static_cast<const GLchar *>(source.data());
+	glShaderSource(out.id, 1, &glchar_source, NULL);
+	glCompileShader(out.id);
 
-	GLint isCompiled;
-	glGetShaderiv(id, GL_COMPILE_STATUS, &isCompiled);
-
-	if (!isCompiled) {
-		GLsizei len;
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
-
-		GLchar *log = new GLchar[size_t(len) + 1];
-		glGetShaderInfoLog(id, len, &len, log);
-		log::warning::critical << "During shader compilation: " << std::string(log);
-		delete[] log;
-	} else
-		log::message::minor << "A shader was compiled successfully.";
-}
-
-clap::gl::shader::detail::object::object(uint32_t id) : id(id) {
-	gl::detail::state::verify_loaded();
-
-	if (id == 0 || !glIsShader(id))
-		log::warning::critical << "Unable to perform a shader object move operation. "
-		"Passed shader object seems to be corrupted.";
-	else
-		log::message::negligible << "A shader object was moved.";
-}
-
-clap::gl::shader::detail::object clap::gl::shader::from_source(type type, std::string source) {
-	return detail::object(type, source);
-}
-clap::gl::shader::detail::object clap::gl::shader::from_source(type type, std::string_view source) {
-	return from_source(type, std::string(source));
-}
-
-clap::gl::shader::detail::object clap::gl::shader::from_source(type type, char const *source) {
-	return from_source(type, std::string(source));
-}
-
-clap::gl::shader::detail::object clap::gl::shader::from_file(type type, std::filesystem::path const &filename) {
-	std::ifstream filestream;
-	filestream.open(filename);
-	if (!filestream) {
-		log::warning::critical << "File " << filename << " cannot be oppened. Make sure it exists.";
-		return detail::object(type);
-	}
-
-	std::string source{
-		std::istreambuf_iterator<char>(filestream),
-		std::istreambuf_iterator<char>()
-	};
-
-	return from_source(type, source);
-}
-
-size_t clap::gl::shader::detail::variable::count() const {
-	return type.dimentions.x * type.dimentions.y;
-}
-
-size_t clap::gl::shader::detail::variable::size() const {
-	if (type.structure == variable_type_t::structure::data)
-		return count() * datatype_size();
-	else
-		log::warning::critical << "Size can only be obtained for data variables.";
-}
-
-size_t clap::gl::shader::detail::variable::datatype_size() const {
-	if (type.structure == variable_type_t::structure::data)
-		return gl::detail::convert::to_size(type.datatype);
-	else
-		log::warning::critical << "Datatype size can only be obtained for data variables.";
-}
-
-clap::gl::shader::detail::variable::variable(std::string const &name, uint32_t const &location,
-											 variable_type_t::storage const storage,
-											 variable_type const &type)
-	: name(name), location(location), storage(storage), type(type) {
-
-	if (type.structure == variable_type_t::structure::data) {
-		if (type.dimentions.x < 1 || type.dimentions.x > 4 || type.dimentions.y < 1 || type.dimentions.y > 4)
-			log::warning::critical << "Variable dimentions must be in [1; 4] range.";
-		if (type.dimentions.x > 1 && !(type.datatype == variable_type_t::datatype::_float || type.datatype == variable_type_t::datatype::_double))
-			log::warning::critical << "Matrix variables can only be 'float's or 'double's.";
-		if (type.dimentions.y == 1 && type.dimentions.x != 1)
-			log::warning::critical << "Variable dimentions are impossible. It's possible it has been corrupted.";
-		if (type.specific != variable_type_t::specific::none)
-			log::warning::critical << "Data variables must not have any specifics applied.";
+	GLint compilation_successful;
+	glGetShaderiv(out.id, GL_COMPILE_STATUS, &compilation_successful);
+	if (compilation_successful) {
+		log::message::minor << "A '" << type << "' " << out << " was compiled.";
+		return std::move(out);
 	} else {
-		if (type.dimentions.y != 0)
-			log::warning::critical << "'y' dimention must always be '0' for non-data variables.";
-		if (type.dimentions.x == 0 && !(type.specific == variable_type_t::specific::cube || type.specific == variable_type_t::specific::buffer))
-			log::warning::critical << "'x' dimention must not be '0' unless 'cube' or 'buffer' specific is applied.";
-		if ((type.specific == variable_type_t::specific::multisample ||
-			 type.specific == variable_type_t::specific::multisample_array ||
-			 type.specific == variable_type_t::specific::rect) && type.dimentions.x != 2)
-			log::warning::critical << "'x' dimention must always be '2' if 'multisample', 'multisample_array' or 'rect' specific is applied.";
-		if (type.specific == variable_type_t::specific::array && type.dimentions.x > 2)
-			log::warning::critical << "'x' dimention must not be bigger than '2' if 'array' specific is applied.";
-		if (type.dimentions.x > 3)
-			log::warning::critical << "'x' dimention must not be bigger than '3' for non-data variables.";
+		GLsizei length;
+		glGetShaderiv(out.id, GL_INFO_LOG_LENGTH, &length);
 
-		if (type.structure == variable_type_t::structure::shadow_sampler) {
-			if (type.dimentions.x > 2)
-				log::warning::critical << "'x' dimention must always be '2' or less for 'shadow_sampler' variables.";
-			if (type.datatype != variable_type_t::datatype::_float)
-				log::warning::critical << "'shadow_sampler' variables must always have 'float' type.";
-			if (type.specific == variable_type_t::specific::buffer
-				|| type.specific == variable_type_t::specific::multisample
-				|| type.specific == variable_type_t::specific::multisample_array) {
+		GLchar *log = new GLchar[size_t(length) + 1];
+		glGetShaderInfoLog(out.id, length, &length, log);
+		log::warning::critical << "A '" << type << "' " << out << " has failed to compile.";
+		log::info::critical << std::string(log);
+		delete[] log;
 
-				log::warning::critical << "'shadow_sampler' variables must not have 'buffer', 'multisample' or 'multisample_array' specifics applied.";
-			}
-		}
-		if (type.datatype != variable_type_t::datatype::_float &&
-			type.datatype != variable_type_t::datatype::_int &&
-			type.datatype != variable_type_t::datatype::_unsigned) {
+		return std::nullopt;
+	}
+}
+std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_file(type type, std::filesystem::path path) {
+	std::ifstream filestream;
+	filestream.open(path);
+	if (!filestream) {
+		log::warning::critical << "File " << path << " cannot be opened. Make sure it exists.";
+		log::info::critical << "While trying to compile a '" << type << "' shader object.";
+		return std::nullopt;
+	} else {
+		std::string source{
+			std::istreambuf_iterator<char>(filestream),
+			std::istreambuf_iterator<char>()
+		};
 
-			if (type.structure == variable_type_t::structure::sampler)
-				log::warning::critical << "'sampler' variables can only have 'float', 'int' or 'unsigned' type.";
-			if (type.structure == variable_type_t::structure::image)
-				log::warning::critical << "'image' variables can only have 'float', 'int' or 'unsigned' type.";
-		}
+		return from_source(type, source);
 	}
 }
 
-clap::gl::shader::program::program() : id(uint32_t(-1)), needs_linking(true) {
-	gl::detail::state::verify_loaded();
-
+clap::gl::shader::detail::linker::linker() : id(0u) {
 	id = glCreateProgram();
-	if (id == 0 || id == -1)
+	if (id == 0)
 		log::warning::critical << "Shader program creation failed.";
 	else
-		log::message::minor << "A shader program was created.";
-}
-clap::gl::shader::program::~program() {
-	glDeleteProgram(id);
-	log::message::minor << "A shader program was destroyed.";
+		log::message::minor << "A " << *this << " was created.";
 }
 
-void clap::gl::shader::program::add(detail::object const &object) {
-	glAttachShader(id, object.id);
-	log::message::negligible << "A shader object was attached to a program.";
-	needs_linking = true;
+clap::gl::shader::detail::linker::~linker() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a shader program object when its context it was created in is not current.";
+	if (id) {
+		glDeleteProgram(id);
+		log::warning::major << "A " << *this << " was destroyed.";
+	}
 }
 
-void clap::gl::shader::program::add(detail::object &&object) {
-	glAttachShader(id, object.id);
-	log::message::negligible << "A shader object was attached to a program.";
-	needs_linking = true;
+void clap::gl::shader::detail::linker::add(detail::object const &object) {
+	if (!verify_context()) return;
+	if (id) {
+		if (context != object.context)
+			log::warning::critical << "Cannot add a shader object to a shader program as they belong to different contexts.";
+		else {
+			glAttachShader(id, object.id);
+			log::message::negligible << "A " << object << " was attached to a " << *this << ".";
+		}
+	} else
+		log::warning::major << "Cannot add new shaders to an invalid linker object.";
 }
 
-void clap::gl::shader::program::link() {
-	if (needs_linking) {
+clap::gl::shader::detail::linker::operator clap::gl::shader::program() {
+	if (!verify_context()) return program(0);
+	if (id) {
 		glLinkProgram(id);
 
-		GLint isLinked;
-		glGetProgramiv(id, GL_LINK_STATUS, &isLinked);
-		if (!isLinked) {
-			GLsizei len;
-			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &len);
+		GLint linkage_successful;
+		glGetProgramiv(id, GL_LINK_STATUS, &linkage_successful);
+		if (linkage_successful) {
+			log::message::minor << "A " << *this << " was linked.";
 
-			GLchar *log = new GLchar[size_t(len) + 1];
-			glGetProgramInfoLog(id, len, &len, log);
-			log::warning::critical << "During program linking: " << std::string(log);
+			auto id_copy = id;
+			id = 0;
+
+			return program(id_copy);
+		} else {
+			GLsizei length;
+			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
+
+			GLchar *log = new GLchar[size_t(length) + 1];
+			glGetProgramInfoLog(id, length, &length, log);
+			log::warning::critical << "A " << *this << " has failed to link.";
+			log::info::critical << std::string(log);
 			delete[] log;
-		} else
-			log::message::minor << "A shader program was linked successfully.";
-		needs_linking = false;
-	} else
-		log::warning::negligible << "Program is already linked. Repeated linkage is not needed.";
-}
 
-void clap::gl::shader::program::use() {
-	if (!needs_linking)
-		gl::detail::state::use(this);
-	else
-		log::warning::major << "Attempting to use an unlinked program.";
+			return program(0);
+		}
+	} else {
+		log::warning::major << "Cannot link an invalid linker object. Make sure the program object isn't already linked.";
+		return program(0);
+	}
 }
 
 template<typename gl_get_lambda_t, typename gl_get_location_lambda_t, typename create_variable_lambda_t>
-void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_length,
-			   gl_get_lambda_t gl_get_lambda, gl_get_location_lambda_t gl_get_location_lambda,
-			   create_variable_lambda_t create_variable_lambda) {
+void gl_variable_request_template(uint32_t program_id, GLenum active_type, GLenum active_type_length,
+								  gl_get_lambda_t gl_get_lambda, gl_get_location_lambda_t gl_get_location_lambda,
+								  create_variable_lambda_t create_variable_lambda) {
 	GLint number, max_length, name_length, size;
 	GLenum type;
 	glGetProgramiv(program_id, active_type, &number);
@@ -221,239 +142,178 @@ void local_get(uint32_t program_id, GLenum active_type, GLenum active_type_lengt
 	for (int i = 0; i < number; i++) {
 		std::vector<GLchar> name(max_length);
 		gl_get_lambda(program_id, i, max_length, &name_length, &size, &type, name.data());
-		create_variable_lambda(name.data(), gl_get_location_lambda(program_id, name.data()), type);
+		create_variable_lambda(name.data(), gl_get_location_lambda(program_id, name.data()), type, size);
 	}
 }
-clap::gl::shader::variables clap::gl::shader::program::getUniforms() {
-	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform, 
-			  glad_glGetUniformLocation, [&out](auto name, auto location, auto datatype) {
-				  out.insert(std::make_pair(
-					  name,
-					  detail::variable(name,
-									   location,
-									   detail::variable_type_t::storage::uniform,
-									   gl::detail::convert::to_variable_type(datatype))
-				  ));
-			  });
-	log::message::minor << "Uniforms (" << out.size() << ") were requested from the shader program.";
-	return out;
+clap::gl::shader::program::program(unsigned id) : id(id) {
+	if (id) {
+		gl_variable_request_template(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib,
+									 glGetAttribLocation, [this](auto name, auto location, auto datatype, auto size) {
+										 attribute.emplace(
+											 name,
+											 variable::attribute(gl::detail::convert::to_attribute(datatype), size, location, name, *this)
+										 );
+									 });
+		gl_variable_request_template(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform,
+									 glGetUniformLocation, [this](auto name, auto location, auto datatype, auto size) {
+										 uniform.emplace(
+											 name,
+											 variable::uniform(gl::detail::convert::to_uniform(datatype), size, location, name, *this)
+										 );
+									 });
+		log::message::minor << "A " << *this << " have successfully requested variable data.";
+		log::info::major << "Uniform count: " << uniform.size() << ".";
+		for (auto &entry : uniform)
+			log::info::minor << '\t' << entry.first;
+		log::info::major << "Attribute count: " << attribute.size() << ".";
+		for (auto &entry : attribute)
+			log::info::minor << '\t' << entry.first;
+	} else
+		log::warning::major << "An attempt to create a shader program object with id = 0.";
 }
-clap::gl::shader::variables clap::gl::shader::program::getAttributes() {
-	clap::gl::shader::variables out;
-	local_get(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib, 
-			  glGetAttribLocation, [&out](auto name, auto location, auto datatype) {
-				  out.insert(std::make_pair(
-					  name,
-					  detail::variable(name,
-									   location,
-									   detail::variable_type_t::storage::attribute,
-									   gl::detail::convert::to_variable_type(datatype))
-				  ));
-			  });
-	log::message::minor << "Attributes (" << out.size() << ") were requested from the shader program.";
-	return out;
-}
-clap::gl::shader::variables clap::gl::shader::program::getVariables() {
-	auto out = getUniforms();
-	out.merge(getAttributes());
-	return out;
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, std::vector<float> const &values) {
-	set(variable, values.size(), values.data());
-}
-void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<float> const &values) {
-	set(variable, std::vector<float>(values));
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, std::vector<double> const &values) {
-	set(variable, values.size(), values.data());
-}
-void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<double> const &values) {
-	set(variable, std::vector<double>(values));
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, std::vector<int> const &values) {
-	set(variable, values.size(), values.data());
-}
-void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<int> const &values) {
-	set(variable, std::vector<int>(values));
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, std::vector<unsigned> const &values) {
-	set(variable, values.size(), values.data());
-}
-void clap::gl::shader::program::set(detail::variable const &variable, std::initializer_list<unsigned> const &values) {
-	set(variable, std::vector<unsigned>(values));
-}
-
-bool check_uniform_variable(uint32_t const &location,
-							clap::gl::shader::detail::variable_type_t::storage const &storage,
-							clap::gl::shader::detail::variable_type const &type,
-							clap::gl::shader::detail::variable_type_t::datatype expected_datatype) {
-	if (location == -1) {
-		clap::log::warning::major << "Uniform variable is silently ignored by OpenGL. It's location value is '-1'.";
-		return false;
+clap::gl::shader::program::~program() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a shader program object when the context it was created in is not current.";
+	
+	// TODO: Stop using this program (and log a warning) if it's being used on deletion.
+	
+	if (id) {
+		glDeleteProgram(id);
+		log::message::minor << "A " << *this << " was destroyed.";
 	}
-
-	if (storage != clap::gl::shader::detail::variable_type_t::storage::uniform
-		|| type.structure != clap::gl::shader::detail::variable_type_t::structure::data) {
-
-		clap::log::warning::major << "Only data uniform variables can be directly set.";
-		return false;
-	}
-
-	if (type.datatype != expected_datatype && type.datatype != clap::gl::shader::detail::variable_type_t::datatype::_bool) {
-		clap::log::warning::major << "Cannot set value to a variable of a different type.";
-		return false;
-	}
-
-	return true;
 }
 
-void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const float *values) {
-	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
-								clap::gl::shader::detail::variable_type_t::datatype::_float))
-		return;
-	if (variable.count() != n) {
-		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
-		return;
-	}
-
-	use();
-	switch (variable.type.dimentions.x) {
-		case 1:
-			switch (variable.type.dimentions.y) {
-				case 1: glUniform1fv(variable.location, 1, values); return;
-				case 2: glUniform2fv(variable.location, 1, values); return;
-				case 3: glUniform3fv(variable.location, 1, values); return;
-				case 4: glUniform4fv(variable.location, 1, values); return;
-			} break;
-		case 2:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix2fv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix2x3fv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix2x4fv(variable.location, 1, false, values); return;
-			} break;
-		case 3:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix3x2fv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix3fv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix3x4fv(variable.location, 1, false, values); return;
-			} break;
-		case 4:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix4x2fv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix4x3fv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix4fv(variable.location, 1, false, values); return;
-			}
-			break;
-	}
-	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const double *values) {
-	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
-								clap::gl::shader::detail::variable_type_t::datatype::_double))
-		return;
-	if (variable.count() != n) {
-		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
-		return;
-	}
-
-	use();
-	switch (variable.type.dimentions.x) {
-		case 1:
-			switch (variable.type.dimentions.y) {
-				case 1: glUniform1dv(variable.location, 1, values); return;
-				case 2: glUniform2dv(variable.location, 1, values); return;
-				case 3: glUniform3dv(variable.location, 1, values); return;
-				case 4: glUniform4dv(variable.location, 1, values); return;
-			} break;
-		case 2:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix2dv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix2x3dv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix2x4dv(variable.location, 1, false, values); return;
-			} break;
-		case 3:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix3x2dv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix3dv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix3x4dv(variable.location, 1, false, values); return;
-			} break;
-		case 4:
-			switch (variable.type.dimentions.y) {
-				case 2: glUniformMatrix4x2dv(variable.location, 1, false, values); return;
-				case 3: glUniformMatrix4x3dv(variable.location, 1, false, values); return;
-				case 4: glUniformMatrix4dv(variable.location, 1, false, values); return;
-			}
-			break;
-	}
-	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const int *values) {
-	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
-								clap::gl::shader::detail::variable_type_t::datatype::_int))
-		return;
-	if (variable.count() != n) {
-		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
-		return;
-	}
-
-	use();
-	switch (variable.type.dimentions.x) {
-		case 1:
-			switch (variable.type.dimentions.y) {
-				case 1: glUniform1iv(variable.location, 1, values); return;
-				case 2: glUniform2iv(variable.location, 1, values); return;
-				case 3: glUniform3iv(variable.location, 1, values); return;
-				case 4: glUniform4iv(variable.location, 1, values); return;
-			} break;
-	}
-	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
-}
-
-void clap::gl::shader::program::set(detail::variable const &variable, size_t n, const unsigned *values) {
-	if (!check_uniform_variable(variable.location, variable.storage, variable.type,
-								clap::gl::shader::detail::variable_type_t::datatype::_unsigned))
-		return;
-	if (variable.count() != n) {
-		clap::log::warning::major << "The number of values passed isn't suitable for the variable.";
-		return;
-	}
-
-	use();
-	switch (variable.type.dimentions.x) {
-		case 1:
-			switch (variable.type.dimentions.y) {
-				case 1: glUniform1uiv(variable.location, 1, values); return;
-				case 2: glUniform2uiv(variable.location, 1, values); return;
-				case 3: glUniform3uiv(variable.location, 1, values); return;
-				case 4: glUniform4uiv(variable.location, 1, values); return;
-			} break;
-	}
-	clap::log::error::critical << "Cannot set the variable. It's either unsupported or corrupted.";
-}
-
-clap::gl::shader::program::program(uint32_t id) : id(id), needs_linking(true) {
-	gl::detail::state::verify_loaded();
-
-	if (id == 0 || !glIsProgram(id))
-		log::warning::critical << "Unable to perform a shader program move operation. "
-		"Passed shader program seems to be corrupted.";
-	else
-		log::message::negligible << "A shader program was moved.";
-}
-
-clap::gl::shader::detail::variable const &clap::gl::shader::variables::operator[](std::string name) const {
-	auto found = find(name);
-	if (found != end())
-		return found->second;
+clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::shader::detail::lock_program_callable::operator()() {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to use a " << program_ref << " without a context being active on the current thread.";
+	else if (context != program_ref.context)
+		log::error::critical << "Attempting to use a " << program_ref << " when active context is different from the context object was created with.";
 	else {
-		log::error::major << "Attempting to access an non-existent variable.";
-		log::info::major << "Requested name is '" << name << "'.";
+		auto out = context->shader_program_stack.push(&program_ref);
+
+		log::message::negligible << "Using a " << program_ref << ".";
+		log::info::major << "It was added to the top of the stack.";
+		glUseProgram(program_ref.id);
+
+		return out;
 	}
+}
+void clap::gl::shader::detail::unlock_program_callable::operator()(clap::essential::stack<clap::gl::shader::program const *>::iterator iterator) {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to stop using a " << program_ref << " without a context being active on the current thread.";
+	else if (context != program_ref.context)
+		log::error::critical << "Attempting to stop using a " << program_ref << " when active context is different from the context object was created with.";
+	else if (context->shader_program_stack.is_front(iterator)) {
+		auto active = context->shader_program_stack.pop();
+
+		log::message::negligible << "Stopping usage of a " << *active << ".";
+		if (context->shader_program_stack.empty()) {
+			log::info::major << "Stack is empty.";
+			glUseProgram(0);
+		} else {
+			auto reactivated = context->shader_program_stack.peek();
+			log::info::major << "A previously used " << *reactivated << " is back to being active, as it's the next element on the stack.";
+			glUseProgram(reactivated->id);
+		}
+	} else {
+		log::message::negligible << "Removing a " << program_ref << " from used shader::program stack.";
+		log::info::major << "This doesn't affect active program in any way.";
+		context->shader_program_stack.erase(iterator);
+	}
+}
+
+#pragma warning(push)
+#pragma warning(disable : 4716)
+template <typename T>
+T const &clap::gl::shader::detail::unknown_variable_error(std::string_view const &name) {
+	log::error::major << "Attempting to access an non-existent variable.";
+	log::info::critical << "Requested name is '" << name << "'.";
+}
+template clap::gl::shader::variable::attribute const &clap::gl::shader::detail::unknown_variable_error(std::string_view const &name);
+template clap::gl::shader::variable::uniform const &clap::gl::shader::detail::unknown_variable_error(std::string_view const &name);
+#pragma warning(pop)
+
+std::ostream &operator<<(std::ostream &stream, clap::gl::shader::variable::attribute const &variable) {
+	return stream << variable.program_ref << " attribute \"" << variable.name << "\"";
+}
+std::ostream &operator<<(std::ostream &stream, clap::gl::shader::variable::uniform const &variable) {
+	return stream << variable.program_ref << " uniform \"" << variable.name << "\"";
+}
+
+template<> void clap::gl::shader::variable::detail::set_vectors<1>(int location, unsigned count, float const *value) { glUniform1fv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<2>(int location, unsigned count, float const *value) { glUniform2fv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<3>(int location, unsigned count, float const *value) { glUniform3fv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<4>(int location, unsigned count, float const *value) { glUniform4fv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<1>(int location, unsigned count, int const *value) { glUniform1iv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<2>(int location, unsigned count, int const *value) { glUniform2iv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<3>(int location, unsigned count, int const *value) { glUniform3iv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<4>(int location, unsigned count, int const *value) { glUniform4iv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<1>(int location, unsigned count, unsigned const *value) { glUniform1uiv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<2>(int location, unsigned count, unsigned const *value) { glUniform2uiv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<3>(int location, unsigned count, unsigned const *value) { glUniform3uiv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<4>(int location, unsigned count, unsigned const *value) { glUniform4uiv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<1>(int location, unsigned count, double const *value) { glUniform1dv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<2>(int location, unsigned count, double const *value) { glUniform2dv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<3>(int location, unsigned count, double const *value) { glUniform3dv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<4>(int location, unsigned count, double const *value) { glUniform4dv(location, count, value); }
+template<> void clap::gl::shader::variable::detail::set_vectors<1>(int location, unsigned count, bool const *value) {
+	auto *tmp = new int[count];
+	std::transform(value, value + count * 1, tmp, [](bool const &input) -> int { return static_cast<int>(input); });
+	glUniform1iv(location, count, tmp);
+	delete[] tmp;
+}
+template<> void clap::gl::shader::variable::detail::set_vectors<2>(int location, unsigned count, bool const *value) {
+	auto *tmp = new int[count];
+	std::transform(value, value + size_t(count) * 2, tmp, [](bool const &input) -> int { return static_cast<int>(input); });
+	glUniform2iv(location, count, tmp);
+	delete[] tmp;
+}
+template<> void clap::gl::shader::variable::detail::set_vectors<3>(int location, unsigned count, bool const *value) {
+	auto *tmp = new int[count];
+	std::transform(value, value + size_t(count) * 3, tmp, [](bool const &input) -> int { return static_cast<int>(input); });
+	glUniform3iv(location, count, tmp);
+	delete[] tmp;
+}
+template<> void clap::gl::shader::variable::detail::set_vectors<4>(int location, unsigned count, bool const *value) {
+	auto *tmp = new int[count];
+	std::transform(value, value + size_t(count) * 4, tmp, [](bool const &input) -> int { return static_cast<int>(input); });
+	glUniform4iv(location, count, tmp);
+	delete[] tmp;
+}
+
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 2>(int location, unsigned count, float const *value) { glUniformMatrix2fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 2>(int location, unsigned count, double const *value) { glUniformMatrix2dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 3>(int location, unsigned count, float const *value) { glUniformMatrix3fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 3>(int location, unsigned count, double const *value) { glUniformMatrix3dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 4>(int location, unsigned count, float const *value) { glUniformMatrix4fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 4>(int location, unsigned count, double const *value) { glUniformMatrix4dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 3>(int location, unsigned count, float const *value) { glUniformMatrix2x3fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 3>(int location, unsigned count, double const *value) { glUniformMatrix2x3dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 4>(int location, unsigned count, float const *value) { glUniformMatrix2x4fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<2, 4>(int location, unsigned count, double const *value) { glUniformMatrix2x4dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 2>(int location, unsigned count, float const *value) { glUniformMatrix3x2fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 2>(int location, unsigned count, double const *value) { glUniformMatrix3x2dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 4>(int location, unsigned count, float const *value) { glUniformMatrix3x4fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<3, 4>(int location, unsigned count, double const *value) { glUniformMatrix3x4dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 2>(int location, unsigned count, float const *value) { glUniformMatrix4x2fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 2>(int location, unsigned count, double const *value) { glUniformMatrix4x2dv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 3>(int location, unsigned count, float const *value) { glUniformMatrix4x3fv(location, count, false, value); }
+template<> void clap::gl::shader::variable::detail::set_matrices<4, 3>(int location, unsigned count, double const *value) { glUniformMatrix4x3dv(location, count, false, value); }
+
+void clap::gl::shader::variable::detail::variable_set_without_convertion_message(uniform const &variable) {
+	log::message::negligible << "A " << variable << " was set.";
+}
+void clap::gl::shader::variable::detail::variable_set_with_convertion_message(uniform const &variable) {
+	log::message::negligible << "A " << variable << " was set. Conversion to variable type was performed.";
+}
+void clap::gl::shader::variable::detail::cannot_convert_variable_type_error(uniform const &variable) {
+	log::warning::major << "A " << variable << " was not set. Conversion to variable type is impossible.";
+	log::info::major << "'std::is_convertible<variable_type, passed_value_type>::value' is 'false'.";
+}
+void clap::gl::shader::variable::detail::variable_size_error(uniform const &variable, size_t expected, size_t received) {
+	log::warning::major << "A " << variable << " was not set. The number of passed values is not the same as the number of values expected by the variable.";
+	log::info::major << "Expected value count: " << expected << ".";
+	log::info::major << "Received value count: " << received << ".";
 }

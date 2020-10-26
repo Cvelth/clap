@@ -17,47 +17,53 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\gl\buffer.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\gl\misc.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\gl\shader.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\gl\vertex_array.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\gl\detail\state.hpp">
-      <Filter>include\detail</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\gl\texture.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\gl\gl.hpp" />
+    <ClInclude Include="..\..\include\gl\detail\window.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\gl\detail\context.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\gl\interface.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\gl\vertex.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\gl\buffer.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\gl\misc.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\gl\shader.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\gl\vertex_array.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\gl\detail\state.cpp">
-      <Filter>source\detail</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\gl\texture.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\gl\detail\convert.cpp">
       <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\detail\window.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\detail\context.cpp">
+      <Filter>source\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\interface.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\gl\vertex.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
