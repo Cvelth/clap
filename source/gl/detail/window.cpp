@@ -1,5 +1,4 @@
 ﻿#include "gl/detail/window.hpp"
-#include "gl/detail/state.hpp"
 
 #include <unordered_map>
 
@@ -37,22 +36,6 @@ void clap::gl::detail::window::ensure_initialized() {
 	initialize();
 }
 
-void clap::gl::detail::load_gl() {
-	if (!clap::gl::detail::state::was_loaded) {
-		bool success = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-		if (success) {
-			clap::gl::detail::state::was_loaded = true;
-
-			clap::log::message::critical << "GL was loaded using 'glad'.";
-			clap::log::info::critical << "GL Version: " << glGetString(GL_VERSION);
-			clap::log::info::negligible << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-			clap::log::info::negligible << "Vendor: " << glGetString(GL_VENDOR);
-			clap::log::info::major << "Renderer: " << glGetString(GL_RENDERER);
-		} else
-			clap::log::warning::critical << "Unable to load GL. 'glad' returns false.";
-	}
-}
-
 clap::gl::detail::window::object clap::gl::detail::window::create(std::u8string title,
 																  size_t width, size_t height,
 																  struct_handle<GLFWmonitor> monitor,
@@ -69,9 +52,24 @@ clap::gl::detail::window::object clap::gl::detail::window::create(std::u8string 
 	if (auto out = glfwCreateWindow(signed_width, signed_height, (char const *) title.c_str(), monitor, share); out) {
 		log::message::major << "New window was created with dimentions (" << width << ", " << height << ").";
 
-		glfwMakeContextCurrent(out);
-		clap::gl::detail::load_gl();
-		glfwMakeContextCurrent(nullptr);
+		static bool was_gl_loaded = false;
+		if (!was_gl_loaded) {
+			glfwMakeContextCurrent(out);
+
+			bool success = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+			if (success) {
+				was_gl_loaded = true;
+
+				clap::log::message::critical << "GL was loaded using 'glad'.";
+				clap::log::info::critical << "GL Version: " << glGetString(GL_VERSION);
+				clap::log::info::negligible << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+				clap::log::info::negligible << "Vendor: " << glGetString(GL_VENDOR);
+				clap::log::info::major << "Renderer: " << glGetString(GL_RENDERER);
+			} else
+				clap::log::warning::critical << "Unable to load GL. 'glad' returns false.";
+
+			glfwMakeContextCurrent(nullptr);
+		}
 
 		return object(out);
 	} else {
