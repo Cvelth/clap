@@ -56,6 +56,9 @@ int clap::ui::loop(int argc, char **argv) {
 				}
 				clap::log::message::critical << "Window for zone '" << zone->get_name() << "' was cleaned up.";
 
+				//To move out of the loop after context aware resource management is implemented!
+				clap::resource::clear();
+
 				clap::ui::detail::state::remove(zone);
 			}
 		);
@@ -71,7 +74,6 @@ int clap::ui::loop(int argc, char **argv) {
 	threads.clear();
 
 	gl::detail::window::terminate();
-	clap::resource::clear();
 
 	return 0;
 }

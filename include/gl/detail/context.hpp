@@ -4,9 +4,11 @@
 #include "essential/guard.hpp"
 #include "essential/stack.hpp"
 
+#include "gl/texture.hpp"
 #include "gl/vertex.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace clap::gl::shader {
 	class program;
@@ -15,20 +17,7 @@ namespace clap::gl::shader {
 		struct unlock_program_callable;
 	}
 }
-namespace clap::gl::vertex {
-	class buffer;
-	namespace detail {
-		struct bind_buffer_callable;
-		struct unbind_buffer_callable;
-	}
-	enum class buffer_target;
 
-	class array;
-	namespace detail {
-		struct bind_array_callable;
-		struct unbind_array_callable;
-	}
-}
 namespace clap::gl::detail {
 	class context;
 	namespace detail {
@@ -60,10 +49,18 @@ namespace clap::gl::detail {
 		friend clap::gl::vertex::detail::bind_array_callable;
 		friend clap::gl::vertex::detail::unbind_array_callable;
 
+		template <texture::detail::target texture_type>
+		friend struct texture::detail::bind_texture_callable;
+		template <texture::detail::target texture_type>
+		friend struct texture::detail::unbind_texture_callable;
+
 	public:
 		context(std::u8string name, size_t width, size_t height);
+		inline ~context() { 
+			//std::scoped_lock(mutex);
+		}
 
-		[[nodiscard]] static context* current();
+		[[nodiscard]] static context *current();
 		[[nodiscard]] context_guard make_current();
 
 	protected:
@@ -74,13 +71,13 @@ namespace clap::gl::detail {
 		window::object window;
 
 		inline clap::gl::shader::program const *active_shader_program() const {
-			return !shader_program_stack.empty() 
-				? shader_program_stack.peek() 
+			return !shader_program_stack.empty()
+				? shader_program_stack.peek()
 				: nullptr;
 		}
 		inline clap::gl::vertex::buffer const *bound_vertex_buffer(clap::gl::vertex::buffer_target target) const {
-			return !vertex_buffer_stack[size_t(target)].empty() 
-				? vertex_buffer_stack[size_t(target)].peek() 
+			return !vertex_buffer_stack[size_t(target)].empty()
+				? vertex_buffer_stack[size_t(target)].peek()
 				: nullptr;
 		}
 		inline clap::gl::vertex::array const *bound_vertex_array() const {
@@ -88,12 +85,23 @@ namespace clap::gl::detail {
 				? vertex_array_stack.peek()
 				: nullptr;
 		}
+		inline clap::gl::texture::detail::generic_interface bound_texture(size_t unit) const {
+			if (unit >= texture_stack.size())
+				return (clap::gl::texture::_1d *) nullptr;
+			else {
+				return !texture_stack.at(unit).empty()
+					? texture_stack.at(unit).peek()
+					: (clap::gl::texture::_1d *) nullptr;
+			}
+		}
 
 	protected:
-		essential::stack<clap::gl::shader::program const*> shader_program_stack;
-		essential::stack<clap::gl::vertex::buffer const*> 
+		essential::stack<clap::gl::shader::program const *> shader_program_stack;
+		essential::stack<clap::gl::vertex::array const *> vertex_array_stack;
+		essential::stack<clap::gl::vertex::buffer const *>
 			vertex_buffer_stack[size_t(gl::vertex::buffer_target::LAST)];
-		essential::stack<clap::gl::vertex::array const*> vertex_array_stack;
+		std::vector<essential::stack<clap::gl::texture::detail::generic_interface>>
+			texture_stack;
 
 	private:
 		std::mutex mutex;

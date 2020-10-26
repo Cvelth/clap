@@ -481,35 +481,35 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
 	return stream;
 }
 
-GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::target v) {
+GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::detail::target v) {
 	switch (v) {
-		case clap::gl::texture::target::_1d: return GL_TEXTURE_1D;
-		case clap::gl::texture::target::_2d: return GL_TEXTURE_2D;
-		case clap::gl::texture::target::_3d: return GL_TEXTURE_3D;
-		case clap::gl::texture::target::_1d_array: return GL_TEXTURE_1D_ARRAY;
-		case clap::gl::texture::target::_2d_array: return GL_TEXTURE_2D_ARRAY;
-		case clap::gl::texture::target::rectangle: return GL_TEXTURE_RECTANGLE;
-		case clap::gl::texture::target::cube_map: return GL_TEXTURE_CUBE_MAP;
-		case clap::gl::texture::target::cube_map_array: return GL_TEXTURE_CUBE_MAP_ARRAY;
-		case clap::gl::texture::target::buffer: return GL_TEXTURE_BUFFER;
-		case clap::gl::texture::target::multisample: return GL_TEXTURE_2D_MULTISAMPLE;
-		case clap::gl::texture::target::multisample_array: return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+		case clap::gl::texture::detail::target::_1d: return GL_TEXTURE_1D;
+		case clap::gl::texture::detail::target::_2d: return GL_TEXTURE_2D;
+		case clap::gl::texture::detail::target::_3d: return GL_TEXTURE_3D;
+		case clap::gl::texture::detail::target::_1d_array: return GL_TEXTURE_1D_ARRAY;
+		case clap::gl::texture::detail::target::_2d_array: return GL_TEXTURE_2D_ARRAY;
+		case clap::gl::texture::detail::target::rectangle: return GL_TEXTURE_RECTANGLE;
+		case clap::gl::texture::detail::target::cube_map: return GL_TEXTURE_CUBE_MAP;
+		case clap::gl::texture::detail::target::cube_map_array: return GL_TEXTURE_CUBE_MAP_ARRAY;
+		case clap::gl::texture::detail::target::buffer: return GL_TEXTURE_BUFFER;
+		case clap::gl::texture::detail::target::multisample: return GL_TEXTURE_2D_MULTISAMPLE;
+		case clap::gl::texture::detail::target::multisample_array: return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 	}
 	clap::log::error::critical << "Unsupported enum value.";
 }
-clap::gl::texture::target clap::gl::detail::convert::to_texture_target(GLenum v) {
+clap::gl::texture::detail::target clap::gl::detail::convert::to_texture_target(GLenum v) {
 	switch (v) {
-		case GL_TEXTURE_1D: return clap::gl::texture::target::_1d;
-		case GL_TEXTURE_2D: return clap::gl::texture::target::_2d;
-		case GL_TEXTURE_3D: return clap::gl::texture::target::_3d;
-		case GL_TEXTURE_1D_ARRAY: return clap::gl::texture::target::_1d_array;
-		case GL_TEXTURE_2D_ARRAY: return clap::gl::texture::target::_2d_array;
-		case GL_TEXTURE_RECTANGLE: return clap::gl::texture::target::rectangle;
-		case GL_TEXTURE_CUBE_MAP: return clap::gl::texture::target::cube_map;
-		case GL_TEXTURE_CUBE_MAP_ARRAY: return clap::gl::texture::target::cube_map_array;
-		case GL_TEXTURE_BUFFER: return clap::gl::texture::target::buffer;
-		case GL_TEXTURE_2D_MULTISAMPLE: return clap::gl::texture::target::multisample;
-		case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return clap::gl::texture::target::multisample_array;
+		case GL_TEXTURE_1D: return clap::gl::texture::detail::target::_1d;
+		case GL_TEXTURE_2D: return clap::gl::texture::detail::target::_2d;
+		case GL_TEXTURE_3D: return clap::gl::texture::detail::target::_3d;
+		case GL_TEXTURE_1D_ARRAY: return clap::gl::texture::detail::target::_1d_array;
+		case GL_TEXTURE_2D_ARRAY: return clap::gl::texture::detail::target::_2d_array;
+		case GL_TEXTURE_RECTANGLE: return clap::gl::texture::detail::target::rectangle;
+		case GL_TEXTURE_CUBE_MAP: return clap::gl::texture::detail::target::cube_map;
+		case GL_TEXTURE_CUBE_MAP_ARRAY: return clap::gl::texture::detail::target::cube_map_array;
+		case GL_TEXTURE_BUFFER: return clap::gl::texture::detail::target::buffer;
+		case GL_TEXTURE_2D_MULTISAMPLE: return clap::gl::texture::detail::target::multisample;
+		case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return clap::gl::texture::detail::target::multisample_array;
 	}
 	clap::log::error::critical << "Unsupported enum value.";
 }
@@ -825,30 +825,30 @@ clap::gl::texture::wrap clap::gl::detail::convert::to_wrap(GLenum v) {
 	clap::log::error::critical << "Unsupported enum value.";
 }
 
-std::ostream &operator<<(std::ostream &stream, clap::gl::texture::target target) {
+std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target) {
 	switch (target) {
-		case clap::gl::texture::target::_1d:
-			stream << "texture::target::_1d"; break;
-		case clap::gl::texture::target::_2d:
-			stream << "texture::target::_2d"; break;
-		case clap::gl::texture::target::_3d:
-			stream << "texture::target::_3d"; break;
-		case clap::gl::texture::target::_1d_array:
-			stream << "texture::target::_1d_array"; break;
-		case clap::gl::texture::target::_2d_array:
-			stream << "texture::target::_2d_array"; break;
-		case clap::gl::texture::target::rectangle:
-			stream << "texture::target::rectangle"; break;
-		case clap::gl::texture::target::cube_map:
-			stream << "texture::target::cube_map"; break;
-		case clap::gl::texture::target::cube_map_array:
-			stream << "texture::target::cube_map_array"; break;
-		case clap::gl::texture::target::buffer:
-			stream << "texture::target::buffer"; break;
-		case clap::gl::texture::target::multisample:
-			stream << "texture::target::multisample"; break;
-		case clap::gl::texture::target::multisample_array:
-			stream << "texture::target::multisample_array"; break;
+		case clap::gl::texture::detail::target::_1d:
+			stream << "texture::_1d"; break;
+		case clap::gl::texture::detail::target::_2d:
+			stream << "texture::_2d"; break;
+		case clap::gl::texture::detail::target::_3d:
+			stream << "texture::_3d"; break;
+		case clap::gl::texture::detail::target::_1d_array:
+			stream << "texture::_1d_array"; break;
+		case clap::gl::texture::detail::target::_2d_array:
+			stream << "texture::_2d_array"; break;
+		case clap::gl::texture::detail::target::rectangle:
+			stream << "texture::rectangle"; break;
+		case clap::gl::texture::detail::target::cube_map:
+			stream << "texture::cube_map"; break;
+		case clap::gl::texture::detail::target::cube_map_array:
+			stream << "texture::cube_map_array"; break;
+		case clap::gl::texture::detail::target::buffer:
+			stream << "texture::buffer"; break;
+		case clap::gl::texture::detail::target::multisample:
+			stream << "texture::multisample"; break;
+		case clap::gl::texture::detail::target::multisample_array:
+			stream << "texture::multisample_array"; break;
 		default:
 			clap::log::warning::major << "Unsupported enum value.";
 	}

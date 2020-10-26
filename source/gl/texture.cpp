@@ -1,278 +1,767 @@
 ﻿#include "gl/texture.hpp"
+#include "essential/log.hpp"
+
+#include "gl/detail/context.hpp"
 
 #include "glad/glad.h"
 
-#include "gl/detail/state.hpp"
-#include "essential/log.hpp"
+template <clap::gl::texture::detail::target texture_type>
+clap::gl::texture::detail::interface<texture_type>::~interface() {
+	if (!verify_context())
+		log::error::critical << "Unable to destroy a texture object when the context it was created in is not current.";
 
-clap::gl::texture::detail::interface::interface(texture::target target,
-												texture::internal_format internal_format)
-	: target(target), internal_format(internal_format) {
-	gl::detail::state::verify_loaded();
+	// TODO: Stop using this texture (and log a warning) if it's being used on deletion.
 
-	glGenTextures(1, &id);
-	log::message::minor << "A new texture of type \"" << target << "\" was created.";
-}
-clap::gl::texture::detail::interface::~interface() {
-	if (id != 0) {
-		while (auto target = gl::detail::state::is_bound(this))
-			gl::detail::state::unbind(*target);
-
+	if (id) {
 		glDeleteTextures(1, &id);
-		log::message::minor << "A texture of type \"" << target << "\" was destroyed.";
+		log::message::minor << "A " << *this << " was destroyed.";
 	}
 }
 
-void clap::gl::texture::detail::interface::bind() {
-	clap::gl::detail::state::bind(target, this);
+
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_depth_stencil_texture_mode(
+	depth_stencil_texture_mode mode
+) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_DEPTH_STENCIL_TEXTURE_MODE,
+					gl::detail::convert::to_gl(mode));
 }
-
-template <typename target_t, typename ptr_t, typename lambda_t>
-void temporarily_unbound(target_t const &target, ptr_t *ptr, lambda_t lambda) {
-	auto bound_check = clap::gl::detail::state::bound(target);
-
-	clap::gl::texture::detail::interface *was_bound = nullptr;
-	if (bound_check != ptr) {
-		was_bound = clap::gl::detail::state::unbind(target);
-		clap::gl::detail::state::bind(target, ptr);
-	}
-
-	lambda();
-
-	if (bound_check && bound_check != ptr)
-		clap::gl::detail::state::bind(target, was_bound);
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_base_level(int level) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_BASE_LEVEL, level);
 }
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_border_color(
+	float r, float g, float b, float a
+) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
 
-template <GLenum parameter_name, typename lambda_t, typename ...Ts>
-void set_parameter_template(clap::gl::texture::target const &target,
-							clap::gl::texture::detail::interface *ptr,
-							lambda_t lambda, Ts...params) {
-	temporarily_unbound(target, ptr, [&]() {
-		lambda(clap::gl::detail::convert::to_gl(target), parameter_name, params...);
-	});
-}
-
-void clap::gl::texture::detail::interface::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode) {
-	set_parameter_template<GL_DEPTH_STENCIL_TEXTURE_MODE>(target, this, glTexParameteri,
-														  gl::detail::convert::to_gl(mode));
-}
-void clap::gl::texture::detail::interface::set_base_level(int level) {
-	set_parameter_template<GL_TEXTURE_BASE_LEVEL>(target, this, glTexParameteri, level);
-}
-void clap::gl::texture::detail::interface::set_texure_border_color(float r, float g, float b, float a) {
 	GLfloat temp[] = { r, g, b, a };
-	set_parameter_template<GL_TEXTURE_BORDER_COLOR>(target, this, glTexParameterfv, temp);
+	glTexParameterfv(clap::gl::detail::convert::to_gl(texture_type),
+					 GL_TEXTURE_BORDER_COLOR, temp);
 }
-void clap::gl::texture::detail::interface::set_lod_bias(float bias) {
-	set_parameter_template<GL_TEXTURE_LOD_BIAS>(target, this, glTexParameterf, bias);
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_lod_bias(float bias) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameterf(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_LOD_BIAS, bias);
 }
-void clap::gl::texture::detail::interface::set_min_filter(min_filter filter) {
-	set_parameter_template<GL_TEXTURE_MIN_FILTER>(target, this, glTexParameteri,
-												  gl::detail::convert::to_gl(filter));
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_min_filter(min_filter filter) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_MIN_FILTER, gl::detail::convert::to_gl(filter));
 }
-void clap::gl::texture::detail::interface::set_mag_filter(mag_filter filter) {
-	set_parameter_template<GL_TEXTURE_MAG_FILTER>(target, this, glTexParameteri,
-												  gl::detail::convert::to_gl(filter));
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_mag_filter(mag_filter filter) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_MAG_FILTER, gl::detail::convert::to_gl(filter));
 }
-void clap::gl::texture::detail::interface::set_min_lod(float value) {
-	set_parameter_template<GL_TEXTURE_MIN_LOD>(target, this, glTexParameterf, value);
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_min_lod(float value) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameterf(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_MIN_LOD, value);
 }
-void clap::gl::texture::detail::interface::set_max_lod(float value) {
-	set_parameter_template<GL_TEXTURE_MAX_LOD>(target, this, glTexParameterf, value);
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_max_lod(float value) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameterf(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_MAX_LOD, value);
 }
-void clap::gl::texture::detail::interface::set_max_level(int level) {
-	set_parameter_template<GL_TEXTURE_MAX_LEVEL>(target, this, glTexParameteri, level);
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_max_level(int level) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_MAX_LEVEL, level);
 }
-void clap::gl::texture::detail::interface::set_texture_wrap_s(wrap wrap) {
-	set_parameter_template<GL_TEXTURE_WRAP_S>(target, this, glTexParameteri,
-											  gl::detail::convert::to_gl(wrap));
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_texture_wrap_s(wrap wrap) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_WRAP_S, gl::detail::convert::to_gl(wrap));
 }
-void clap::gl::texture::detail::interface::set_texture_wrap_t(wrap wrap) {
-	set_parameter_template<GL_TEXTURE_WRAP_T>(target, this, glTexParameteri,
-											  gl::detail::convert::to_gl(wrap));
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_texture_wrap_t(wrap wrap) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_WRAP_T, gl::detail::convert::to_gl(wrap));
 }
-void clap::gl::texture::detail::interface::set_texture_wrap_r(wrap wrap) {
-	set_parameter_template<GL_TEXTURE_WRAP_R>(target, this, glTexParameteri,
-											  gl::detail::convert::to_gl(wrap));
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::interface<texture_type>::set_texture_wrap_r(wrap wrap) {
+	if (!verify_context()) return;
+	auto guard = this->bind();
+	glTexParameteri(clap::gl::detail::convert::to_gl(texture_type),
+					GL_TEXTURE_WRAP_R, gl::detail::convert::to_gl(wrap));
 }
 
-size_t clap::gl::texture::maximum_size() {
+template <clap::gl::texture::detail::target texture_type>
+size_t clap::gl::texture::detail::interface<texture_type>::maximum_size() {
+	if (!clap::gl::detail::verify_context()) return 0;
 	GLint out = 0;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &out);
 	return size_t(out);
 }
-size_t clap::gl::texture::maximum_layer_count() {
+template <clap::gl::texture::detail::target texture_type>
+size_t clap::gl::texture::detail::interface<texture_type>::maximum_layer_count() {
+	if (!clap::gl::detail::verify_context()) return 0;
 	GLint out = 0;
 	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &out);
 	return size_t(out);
 }
-size_t clap::gl::texture::maximum_size_3d() {
+template <clap::gl::texture::detail::target texture_type>
+size_t clap::gl::texture::detail::interface<texture_type>::maximum_size_3d() {
+	if (!clap::gl::detail::verify_context()) return 0;
 	GLint out = 0;
 	glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &out);
 	return size_t(out);
 }
 
 
-clap::gl::texture::_1d::_1d(texture::target target, void *data, size_t width, bool generate_mipmap,
-							texture::internal_format internal_format, external_format external_format,
-							external_type external_type)
-	: detail::interface(target, internal_format), width(width) {
-	temporarily_unbound(target, this, [&]() {
-		glTexImage1D(gl::detail::convert::to_gl(target), 0,
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::interface(
+	void *data, size_t width, bool generate_mipmap,
+	texture::internal_format internal_format,
+	external_format external_format,
+	external_type external_type)
+	: internal_format(internal_format),
+	has_width<target::_1d, needs_width<target::_1d>>{width}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::_1d << ".";
+	} else {
+		glTexImage1D(gl::detail::convert::to_gl(target::_2d), 0,
 					 gl::detail::convert::to_gl(internal_format),
 					 GLsizei(width), 0,
 					 gl::detail::convert::to_gl(external_format),
 					 gl::detail::convert::to_gl(external_type),
 					 data);
-		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+
+		log::message::minor << "A " << *this << " was created.";
 		log::info::major << "Dimentions are (" << width << ").";
-
 		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			glGenerateMipmap(gl::detail::convert::to_gl(target::_1d));
 			log::info::minor << "Mipmap was generated.";
 		}
-	});
-}
-
-void clap::gl::texture::_1d::data(void *data, size_t offset, size_t width, bool generate_mipmap,
-								  int level, external_format external_format, external_type external_type) {
-	if (width + offset > this->width) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
-		return;
 	}
-
-	temporarily_unbound(target, this, [&]() {
-		glTexSubImage1D(gl::detail::convert::to_gl(target), level,
-						GLsizei(offset), GLsizei(width),
-						gl::detail::convert::to_gl(external_format),
-						gl::detail::convert::to_gl(external_type),
-						data);
-		log::message::minor << "Texture (" << target << ") was modified.";
-
-		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
-			log::info::minor << "Mipmap was generated.";
-		}
-	});
 }
-
-
-clap::gl::texture::_2d::_2d(texture::target target, void *data, size_t width, size_t height,
-							bool generate_mipmap,
-							texture::internal_format internal_format, external_format external_format,
-							external_type external_type)
-	: detail::interface(target, internal_format), width(width), height(height) {
-	temporarily_unbound(target, this, [&]() {
-		glTexImage2D(gl::detail::convert::to_gl(target), 0,
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::interface(
+	void *data, size_t width, size_t height, bool generate_mipmap,
+	texture::internal_format internal_format,
+	external_format external_format,
+	external_type external_type)
+	: internal_format(internal_format),
+	has_width<target::_2d, needs_width<target::_2d>>{width},
+	has_height<target::_2d, needs_height<target::_2d>>{height}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::_2d << ".";
+	} else {
+		glTexImage2D(gl::detail::convert::to_gl(target::_2d), 0,
 					 gl::detail::convert::to_gl(internal_format),
 					 GLsizei(width), GLsizei(height), 0,
 					 gl::detail::convert::to_gl(external_format),
 					 gl::detail::convert::to_gl(external_type),
 					 data);
-		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
+
+		log::message::minor << "A " << *this << " was created.";
 		log::info::major << "Dimentions are (" << width << ", " << height << ").";
-
 		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			glGenerateMipmap(gl::detail::convert::to_gl(target::_2d));
 			log::info::minor << "Mipmap was generated.";
 		}
-	});
-}
-
-void clap::gl::texture::_2d::data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
-								  bool generate_mipmap, int level,
-								  external_format external_format, external_type external_type) {
-	if (width + offset_x > this->width || height + offset_y > this->height) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
-		return;
 	}
-
-	temporarily_unbound(target, this, [&]() {
-		glTexSubImage2D(gl::detail::convert::to_gl(target), level,
-						GLsizei(offset_x), GLsizei(offset_y),
-						GLsizei(width), GLsizei(height),
-						gl::detail::convert::to_gl(external_format),
-						gl::detail::convert::to_gl(external_type),
-						data);
-		log::message::minor << "Texture (" << target << ") was modified.";
-
-		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
-			log::info::minor << "Mipmap was generated.";
-		}
-	});
 }
-
-
-clap::gl::texture::_3d::_3d(texture::target target, void *data, size_t width, size_t height, size_t depth,
-							bool generate_mipmap, texture::internal_format internal_format,
-							external_format external_format, external_type external_type)
-	: detail::interface(target, internal_format), width(width), height(height), depth(depth) {
-	temporarily_unbound(target, this, [&]() {
-		glTexImage3D(gl::detail::convert::to_gl(target), 0,
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::interface(
+	void *data, size_t width, size_t height, size_t depth, bool generate_mipmap,
+	texture::internal_format internal_format,
+	external_format external_format,
+	external_type external_type)
+	: internal_format(internal_format),
+	has_width<target::_3d, needs_width<target::_3d>>{width},
+	has_height<target::_3d, needs_height<target::_3d>>{height},
+	has_depth<target::_3d, needs_depth<target::_3d>>{depth}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::_3d << ".";
+	} else {
+		glTexImage3D(gl::detail::convert::to_gl(target::_3d), 0,
 					 gl::detail::convert::to_gl(internal_format),
 					 GLsizei(width), GLsizei(height), GLsizei(depth), 0,
 					 gl::detail::convert::to_gl(external_format),
 					 gl::detail::convert::to_gl(external_type),
 					 data);
-		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-		log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
 
+		log::message::minor << "A " << *this << " was created.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
 		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
+			glGenerateMipmap(gl::detail::convert::to_gl(target::_3d));
 			log::info::minor << "Mipmap was generated.";
 		}
-	});
+	}
 }
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::interface(
+	void *data, size_t width, size_t count, bool generate_mipmap,
+	texture::internal_format internal_format,
+	external_format external_format,
+	external_type external_type)
+	: internal_format(internal_format),
+	has_width<target::_1d_array, needs_width<target::_1d_array>>{width},
+	has_count<target::_1d_array, needs_count<target::_1d_array>>{count}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::_1d_array << ".";
+	} else {
+		glTexImage2D(gl::detail::convert::to_gl(target::_1d_array), 0,
+					 gl::detail::convert::to_gl(internal_format),
+					 GLsizei(width), GLsizei(count), 0,
+					 gl::detail::convert::to_gl(external_format),
+					 gl::detail::convert::to_gl(external_type),
+					 data);
 
-void clap::gl::texture::_3d::data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-								  size_t width, size_t height, size_t depth, bool generate_mipmap,
-								  int level, external_format external_format, external_type external_type) {
+		log::message::minor << "A " << *this << " was created.";
+		log::info::major << "Dimentions are (" << width << ") x " << count << ".";
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target::_1d_array));
+			log::info::minor << "Mipmap was generated.";
+		}
+	}
+}
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::interface(
+	void *data, size_t width, size_t height, size_t count, bool generate_mipmap,
+	texture::internal_format internal_format,
+	external_format external_format,
+	external_type external_type)
+	: internal_format(internal_format),
+	has_width<target::_2d_array, needs_width<target::_2d_array>>{width},
+	has_height<target::_2d_array, needs_height<target::_2d_array>>{height},
+	has_count<target::_2d_array, needs_count<target::_2d_array>>{count}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::_2d_array << ".";
+	} else {
+		glTexImage3D(gl::detail::convert::to_gl(target::_2d_array), 0,
+					 gl::detail::convert::to_gl(internal_format),
+					 GLsizei(width), GLsizei(height), GLsizei(count), 0,
+					 gl::detail::convert::to_gl(external_format),
+					 gl::detail::convert::to_gl(external_type),
+					 data);
+
+		log::message::minor << "A " << *this << " was created.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ") x " << count << ".";
+		if (generate_mipmap) {
+			glGenerateMipmap(gl::detail::convert::to_gl(target::_2d_array));
+			log::info::minor << "Mipmap was generated.";
+		}
+	}
+}
+/*
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::interface(
+	size_t sample_count, size_t width, size_t height,
+	bool are_samples_fixed, texture::internal_format internal_format)
+	: internal_format(internal_format),
+	has_width<target::multisample, needs_width<target::multisample>>{width},
+	has_height<target::multisample, needs_height<target::multisample>>{height},
+	has_sample_count<target::multisample, needs_sample_count<target::multisample>>{sample_count}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::multisample << ".";
+	} else {
+		glTexImage2DMultisample(gl::detail::convert::to_gl(target::multisample),
+								GLsizei(sample_count),
+								gl::detail::convert::to_gl(internal_format),
+								GLsizei(width), GLsizei(height), are_samples_fixed);
+
+		log::message::minor << "A " << *this << " was created.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ").";
+		log::info::major << "Sample count: " << sample_count << ".";
+		log::info::major << "Samples are" << (are_samples_fixed ? " " : " not ") << "fixed.";
+	}
+}
+template <>
+template <>
+clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::interface(
+	size_t sample_count, size_t width, size_t height, size_t count,
+	bool are_samples_fixed, texture::internal_format internal_format)
+	: internal_format(internal_format),
+	has_width<target::multisample_array, needs_width<target::multisample_array>>{width},
+	has_height<target::multisample_array, needs_height<target::multisample_array>>{height},
+	has_count<target::multisample_array, needs_count<target::multisample_array>>{count},
+	has_sample_count<target::multisample_array, needs_sample_count<target::multisample_array>>{sample_count}
+{
+	glGenTextures(1, &id);
+	if (id == 0) {
+		log::warning::critical << "Texture Object creation failed.";
+		log::info::major << "Requested type: " << target::multisample_array << ".";
+	} else {
+		glTexImage3DMultisample(gl::detail::convert::to_gl(target::multisample_array),
+								GLsizei(sample_count),
+								gl::detail::convert::to_gl(internal_format),
+								GLsizei(width), GLsizei(height), GLsizei(count),
+								are_samples_fixed);
+
+		log::message::minor << "A " << *this << " was created.";
+		log::info::major << "Dimentions are (" << width << ", " << height << ") x " << count << ".";
+		log::info::major << "Sample count: " << sample_count << ".";
+		log::info::major << "Samples are" << (are_samples_fixed ? " " : " not ") << "fixed.";
+	}
+}*/
+
+template <>
+template <>
+void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::data(
+	void *data, size_t offset_x, size_t width, bool generate_mipmap, int level,
+	external_format external_format, external_type external_type) {
+	if (!verify_context()) return;
+
+	if (width + offset_x > this->width) {
+		log::warning::critical << "Attempt to change data out of texture bounds";
+		return;
+	}
+
+	auto guard = this->bind();
+	glTexSubImage1D(gl::detail::convert::to_gl(target::_1d), level,
+					GLsizei(offset_x), GLsizei(width),
+					gl::detail::convert::to_gl(external_format),
+					gl::detail::convert::to_gl(external_type),
+					data);
+	log::message::minor << "A " << *this << " was modified.";
+
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target::_1d));
+		log::info::minor << "Mipmap was generated.";
+	}
+}
+template <>
+template <>
+void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::data(
+	void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
+	bool generate_mipmap, int level,
+	external_format external_format, external_type external_type) {
+	if (!verify_context()) return;
+
+	if (width + offset_x > this->width || height + offset_y > this->height) {
+		log::warning::critical << "Attempt to change data out of texture bounds";
+		return;
+	}
+
+	auto guard = this->bind();
+	glTexSubImage2D(gl::detail::convert::to_gl(target::_2d), level,
+					GLsizei(offset_x), GLsizei(offset_y),
+					GLsizei(width), GLsizei(height),
+					gl::detail::convert::to_gl(external_format),
+					gl::detail::convert::to_gl(external_type),
+					data);
+	log::message::minor << "A " << *this << " was modified.";
+
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target::_2d));
+		log::info::minor << "Mipmap was generated.";
+	}
+}
+template <>
+template <>
+void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::data(
+	void *data, size_t offset_x, size_t offset_y, size_t offset_z,
+	size_t width, size_t height, size_t depth,
+	bool generate_mipmap, int level,
+	external_format external_format, external_type external_type) {
+	if (!verify_context()) return;
+
 	if (width + offset_x > this->width || height + offset_y > this->height || depth + offset_z > this->depth) {
 		log::warning::critical << "Attempt to change data out of texture bounds";
 		return;
 	}
 
-	temporarily_unbound(target, this, [&]() {
-		glTexSubImage3D(gl::detail::convert::to_gl(target), level,
-						GLsizei(offset_x), GLsizei(offset_y), GLsizei(offset_z),
-						GLsizei(width), GLsizei(height), GLsizei(depth),
-						gl::detail::convert::to_gl(external_format),
-						gl::detail::convert::to_gl(external_type),
-						data);
-		log::message::minor << "Texture (" << target << ") was modified.";
+	auto guard = this->bind();
+	glTexSubImage3D(gl::detail::convert::to_gl(target::_3d), level,
+					GLsizei(offset_x), GLsizei(offset_y), GLsizei(offset_z),
+					GLsizei(width), GLsizei(height), GLsizei(depth),
+					gl::detail::convert::to_gl(external_format),
+					gl::detail::convert::to_gl(external_type),
+					data);
+	log::message::minor << "A " << *this << " was modified.";
 
-		if (generate_mipmap) {
-			glGenerateMipmap(gl::detail::convert::to_gl(target));
-			log::info::minor << "Mipmap was generated.";
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target::_3d));
+		log::info::minor << "Mipmap was generated.";
+	}
+}
+template <>
+template <>
+void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::data(
+	void *data, size_t offset_x, size_t offset_c, size_t width, size_t count,
+	bool generate_mipmap, int level,
+	external_format external_format, external_type external_type) {
+	if (!verify_context()) return;
+
+	if (width + offset_x > this->width || count + offset_c > this->count) {
+		log::warning::critical << "Attempt to change data out of texture bounds";
+		return;
+	}
+
+	auto guard = this->bind();
+	glTexSubImage2D(gl::detail::convert::to_gl(target::_1d_array), level,
+					GLsizei(offset_x), GLsizei(offset_c),
+					GLsizei(width), GLsizei(count),
+					gl::detail::convert::to_gl(external_format),
+					gl::detail::convert::to_gl(external_type),
+					data);
+	log::message::minor << "A " << *this << " was modified.";
+
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target::_1d_array));
+		log::info::minor << "Mipmap was generated.";
+	}
+}
+template <>
+template <>
+void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::data(
+	void *data, size_t offset_x, size_t offset_y, size_t offset_c,
+	size_t width, size_t height, size_t count,
+	bool generate_mipmap, int level,
+	external_format external_format, external_type external_type) {
+	if (!verify_context()) return;
+
+	if (width + offset_x > this->width || height + offset_y > this->height || count + offset_c > this->count) {
+		log::warning::critical << "Attempt to change data out of texture bounds";
+		return;
+	}
+
+	auto guard = this->bind();
+	glTexSubImage3D(gl::detail::convert::to_gl(target::_2d_array), level,
+					GLsizei(offset_x), GLsizei(offset_y), GLsizei(offset_c),
+					GLsizei(width), GLsizei(height), GLsizei(count),
+					gl::detail::convert::to_gl(external_format),
+					gl::detail::convert::to_gl(external_type),
+					data);
+	log::message::minor << "A " << *this << " was modified.";
+
+	if (generate_mipmap) {
+		glGenerateMipmap(gl::detail::convert::to_gl(target::_2d_array));
+		log::info::minor << "Mipmap was generated.";
+	}
+}
+
+template <clap::gl::texture::detail::target texture_type>
+typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<texture_type>::operator()() {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to use a " << texture_ref << " without a context being active on the current thread.";
+	else if (context != texture_ref.context)
+		log::error::critical << "Attempting to use a " << texture_ref << " when active context is different from the context object was created with.";
+	else {
+		if (context->texture_stack.empty()) {
+			int value = -1;
+			glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &value);
+			if (value < 0)
+				log::error::critical << "Error attempting to request 'GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS'.";
+			else
+				context->texture_stack.resize((size_t) value);
 		}
-	});
+		if (unit >= context->texture_stack.size()) {
+			log::error::critical << "Attempting to bind texture to a non-existent texture unit.";
+			log::info::major << "Requested target: " << unit << ".";
+			log::info::major << "Available targets: " << context->texture_stack.size();
+		}
+
+		detail::generic_interface ptr = &texture_ref;
+		auto out = context->texture_stack[unit].push(ptr);
+
+		log::message::negligible << "A " << texture_ref << " was bound.";
+		log::info::major << "It was added to the top of the stack.";
+		glActiveTexture(GLenum(GL_TEXTURE0 + unit));
+		glBindTexture(gl::detail::convert::to_gl(texture_type), texture_ref.id);
+
+		return out;
+	}
 }
 
-clap::gl::texture::multisample::multisample(void *data, size_t sample_count, size_t width, size_t height,
-											bool are_samples_fixed, texture::internal_format internal_format)
-	: detail::interface(target::multisample, internal_format), width(width), height(height) {
-	temporarily_unbound(target, this, [&]() {
-		glTexImage2DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
-								gl::detail::convert::to_gl(internal_format),
-								GLsizei(width), GLsizei(height), are_samples_fixed);
-		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-		log::info::major << "Dimentions are (" << width << ", " << height << ").";
-		log::info::minor << "'sample_count' is " << sample_count << ".";
-	});
+template <clap::gl::texture::detail::target texture_type>
+void clap::gl::texture::detail::unbind_texture_callable<texture_type>::operator()(typename essential::stack<generic_interface>::iterator iterator) {
+	auto context = gl::detail::context::current();
+	if (!context)
+		log::error::critical << "Attempting to stop using a " << texture_ref << " without a context being active on the current thread.";
+	else if (context != texture_ref.context)
+		log::error::critical << "Attempting to stop using a " << texture_ref << " when active context is different from the context object was created with.";
+	else if (unit >= context->texture_stack.size()) {
+		log::error::critical << "Attempting to unbind texture from a non-existent texture unit.";
+		log::info::major << "Requested target: " << unit << ".";
+		log::info::major << "Available targets: " << context->texture_stack.size();
+	} else if (context->texture_stack[unit].is_front(iterator)) {
+		auto active = context->texture_stack[unit].pop();
+		log::message::negligible << "A " << *std::get<detail::interface<texture_type> const *>(active) << " was unbound.";
+
+		glActiveTexture(GLenum(GL_TEXTURE0 + unit));
+		if (context->texture_stack[unit].empty()) {
+			log::info::major << "Stack is empty.";
+			glBindTexture(gl::detail::convert::to_gl(texture_type), 0);
+		} else {
+			auto reactivated = context->texture_stack[unit].peek();
+			auto reactivated_ptr = std::get<detail::interface<texture_type> const *>(reactivated);
+			log::info::major << "A previously used " << *reactivated_ptr
+				<< " was rebound, as it's the next element on the stack.";
+			glBindTexture(gl::detail::convert::to_gl(texture_type), reactivated_ptr->id);
+		}
+	} else {
+		log::message::negligible << "Removing a " << texture_ref << " from bound texture stack.";
+		log::info::major << "This doesn't affect any currently bound textures in any way.";
+		context->texture_stack[unit].erase(iterator);
+	}
 }
 
-clap::gl::texture::multisample_array::multisample_array(void *data, size_t sample_count,
-														size_t width, size_t height, size_t depth,
-														bool are_samples_fixed,
-														texture::internal_format internal_format)
-	: detail::interface(target::multisample_array, internal_format), width(width), height(height), depth(depth) {
-	temporarily_unbound(target, this, [&]() {
-		glTexImage3DMultisample(gl::detail::convert::to_gl(target), GLsizei(sample_count),
-								gl::detail::convert::to_gl(internal_format),
-								GLsizei(width), GLsizei(height), GLsizei(depth), are_samples_fixed);
-		log::message::minor << "A new texture of type \"" << target << "\" was initialized.";
-		log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
-		log::info::minor << "'sample_count' is " << sample_count << ".";
-	});
-}
+
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::~interface();
+template clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::~interface();
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_depth_stencil_texture_mode(depth_stencil_texture_mode mode);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_base_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_base_level(int level);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_border_color(float r, float g, float b, float a);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_border_color(float r, float g, float b, float a);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_lod_bias(float bias);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_lod_bias(float bias);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_min_filter(min_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_min_filter(min_filter filter);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_mag_filter(mag_filter filter);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_mag_filter(mag_filter filter);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_min_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_min_lod(float value);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_max_lod(float value);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_max_lod(float value);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_max_level(int level);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_max_level(int level);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_texture_wrap_s(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_texture_wrap_s(wrap wrap);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_texture_wrap_t(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_texture_wrap_t(wrap wrap);
+
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::set_texture_wrap_r(wrap wrap);
+template void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::set_texture_wrap_r(wrap wrap);
+
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::maximum_size();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::maximum_size();
+
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::maximum_layer_count();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::maximum_layer_count();
+
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::rectangle>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::cube_map_array>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::buffer>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample>::maximum_size_3d();
+template size_t clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisample_array>::maximum_size_3d();
+
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::_1d>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::_2d>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::_3d>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::_1d_array>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::_2d_array>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::rectangle>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::cube_map>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::cube_map_array>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::buffer>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::multisample>::operator()();
+template typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::iterator clap::gl::texture::detail::bind_texture_callable<clap::gl::texture::detail::target::multisample_array>::operator()();
+
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::_1d>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::_2d>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::_3d>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::_1d_array>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::_2d_array>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::rectangle>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::cube_map>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::cube_map_array>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::buffer>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::multisample>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);
+template void clap::gl::texture::detail::unbind_texture_callable<clap::gl::texture::detail::target::multisample_array>::operator()(typename essential::stack<clap::gl::texture::detail::generic_interface>::iterator iterator);

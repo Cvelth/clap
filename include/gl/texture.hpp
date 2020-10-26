@@ -1,18 +1,16 @@
 ﻿#pragma once
 #include <cstdint>
+#include <type_traits>
 #include <utility>
+#include <variant>
+
+#include "gl/interface.hpp"
+#include "essential/guard.hpp"
+#include "essential/stack.hpp"
 
 typedef unsigned int GLenum;
-namespace clap::gl::detail {
-	class state;
-}
 
 namespace clap::gl::texture {
-	enum class target {
-		_1d, _2d, _3d, _1d_array, _2d_array,
-		rectangle, cube_map, cube_map_array, buffer,
-		multisample, multisample_array
-	};
 	enum class internal_format {
 		depth_component, depth_stencil,
 
@@ -107,16 +105,307 @@ namespace clap::gl::texture {
 	};
 
 	namespace detail {
-		class interface {
-			friend gl::detail::state;
+		enum class target {
+			_1d = 0, _2d = 1, _3d = 2, _1d_array = 3, _2d_array = 4,
+			rectangle = 5, cube_map = 6, cube_map_array = 7, buffer = 8,
+			multisample = 9, multisample_array = 10,
+			LAST = multisample_array
+		};
 
+		template<target texture_type>
+		constexpr bool needs_width =
+			(texture_type == target::_1d) ||
+			(texture_type == target::_2d) ||
+			(texture_type == target::_3d) ||
+			(texture_type == target::_1d_array) ||
+			(texture_type == target::_2d_array) ||
+			(texture_type == target::rectangle) ||
+			(texture_type == target::multisample) ||
+			(texture_type == target::multisample_array);
+
+		template<target texture_type>
+		constexpr bool needs_height =
+			(texture_type == target::_2d) ||
+			(texture_type == target::_3d) ||
+			(texture_type == target::_2d_array) ||
+			(texture_type == target::rectangle) ||
+			(texture_type == target::multisample) ||
+			(texture_type == target::multisample_array);
+
+		template<target texture_type>
+		constexpr bool needs_depth =
+			(texture_type == target::_3d);
+
+		template<target texture_type>
+		constexpr bool needs_count =
+			(texture_type == target::_1d_array) ||
+			(texture_type == target::_2d_array) ||
+			(texture_type == target::multisample_array);
+
+		template<target texture_type>
+		constexpr bool needs_sample_count =
+			(texture_type == target::multisample) ||
+			(texture_type == target::multisample_array);
+
+		template<target texture_type, bool condition = false> class has_width;
+		template<target texture_type> class has_width<texture_type, true> {
 		public:
-			void bind();
+			explicit has_width(size_t value) noexcept : width(value) {}
+			size_t get_width() const { return width; }
+		protected:
+			const size_t width;
+		};
+		template<target texture_type> class has_width<texture_type, false> {};
+
+		template<target texture_type, bool condition = false> class has_height;
+		template<target texture_type> class has_height<texture_type, true> {
+		public:
+			explicit has_height(size_t value) noexcept : height(value) {}
+			size_t get_height() const { return height; }
+		protected:
+			const size_t height;
+		};
+		template<target texture_type> class has_height<texture_type, false> {};
+
+		template<target texture_type, bool condition = false> class has_depth;
+		template<target texture_type> class has_depth<texture_type, true> {
+		public:
+			explicit has_depth(size_t value) noexcept : depth(value) {}
+			size_t get_depth() const { return depth; }
+		protected:
+			const size_t depth;
+		};
+		template<target texture_type> class has_depth<texture_type, false> {};
+
+		template<target texture_type, bool condition = false> class has_count;
+		template<target texture_type> class has_count<texture_type, true> {
+		public:
+			explicit has_count(size_t value) noexcept : count(value) {}
+			size_t get_count() const { return count; }
+		protected:
+			const size_t count;
+		};
+		template<target texture_type> class has_count<texture_type, false> {};
+
+		template<target texture_type, bool condition = false> class has_sample_count;
+		template<target texture_type> class has_sample_count<texture_type, true> {
+		public:
+			explicit has_sample_count(size_t value) noexcept : sample_count(value) {}
+			size_t get_count() const { return sample_count; }
+		protected:
+			const size_t sample_count;
+		};
+		template<target texture_type> class has_sample_count<texture_type, false> {};
+
+		template <target texture_type> struct bind_texture_callable;
+		template <target texture_type> struct unbind_texture_callable;
+		template <target texture_type> class texture_guard;
+
+		template <target texture_type>
+		class interface :
+			public gl::detail::object_interface,
+			public has_width<texture_type, needs_width<texture_type>>,
+			public has_height<texture_type, needs_height<texture_type>>,
+			public has_depth<texture_type, needs_depth<texture_type>>,
+			public has_count<texture_type, needs_count<texture_type>>,
+			public has_sample_count<texture_type, needs_sample_count<texture_type>> {
+
+			friend bind_texture_callable<texture_type>;
+			friend unbind_texture_callable<texture_type>;
+		public:
+			const target type = texture_type;
+
+			template <target T = texture_type>
+			interface(void *data, size_t width,
+					  bool generate_mipmap = true,
+					  texture::internal_format internal_format = internal_format::rgba,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+					  ) requires (T == target::_1d);
+			template <target T = texture_type>
+			interface(void *data, size_t width, size_t height,
+					  bool generate_mipmap = true,
+					  texture::internal_format internal_format = internal_format::rgba,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+					  ) requires (T == target::_2d);
+			template <target T = texture_type>
+			interface(void *data, size_t width, size_t height, size_t depth,
+					  bool generate_mipmap = true,
+					  texture::internal_format internal_format = internal_format::rgba,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+					  ) requires (T == target::_3d);
+			template <target T = texture_type>
+			interface(void *data, size_t width, size_t count,
+					  bool generate_mipmap = true,
+					  texture::internal_format internal_format = internal_format::rgba,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+					  ) requires (T == target::_1d_array);
+			template <target T = texture_type>
+			interface(void *data, size_t width, size_t height, size_t count,
+					  bool generate_mipmap = true,
+					  texture::internal_format internal_format = internal_format::rgba,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+					  ) requires (T == target::_2d_array);
+			/*
+			template <target T = texture_type>
+			interface(size_t sample_count, size_t width, size_t height,
+					  bool are_samples_fixed = false,
+					  texture::internal_format internal_format = internal_format::rgba
+					  ) requires (T == target::multisample);
+			template <target T = texture_type>
+			interface(void *data, size_t sample_count, size_t width, size_t height, size_t count,
+					  bool are_samples_fixed = false,
+					  texture::internal_format internal_format = internal_format::rgba
+					  ) requires (T == target::multisample_array);
+			*/
+
+			~interface();
+
+			interface(interface const &another) = delete;
+
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::_1d) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width) {
+				another.id = 0;
+			}
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::_2d || T == target::rectangle) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_height<texture_type, needs_height<texture_type>>(another.height) {
+				another.id = 0;
+			}
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::_3d) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_height<texture_type, needs_height<texture_type>>(another.height),
+				has_depth<texture_type, needs_depth<texture_type>>(another.depth) {
+				another.id = 0;
+			}
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::_1d_array) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_count<texture_type, needs_count<texture_type>>(another.count) {
+				another.id = 0;
+			}
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::_2d_array) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_height<texture_type, needs_height<texture_type>>(another.height),
+				has_count<texture_type, needs_count<texture_type>>(another.count) {
+				another.id = 0;
+			}
+			/*
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::multisample) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_height<texture_type, needs_height<texture_type>>(another.height),
+				has_sample_count<texture_type, needs_sample_count<texture_type>>(another.sample_count) {
+				another.id = 0;
+			}
+			template <target T = texture_type>
+			inline interface(interface &&another) noexcept
+				requires (T == target::multisample_array) :
+				id(another.id),
+				has_width<texture_type, needs_width<texture_type>>(another.width),
+				has_height<texture_type, needs_height<texture_type>>(another.height),
+				has_count<texture_type, needs_count<texture_type>>(another.count),
+				has_sample_count<texture_type, needs_sample_count<texture_type>>(another.sample_count) {
+				another.id = 0;
+			}
+			*/
+
+			[[nodiscard]] inline texture_guard<texture_type> bind() const {
+				return texture_guard<texture_type>(*this, 1 /* Temporary! To replace with unit id. */);
+			}
+
+			template <target T = texture_type>
+			void data(void *data, size_t offset_x, size_t width,
+					  bool generate_mipmap = true, int level = 0,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_1d);
+			template <target T = texture_type>
+			inline void data(void *data, bool generate_mipmap = true,
+							 external_format external_format = external_format::rgba,
+							 external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_1d) {
+				this->data(data, 0, this->width, generate_mipmap, 0, external_format, external_type);
+			}
+			template <target T = texture_type>
+			void data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
+					  bool generate_mipmap = true, int level = 0,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_2d);
+			template <target T = texture_type>
+			inline void data(void *data, bool generate_mipmap = true,
+							 external_format external_format = external_format::rgba,
+							 external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_2d) {
+				this->data(data, 0, 0, this->width, this->height, generate_mipmap, 0, external_format, external_type);
+			}
+			template <target T = texture_type>
+			void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
+					  size_t width, size_t height, size_t depth,
+					  bool generate_mipmap = true, int level = 0,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_3d);
+			template <target T = texture_type>
+			inline void data(void *data, bool generate_mipmap = true,
+							 external_format external_format = external_format::rgba,
+							 external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_3d) {
+				this->data(data, 0, 0, 0, this->width, this->height, this->depth, generate_mipmap, 0, external_format, external_type);
+			}
+			template <target T = texture_type>
+			void data(void *data, size_t offset_x, size_t offset_c, size_t width, size_t count,
+					  bool generate_mipmap = true, int level = 0,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_1d_array);
+			template <target T = texture_type>
+			inline void data(void *data, bool generate_mipmap = true,
+							 external_format external_format = external_format::rgba,
+							 external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_1d_array) {
+				this->data(data, 0, 0, this->width, this->count, generate_mipmap, 0, external_format, external_type);
+			}
+			template <target T = texture_type>
+			void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
+					  size_t width, size_t height, size_t count,
+					  bool generate_mipmap = true, int level = 0,
+					  external_format external_format = external_format::rgba,
+					  external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_2d_array);
+			template <target T = texture_type>
+			inline void data(void *data, bool generate_mipmap = true,
+							 external_format external_format = external_format::rgba,
+							 external_type external_type = external_type::unsigned_byte
+			) requires (T == target::_2d_array) {
+				this->data(data, 0, 0, 0, this->width, this->height, this->count, generate_mipmap, 0, external_format, external_type);
+			}
 
 			void set_depth_stencil_texture_mode(depth_stencil_texture_mode mode
 												= depth_stencil_texture_mode::depth_component);
 			void set_base_level(int level = 0);
-			void set_texure_border_color(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f);
+			void set_border_color(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f);
 			//void set_compare_function(compare_function function = compare_function::greater);
 			//void set_compare_mode(compare_mode mode = compare_mode::none);
 			void set_lod_bias(float bias = 0.f);
@@ -134,265 +423,139 @@ namespace clap::gl::texture {
 			void set_texture_wrap_t(wrap wrap = wrap::repeat);
 			void set_texture_wrap_r(wrap wrap = wrap::repeat);
 
-		protected:
-			interface(target target, internal_format internal_format = internal_format::rgba);
-			virtual ~interface();
-
-			interface(interface const &) = delete;
-			interface(interface &&other) noexcept : id(other.id), target(other.target), internal_format(other.internal_format) {
-				other.id = 0;
+			template <target T = texture_type>
+			static typename std::enable_if<needs_width<T>, size_t>::type maximum_width() {
+				if constexpr (needs_depth<T>)
+					return maximum_size_3d();
+				else
+					return maximum_size();
 			}
-			uint32_t operator*() const { return id; }
+
+			template <target T = texture_type>
+			static typename std::enable_if<needs_height<T>, size_t>::type maximum_height() {
+				if constexpr (needs_depth<T>)
+					return maximum_size_3d();
+				else
+					return maximum_size();
+			}
+
+			template <target T = texture_type>
+			static typename std::enable_if<needs_depth<T>, size_t>::type maximum_depth() {
+				return maximum_size_3d();
+			}
+
+			template <target T = texture_type>
+			static typename std::enable_if<needs_count<T>, size_t>::type maximum_count() {
+				return maximum_layer_count();
+			}
+
+			friend inline std::ostream &operator<<(std::ostream &stream, interface const &object) {
+				return stream << texture_type << " object (with id = " << object.id << ")";
+			}
 
 		protected:
-			target target;
+			static size_t maximum_size();
+			static size_t maximum_layer_count();
+			static size_t maximum_size_3d();
+
+		protected:
 			internal_format internal_format;
 
 		private:
 			uint32_t id;
 		};
+
 	}
 
-	size_t maximum_size();
-	size_t maximum_layer_count();
-	size_t maximum_size_3d();
-
-	class _1d : public detail::interface {
+	class _1d : public detail::interface<detail::target::_1d> {
 	public:
-		_1d(void *data, size_t width, bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte)
-			: _1d(target::_1d, data, width, generate_mipmap, 
-				  internal_format, external_format, external_type) {}
-		inline virtual ~_1d() {}
-
-		_1d(_1d &&other) noexcept
-			: detail::interface(std::move(other)),
-			width(other.width) {}
-
-		void data(void *data, size_t offset, size_t width, 
-				  bool generate_mipmap = true, int level = 0,
-				  external_format external_format = external_format::rgba,
-				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data, bool generate_mipmap = true,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, generate_mipmap, 0, width, 0, external_format, external_type);
-		}
-		static size_t maximum_width() {	return maximum_size(); }
-		size_t get_width() const { return width; }
-	protected:
-		_1d(texture::target target, void *data, size_t width, bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte);
-
-	protected:
-		const size_t width;
+		using detail::interface<detail::target::_1d>::interface;
 	};
-
-	class _2d : public detail::interface {
+	class _2d : public detail::interface<detail::target::_2d> {
 	public:
-		_2d(void *data, size_t width, size_t height, bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte)
-			: _2d(target::_2d, data, width, height, generate_mipmap, 
-				  internal_format, external_format, external_type) {}
-		inline virtual ~_2d() {}
-
-		_2d(_2d &&other) noexcept
-			: detail::interface(std::move(other)), 
-			width(other.width), height(other.height) {}
-
-		void data(void *data, size_t offset_x, size_t offset_y,
-				  size_t width, size_t height, 
-				  bool generate_mipmap = true, int level = 0,
-				  external_format external_format = external_format::rgba,
-				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data, bool generate_mipmap = true,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
-		}
-		static size_t maximum_width() { return maximum_size(); }
-		static size_t maximum_height() { return maximum_size(); }
-		size_t get_width() const { return width; }
-		size_t get_height() const { return height; }
-	protected:
-		_2d(texture::target target, void *data, size_t width, size_t height, 
-			bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte);
-
-	protected:
-		const size_t width;
-		const size_t height;
+		using detail::interface<detail::target::_2d>::interface;
 	};
-
-	class _3d : public detail::interface {
+	class _3d : public detail::interface<detail::target::_3d> {
 	public:
-		_3d(void *data, size_t width, size_t height, size_t depth, bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte)
-			: _3d(target::_3d, data, width, height, depth, generate_mipmap, 
-				  internal_format, external_format, external_type) {}
-		inline virtual ~_3d() {}
-
-		_3d(_3d &&other) noexcept
-			: detail::interface(std::move(other)),
-			width(other.width), height(other.height), depth(other.depth) {}
-
-		void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-				  size_t width, size_t height, size_t depth, 
-				  bool generate_mipmaps = true, int level = 0,
-				  external_format external_format = external_format::rgba,
-				  external_type external_type = external_type::unsigned_byte);
-		inline void data(void *data, bool generate_mipmap = true,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, external_format, external_type);
-		}
-		static size_t maximum_width() { return maximum_size_3d(); }
-		static size_t maximum_height() { return maximum_size_3d(); }
-		static size_t maximum_depth() { return maximum_size_3d(); }
-		size_t get_width() const { return width; }
-		size_t get_height() const { return height; }
-		size_t get_depth() const { return depth; }
-	protected:
-		_3d(texture::target target, void *data, size_t width, size_t height, size_t depth, 
-			bool generate_mipmap = true,
-			texture::internal_format internal_format = internal_format::rgba,
-			external_format external_format = external_format::rgba,
-			external_type external_type = external_type::unsigned_byte);
-
-	protected:
-		const size_t width;
-		const size_t height;
-		const size_t depth;
+		using detail::interface<detail::target::_3d>::interface;
 	};
-
-	class _1d_array : public _2d {
+	class _1d_array : public detail::interface<detail::target::_1d_array> {
 	public:
-		inline _1d_array(void *data, size_t width, size_t count, bool generate_mipmap = true,
-						 texture::internal_format internal_format = internal_format::rgba,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte)
-			: _2d(target::_1d_array, data, width, count, generate_mipmap, internal_format, external_format, external_type) {}
-		inline virtual ~_1d_array() {}
-
-		_1d_array(_1d_array &&other) noexcept
-			: _2d(std::move(other)) {}
-
-		inline void data(void *data, size_t offset_x, size_t offset_c,
-						 size_t _width, size_t count, bool generate_mipmap = true, int level = 0,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			_2d::data(data, offset_x, offset_c, _width, count, generate_mipmap, level, external_format, external_type);
-		}
-		inline void data(void *data, bool generate_mipmap = true,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, width, height, generate_mipmap, 0, external_format, external_type);
-		}
-		static size_t maximum_width() { return maximum_size(); }
-		static size_t maximum_count() { return maximum_layer_count(); }
+		using detail::interface<detail::target::_1d_array>::interface;
 	};
-
-	class _2d_array : public _3d {
+	class _2d_array : public detail::interface<detail::target::_2d_array> {
 	public:
-		inline _2d_array(void *data, size_t width, size_t height, size_t count, 
-						 bool generate_mipmap = true,
-						 texture::internal_format internal_format = internal_format::rgba,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte)
-			: _3d(target::_2d_array, data, width, height, count, generate_mipmap, 
-				  internal_format, external_format, external_type) {}
-		inline virtual ~_2d_array() {}
-
-		_2d_array(_2d_array &&other) noexcept
-			: _3d(std::move(other)) {}
-
-		inline void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
-						 size_t _width, size_t _height, size_t count, 
-						 bool generate_mipmap = true, int level = 0,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			_3d::data(data, offset_x, offset_y, offset_c, _width, _height, count,
-					  generate_mipmap, level, external_format, external_type);
-		}
-		inline void data(void *data, bool generate_mipmap = true,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, 0, width, height, depth, generate_mipmap, 0, 
-					   external_format, external_type);
-		}
-		static size_t maximum_width() { return maximum_size(); }
-		static size_t maximum_height() { return maximum_size(); }
-		static size_t maximum_count() { return maximum_layer_count(); }
+		using detail::interface<detail::target::_2d_array>::interface;
 	};
-
-	class rectangle : public _2d {
+	class rectangle : public detail::interface<detail::target::rectangle> {
 	public:
-		inline rectangle(void *data, size_t width, size_t height,
-						 texture::internal_format internal_format = internal_format::rgba,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte)
-			: _2d(target::rectangle, data, width, height, false, internal_format, external_format, external_type) {}
-		inline virtual ~rectangle() {}
-
-		rectangle(rectangle &&other) noexcept
-			: _2d(std::move(other)) {}
-
-		inline void data(void *data, size_t offset_x, size_t offset_y,
-						 size_t _width, size_t _height, int level = 0,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			_2d::data(data, offset_x, offset_y, _width, _height, false, level, external_format, external_type);
-		}
-		inline void data(void *data,
-						 external_format external_format = external_format::rgba,
-						 external_type external_type = external_type::unsigned_byte) {
-			this->data(data, 0, 0, width, height, 0, external_format, external_type);
-		}
-		static size_t maximum_width() { return maximum_size(); }
-		static size_t maximum_height() { return maximum_size(); }
+		using detail::interface<detail::target::rectangle>::interface;
 	};
 
-	class multisample : public detail::interface {
+	/* Unimplemented.
+	class multisample : public detail::interface<detail::target::multisample> {
 	public:
-		multisample(void *data, size_t sample_count, size_t width, size_t height,
-					bool are_samples_fixed = false,
-					texture::internal_format internal_format = internal_format::rgba);
-
-	protected:
-		const size_t width;
-		const size_t height;
+		using detail::interface<detail::target::multisample>::interface;
 	};
-
-	class multisample_array : public detail::interface {
-		multisample_array(void *data, size_t sample_count, size_t width, size_t height, size_t depth,
-						  bool are_samples_fixed = false,
-						  texture::internal_format internal_format = internal_format::rgba);
-
-	protected:
-		const size_t width;
-		const size_t height;
-		const size_t depth;
+	class multisample_array : public detail::interface<detail::target::multisample_array> {
+	public:
+		using detail::interface<detail::target::multisample_array>::interface;
 	};
+	class cube_map : public detail::interface<detail::target::cube_map> {
+	public:
+		using detail::interface<detail::target::cube_map>::interface;
+	};
+	class cube_map_array : public detail::interface<detail::target::cube_map_array> {
+	public:
+		using detail::interface<detail::target::cube_map_array>::interface;
+	};
+	class buffer : public detail::interface<detail::target::buffer> {
+	public:
+		using detail::interface<detail::target::buffer>::interface;
+	};
+	*/
 
-	//Unimplemented.
-	class cube_map : public detail::interface {};
-	class cube_map_array : public detail::interface {};
-	class buffer : public detail::interface {};
+	namespace detail {
+		using generic_interface = std::variant<
+			detail::interface<detail::target::_1d> const *,
+			detail::interface<detail::target::_2d> const *,
+			detail::interface<detail::target::_3d> const *,
+			detail::interface<detail::target::_1d_array> const *,
+			detail::interface<detail::target::_2d_array> const *,
+			detail::interface<detail::target::cube_map> const *,
+			detail::interface<detail::target::cube_map_array> const *,
+			detail::interface<detail::target::rectangle> const *,
+			detail::interface<detail::target::buffer> const *,
+			detail::interface<detail::target::multisample> const *,
+			detail::interface<detail::target::multisample_array> const *
+		>;
+
+		template <target texture_type> struct bind_texture_callable {
+			interface<texture_type> const &texture_ref;
+			size_t unit;
+			typename essential::stack<generic_interface>::iterator operator()();
+		};
+		template <target texture_type> struct unbind_texture_callable {
+			interface<texture_type> const &texture_ref;
+			size_t unit;
+			void operator()(typename essential::stack<generic_interface>::iterator);
+		};
+
+		template <target texture_type>
+		class texture_guard
+			: essential::simple_guard<bind_texture_callable<texture_type>, unbind_texture_callable<texture_type>> {
+		public:
+			texture_guard(interface<texture_type> const &texture_ref, size_t unit) :
+				essential::simple_guard<bind_texture_callable<texture_type>, unbind_texture_callable<texture_type>>(
+					detail::bind_texture_callable<texture_type>{ texture_ref, unit },
+					detail::unbind_texture_callable<texture_type>{ texture_ref, unit }) {}
+		};
+	}
 }
 
 namespace clap::gl::detail::convert {
-	GLenum to_gl(clap::gl::texture::target v);
-	clap::gl::texture::target to_texture_target(GLenum v);
+	GLenum to_gl(clap::gl::texture::detail::target v);
+	clap::gl::texture::detail::target to_texture_target(GLenum v);
 
 	GLenum to_gl(clap::gl::texture::internal_format v);
 	clap::gl::texture::internal_format to_internal_format(GLenum v);
@@ -417,4 +580,4 @@ namespace clap::gl::detail::convert {
 }
 
 #include <ostream>
-std::ostream &operator<<(std::ostream &stream, clap::gl::texture::target target);
+std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target);

@@ -299,8 +299,8 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 void clap::render::text::render(int x, int y) const {
 	program->uniform["offset"] = { float(x), float(y) };
 
-	auto guard = program->use();
-	font_handle.data.at(height).bitmap.bind();
+	auto program_guard = program->use();
+	auto texture_guard = font_handle.data.at(height).bitmap.bind();
 	vertex_array.draw(clap::gl::vertex::array::connection::lines, count);
 }
 
