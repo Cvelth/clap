@@ -239,7 +239,7 @@ void clap::render::text::update(std::basic_string<char32_t> const &string) {
 					}
 					target.bitmap.data(font_face->glyph->bitmap.buffer, target.offset_x, target.offset_y,
 									   font_face->glyph->bitmap.width, font_face->glyph->bitmap.rows,
-									   false, 0, clap::gl::texture::external_format::red);
+									   false, clap::gl::texture::external_format::red);
 					iterator = target.coordinates.emplace(code_point,
 														  detail::bitmap_coordinates{
 															  target.offset_x, target.offset_y,

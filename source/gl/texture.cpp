@@ -349,8 +349,8 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisam
 template <>
 template <>
 void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::data(
-	void *data, size_t offset_x, size_t width, bool generate_mipmap, int level,
-	external_format external_format, external_type external_type) {
+	void *data, size_t offset_x, size_t width, bool generate_mipmap,
+	external_format external_format, external_type external_type, int level) {
 	if (!verify_context()) return;
 
 	if (width + offset_x > this->width) {
@@ -374,9 +374,9 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d
 template <>
 template <>
 void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::data(
-	void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
-	bool generate_mipmap, int level,
-	external_format external_format, external_type external_type) {
+	void *data, size_t offset_x, size_t offset_y, 
+	size_t width, size_t height, bool generate_mipmap,
+	external_format external_format, external_type external_type, int level) {
 	if (!verify_context()) return;
 
 	if (width + offset_x > this->width || height + offset_y > this->height) {
@@ -402,9 +402,8 @@ template <>
 template <>
 void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::data(
 	void *data, size_t offset_x, size_t offset_y, size_t offset_z,
-	size_t width, size_t height, size_t depth,
-	bool generate_mipmap, int level,
-	external_format external_format, external_type external_type) {
+	size_t width, size_t height, size_t depth, bool generate_mipmap,
+	external_format external_format, external_type external_type, int level) {
 	if (!verify_context()) return;
 
 	if (width + offset_x > this->width || height + offset_y > this->height || depth + offset_z > this->depth) {
@@ -429,9 +428,8 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d
 template <>
 template <>
 void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_array>::data(
-	void *data, size_t offset_x, size_t offset_c, size_t width, size_t count,
-	bool generate_mipmap, int level,
-	external_format external_format, external_type external_type) {
+	void *data, size_t offset_x, size_t offset_c, size_t width, size_t count, bool generate_mipmap,
+	external_format external_format, external_type external_type, int level) {
 	if (!verify_context()) return;
 
 	if (width + offset_x > this->width || count + offset_c > this->count) {
@@ -457,9 +455,8 @@ template <>
 template <>
 void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_array>::data(
 	void *data, size_t offset_x, size_t offset_y, size_t offset_c,
-	size_t width, size_t height, size_t count,
-	bool generate_mipmap, int level,
-	external_format external_format, external_type external_type) {
+	size_t width, size_t height, size_t count, bool generate_mipmap,
+	external_format external_format, external_type external_type, int level) {
 	if (!verify_context()) return;
 
 	if (width + offset_x > this->width || height + offset_y > this->height || count + offset_c > this->count) {
