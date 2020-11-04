@@ -21,7 +21,7 @@ namespace clap::gl::detail {
 		detail::access_guard access_context(object_interface const &another) const;
 
 		friend inline std::ostream &operator<<(std::ostream &stream, object_interface const &object) {
-			return (object, stream << "polymorphic gl object (passed as an 'gl::object_interface' pointer/reference).");
+			return (object, stream << "polymorphic gl object (passed as an 'gl::object_interface' pointer/reference)");
 		}
 
 	protected:
