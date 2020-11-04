@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <mutex>
+#include <ostream>
 #include <string>
 
 #include "essential/guard.hpp"
@@ -79,6 +80,10 @@ namespace clap::gl::detail::window {
 		GLFWwindow *operator*() { return *handle; }
 		GLFWwindow const *operator*() const { return *handle; }
 
+		friend inline std::ostream &operator<<(std::ostream &stream, object const &another) {
+			return stream << "window (glfw, titled \"" << (char const *) another.title.c_str() << "\")";
+		}
+
 		void swap_buffers();
 		bool should_close();
 
@@ -89,10 +94,12 @@ namespace clap::gl::detail::window {
 		void remove_event_handler() { set_event_handler(nullptr); }
 
 	protected:
-		object(struct_handle<GLFWwindow> handle) : handle(handle), event_handler(nullptr) {}
+		object(struct_handle<GLFWwindow> handle, std::u8string title) 
+			: handle(handle), event_handler(nullptr), title(title) {}
 	private:
 		struct_handle<GLFWwindow> handle;
 		clap::gl::detail::window::event::handler_interface *event_handler;
+		std::u8string title;
 
 		std::mutex mutex;
 	};

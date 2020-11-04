@@ -45,14 +45,16 @@ void clap::gl::detail::context::activate() {
 
 	std::lock_guard map_guard(map_access_mutex);
 	auto current_iterator = current_context.find(id);
-	if (current_iterator != current_context.end() && current_iterator->second)
+	if (current_iterator != current_context.end() && current_iterator->second) {
 		clap::log::error::critical << "An attempt to activate a context on a thread where a context is already activated.";
-	else {
+		clap::log::info::major << "An " << *current_iterator->second << " is currently active.";
+		clap::log::info::major << "An " << *this << " is to be activated.";
+	} else {
 		std::lock_guard access_guard(access_mutex);
 
 		current_context[id] = this;
 		glfwMakeContextCurrent(*window);
-		clap::log::message::minor << "Active context of thread #" << id << " was changed.";
+		clap::log::message::minor << "Active context of thread #" << id << " was changed to " << *this << ".";
 	}
 }
 void clap::gl::detail::context::deactivate() {
@@ -66,6 +68,7 @@ void clap::gl::detail::context::deactivate() {
 		current_context[id] = nullptr;
 		glfwMakeContextCurrent(nullptr);
 		clap::log::message::minor << "Active context of thread #" << id << " was deactivated.";
+		clap::log::info::major << *this << " was active.";
 	} else
 		clap::log::error::critical << "Destructor of context guard was called even though its constructor was never called. Fatal error.";
 }
