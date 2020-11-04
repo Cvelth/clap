@@ -8,17 +8,19 @@
 #include "glad/glad.h"
 
 clap::gl::shader::detail::object::object(type type) : id(0u) {
-	id = glCreateShader(gl::detail::convert::to_gl(type));
+	if (auto context = access_context(); context)
+		id = glCreateShader(gl::detail::convert::to_gl(type));
 	if (id == 0)
 		log::warning::critical << "Shader object creation failed.";
 	else
 		log::message::minor << "A '" << type << "' " << *this << " was created.";
 }
 clap::gl::shader::detail::object::~object() {
-	if (id) {
-		glDeleteShader(id);
-		log::message::minor << "A " << *this << " was destroyed.";
-	}
+	if (id)
+		if (auto context = access_context(); context) {
+			glDeleteShader(id);
+			log::message::minor << "A " << *this << " was destroyed.";
+		}
 }
 
 std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_source(type type, std::string_view source) {
@@ -30,26 +32,28 @@ std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_source(ty
 		return std::nullopt;
 	}
 
-	auto const *glchar_source = static_cast<const GLchar *>(source.data());
-	glShaderSource(out.id, 1, &glchar_source, NULL);
-	glCompileShader(out.id);
+	if (auto context = out.access_context(); context) {
+		auto const *glchar_source = static_cast<const GLchar *>(source.data());
+		glShaderSource(out.id, 1, &glchar_source, NULL);
+		glCompileShader(out.id);
 
-	GLint compilation_successful;
-	glGetShaderiv(out.id, GL_COMPILE_STATUS, &compilation_successful);
-	if (compilation_successful) {
-		log::message::minor << "A '" << type << "' " << out << " was compiled.";
-		return std::move(out);
-	} else {
-		GLsizei length;
-		glGetShaderiv(out.id, GL_INFO_LOG_LENGTH, &length);
+		GLint compilation_successful;
+		glGetShaderiv(out.id, GL_COMPILE_STATUS, &compilation_successful);
+		if (compilation_successful) {
+			log::message::minor << "A '" << type << "' " << out << " was compiled.";
+			return std::move(out);
+		} else {
+			GLsizei length;
+			glGetShaderiv(out.id, GL_INFO_LOG_LENGTH, &length);
 
-		GLchar *log = new GLchar[size_t(length) + 1];
-		glGetShaderInfoLog(out.id, length, &length, log);
-		log::warning::critical << "A '" << type << "' " << out << " has failed to compile.";
-		log::info::critical << std::string(log);
-		delete[] log;
+			GLchar *log = new GLchar[size_t(length) + 1];
+			glGetShaderInfoLog(out.id, length, &length, log);
+			log::warning::critical << "A '" << type << "' " << out << " has failed to compile.";
+			log::info::critical << std::string(log);
+			delete[] log;
 
-		return std::nullopt;
+			return std::nullopt;
+		}
 	}
 }
 std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_file(type type, std::filesystem::path path) {
@@ -70,7 +74,8 @@ std::optional<clap::gl::shader::detail::object> clap::gl::shader::from_file(type
 }
 
 clap::gl::shader::detail::linker::linker() : id(0u) {
-	id = glCreateProgram();
+	if (auto context = access_context(); context)
+		id = glCreateProgram();
 	if (id == 0)
 		log::warning::critical << "Shader program creation failed.";
 	else
@@ -78,20 +83,16 @@ clap::gl::shader::detail::linker::linker() : id(0u) {
 }
 
 clap::gl::shader::detail::linker::~linker() {
-	if (!verify_context())
-		log::error::critical << "Unable to destroy a shader program object when its context it was created in is not current.";
-	if (id) {
-		glDeleteProgram(id);
-		log::warning::major << "A " << *this << " was destroyed.";
-	}
+	if (id)
+		if (auto context = access_context(); context) {
+			glDeleteProgram(id);
+			log::warning::major << "A " << *this << " was destroyed.";
+		}
 }
 
 void clap::gl::shader::detail::linker::add(detail::object const &object) {
-	if (!verify_context()) return;
 	if (id) {
-		if (context != object.context)
-			log::warning::critical << "Cannot add a shader object to a shader program as they belong to different contexts.";
-		else {
+		if (auto context = access_context(object); context) {
 			glAttachShader(id, object.id);
 			log::message::negligible << "A " << object << " was attached to a " << *this << ".";
 		}
@@ -100,30 +101,31 @@ void clap::gl::shader::detail::linker::add(detail::object const &object) {
 }
 
 clap::gl::shader::detail::linker::operator clap::gl::shader::program() {
-	if (!verify_context()) return program(0);
 	if (id) {
-		glLinkProgram(id);
+		if (auto context = access_context(); context) {
+			glLinkProgram(id);
 
-		GLint linkage_successful;
-		glGetProgramiv(id, GL_LINK_STATUS, &linkage_successful);
-		if (linkage_successful) {
-			log::message::minor << "A " << *this << " was linked.";
+			GLint linkage_successful;
+			glGetProgramiv(id, GL_LINK_STATUS, &linkage_successful);
+			if (linkage_successful) {
+				log::message::minor << "A " << *this << " was linked.";
 
-			auto id_copy = id;
-			id = 0;
+				auto id_copy = id;
+				id = 0;
 
-			return program(id_copy);
-		} else {
-			GLsizei length;
-			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
+				return program(id_copy);
+			} else {
+				GLsizei length;
+				glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
 
-			GLchar *log = new GLchar[size_t(length) + 1];
-			glGetProgramInfoLog(id, length, &length, log);
-			log::warning::critical << "A " << *this << " has failed to link.";
-			log::info::critical << std::string(log);
-			delete[] log;
+				GLchar *log = new GLchar[size_t(length) + 1];
+				glGetProgramInfoLog(id, length, &length, log);
+				log::warning::critical << "A " << *this << " has failed to link.";
+				log::info::critical << std::string(log);
+				delete[] log;
 
-			return program(0);
+				return program(0);
+			}
 		}
 	} else {
 		log::warning::major << "Cannot link an invalid linker object. Make sure the program object isn't already linked.";
@@ -147,49 +149,44 @@ void gl_variable_request_template(uint32_t program_id, GLenum active_type, GLenu
 }
 clap::gl::shader::program::program(unsigned id) : id(id) {
 	if (id) {
-		gl_variable_request_template(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib,
-									 glGetAttribLocation, [this](auto name, auto location, auto datatype, auto size) {
-										 attribute.emplace(
-											 name,
-											 variable::attribute(gl::detail::convert::to_attribute(datatype), size, location, name, *this)
-										 );
-									 });
-		gl_variable_request_template(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform,
-									 glGetUniformLocation, [this](auto name, auto location, auto datatype, auto size) {
-										 uniform.emplace(
-											 name,
-											 variable::uniform(gl::detail::convert::to_uniform(datatype), size, location, name, *this)
-										 );
-									 });
-		log::message::minor << "A " << *this << " have successfully requested variable data.";
-		log::info::major << "Uniform count: " << uniform.size() << ".";
-		for (auto &entry : uniform)
-			log::info::minor << '\t' << entry.first;
-		log::info::major << "Attribute count: " << attribute.size() << ".";
-		for (auto &entry : attribute)
-			log::info::minor << '\t' << entry.first;
+		if (auto context = access_context(); context) {
+			gl_variable_request_template(id, GL_ACTIVE_ATTRIBUTES, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, glGetActiveAttrib,
+										 glGetAttribLocation, [this](auto name, auto location, auto datatype, auto size) {
+											 attribute.emplace(
+												 name,
+												 variable::attribute(gl::detail::convert::to_attribute(datatype), size, location, name, *this)
+											 );
+										 });
+			gl_variable_request_template(id, GL_ACTIVE_UNIFORMS, GL_ACTIVE_UNIFORM_MAX_LENGTH, glGetActiveUniform,
+										 glGetUniformLocation, [this](auto name, auto location, auto datatype, auto size) {
+											 uniform.emplace(
+												 name,
+												 variable::uniform(gl::detail::convert::to_uniform(datatype), size, location, name, *this)
+											 );
+										 });
+			log::message::minor << "A " << *this << " have successfully requested variable data.";
+			log::info::major << "Uniform count: " << uniform.size() << ".";
+			for (auto &entry : uniform)
+				log::info::minor << '\t' << entry.first;
+			log::info::major << "Attribute count: " << attribute.size() << ".";
+			for (auto &entry : attribute)
+				log::info::minor << '\t' << entry.first;
+		}
 	} else
 		log::warning::major << "An attempt to create a shader program object with id = 0.";
 }
 clap::gl::shader::program::~program() {
-	if (!verify_context())
-		log::error::critical << "Unable to destroy a shader program object when the context it was created in is not current.";
-	
 	// TODO: Stop using this program (and log a warning) if it's being used on deletion.
-	
-	if (id) {
-		glDeleteProgram(id);
-		log::message::minor << "A " << *this << " was destroyed.";
-	}
+
+	if (id)
+		if (auto context = access_context(); context) {
+			glDeleteProgram(id);
+			log::message::minor << "A " << *this << " was destroyed.";
+		}
 }
 
 clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::shader::detail::lock_program_callable::operator()() {
-	auto context = gl::detail::context::current();
-	if (!context)
-		log::error::critical << "Attempting to use a " << program_ref << " without a context being active on the current thread.";
-	else if (context != program_ref.context)
-		log::error::critical << "Attempting to use a " << program_ref << " when active context is different from the context object was created with.";
-	else {
+	if (auto context = program_ref.access_context(); context) {
 		auto out = context->shader_program_stack.push(&program_ref);
 
 		log::message::negligible << "Using a " << program_ref << ".";
@@ -200,27 +197,24 @@ clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::sh
 	}
 }
 void clap::gl::shader::detail::unlock_program_callable::operator()(clap::essential::stack<clap::gl::shader::program const *>::iterator iterator) {
-	auto context = gl::detail::context::current();
-	if (!context)
-		log::error::critical << "Attempting to stop using a " << program_ref << " without a context being active on the current thread.";
-	else if (context != program_ref.context)
-		log::error::critical << "Attempting to stop using a " << program_ref << " when active context is different from the context object was created with.";
-	else if (context->shader_program_stack.is_front(iterator)) {
-		auto active = context->shader_program_stack.pop();
+	if (auto context = program_ref.access_context(); context) {
+		if (context->shader_program_stack.is_front(iterator)) {
+			auto active = context->shader_program_stack.pop();
 
-		log::message::negligible << "Stopping usage of a " << *active << ".";
-		if (context->shader_program_stack.empty()) {
-			log::info::major << "Stack is empty.";
-			glUseProgram(0);
+			log::message::negligible << "Stopping usage of a " << *active << ".";
+			if (context->shader_program_stack.empty()) {
+				log::info::major << "Stack is empty.";
+				glUseProgram(0);
+			} else {
+				auto reactivated = context->shader_program_stack.peek();
+				log::info::major << "A previously used " << *reactivated << " is back to being active, as it's the next element on the stack.";
+				glUseProgram(reactivated->id);
+			}
 		} else {
-			auto reactivated = context->shader_program_stack.peek();
-			log::info::major << "A previously used " << *reactivated << " is back to being active, as it's the next element on the stack.";
-			glUseProgram(reactivated->id);
+			log::message::negligible << "Removing a " << program_ref << " from used shader::program stack.";
+			log::info::major << "This doesn't affect active program in any way.";
+			context->shader_program_stack.erase(iterator);
 		}
-	} else {
-		log::message::negligible << "Removing a " << program_ref << " from used shader::program stack.";
-		log::info::major << "This doesn't affect active program in any way.";
-		context->shader_program_stack.erase(iterator);
 	}
 }
 

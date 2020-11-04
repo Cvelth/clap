@@ -25,7 +25,7 @@ namespace clap::gl::detail {
 			friend clap::gl::shader::detail::unlock_program_callable;
 
 		public:
-			inline clap::gl::shader::program const *active_shader_program() const {
+			[[nodiscard]] inline clap::gl::shader::program const *active_shader_program() const {
 				return !shader_program_stack.empty()
 					? shader_program_stack.peek()
 					: nullptr;
@@ -40,7 +40,7 @@ namespace clap::gl::detail {
 			friend clap::gl::vertex::detail::unbind_buffer_callable;
 
 		public:
-			inline clap::gl::vertex::buffer const *bound_vertex_buffer(clap::gl::vertex::buffer_target target) const {
+			[[nodiscard]] inline clap::gl::vertex::buffer const *bound_vertex_buffer(clap::gl::vertex::buffer_target target) const {
 				return !vertex_buffer_stack[size_t(target)].empty()
 					? vertex_buffer_stack[size_t(target)].peek()
 					: nullptr;
@@ -56,7 +56,7 @@ namespace clap::gl::detail {
 			friend clap::gl::vertex::detail::unbind_array_callable;
 
 		public:
-			inline clap::gl::vertex::array const *bound_vertex_array() const {
+			[[nodiscard]] inline clap::gl::vertex::array const *bound_vertex_array() const {
 				return !vertex_array_stack.empty()
 					? vertex_array_stack.peek()
 					: nullptr;
@@ -73,7 +73,7 @@ namespace clap::gl::detail {
 			friend struct texture::detail::unbind_texture_callable;
 
 		public:
-			inline clap::gl::texture::detail::generic_interface bound_texture(size_t unit) const {
+			[[nodiscard]] inline clap::gl::texture::detail::generic_interface bound_texture(size_t unit) const {
 				if (unit >= texture_stack.size())
 					return (clap::gl::texture::_1d *) nullptr;
 				else {
@@ -91,40 +91,63 @@ namespace clap::gl::detail {
 
 	class context;
 	namespace detail {
-		struct lock_context_callable {
+		struct activate_context_callable {
 			context &context_ref;
-			void operator()();
+			inline void operator()();
 		};
-		struct unlock_context_callable {
+		struct deactivate_context_callable {
 			context &context_ref;
-			void operator()();
+			inline void operator()();
+		};
+
+		class activation_guard
+			: public essential::guard<std::mutex, detail::activate_context_callable, detail::deactivate_context_callable> {
+		public:
+			activation_guard(context &context_ref);
+		};
+		class access_guard {
+		public:
+			access_guard(context *context_ptr);
+			~access_guard();
+
+			access_guard(access_guard const &) = delete;
+			access_guard &operator=(access_guard const &) = delete;
+			access_guard(access_guard &&another) : context_ptr(another.context_ptr) { another.context_ptr = nullptr; }
+			access_guard &operator=(access_guard &&) = delete;
+
+			context *operator*() { return context_ptr; }
+			context const *operator*() const { return context_ptr; }
+			context *operator->() { return context_ptr; }
+			context const *operator->() const { return context_ptr; }
+			operator bool() const { return context_ptr; }
+			auto operator<=>(access_guard const &another) const { return context_ptr <=> another.context_ptr; }
+			bool operator!() const { return !bool(*this); }
+
+		protected:
+			context *context_ptr;
 		};
 	}
-	class context_guard
-		: public essential::guard<std::mutex, detail::lock_context_callable, detail::unlock_context_callable> {
-	public:
-		context_guard(context &context_ref);
-	};
 
-	class context 
+	class context
 		: public detail::shader_program_stack_t
 		, public detail::vertex_buffer_stack_t
 		, public detail::vertex_array_stack_t
 		, public detail::texture_stack_t {
 
-		friend context_guard;
-
-		friend detail::lock_context_callable;
-		friend detail::unlock_context_callable;
+		friend detail::activate_context_callable;
+		friend detail::deactivate_context_callable;
+		friend detail::activation_guard;
+		friend detail::access_guard;
 
 	public:
-		context(std::u8string name, size_t width, size_t height);
-		inline ~context() { 
-			//std::scoped_lock(mutex);
-		}
+		using activation_guard = detail::activation_guard;
+		using access_guard = detail::access_guard;
 
-		[[nodiscard]] static context *current();
-		[[nodiscard]] context_guard make_current();
+		context(std::u8string name, size_t width, size_t height);
+		inline ~context() { std::lock_guard _(access_mutex); }
+
+		[[nodiscard]] static access_guard current();
+		[[nodiscard]] activation_guard make_current();
 
 	protected:
 		void activate();
@@ -134,8 +157,10 @@ namespace clap::gl::detail {
 		window::object window;
 
 	private:
-		std::mutex mutex;
-		context *previous;
-		size_t guard_counter;
+		std::mutex activation_mutex;
+		std::shared_mutex access_mutex;
 	};
+
+	inline void detail::activate_context_callable::operator()() { context_ref.activate(); }
+	inline void detail::deactivate_context_callable::operator()() { context_ref.deactivate(); }
 }

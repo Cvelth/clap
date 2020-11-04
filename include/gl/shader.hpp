@@ -10,6 +10,7 @@
 #include "essential/guard.hpp"
 #include "essential/stack.hpp"
 
+#include "gl/detail/context.hpp"
 #include "gl/interface.hpp"
 
 typedef unsigned int GLenum;
@@ -485,8 +486,8 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type target);
 
 template<typename param_t>
 inline clap::gl::shader::variable::uniform const &clap::gl::shader::variable::uniform::set(param_t const *ptr, size_t count) const {
-	if (!gl::detail::verify_context(program_ref)) return *this;
-	std::visit(detail::set_uniform_visitor(*this, ptr, count), *this);
+	if (auto context = program_ref.access_context(); context)
+		std::visit(detail::set_uniform_visitor(*this, ptr, count), *this);
 	return *this;
 }
 template<typename param_t>
