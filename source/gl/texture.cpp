@@ -7,20 +7,22 @@
 
 template <clap::gl::texture::detail::target texture_type>
 clap::gl::texture::detail::interface<texture_type>::~interface() {
-	if (auto context = access_context(); context) {
-		for (auto &texture_stack : context->texture_stack) {
-			auto iterator = texture_stack.begin();
-			auto pred = [this](auto &interface) { return std::get<detail::interface<texture_type> const *>(interface) == this; };
-			while ((iterator = std::find_if(iterator, texture_stack.end(), pred)) != texture_stack.end()) {
-				log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
-				*iterator = (detail::interface<texture_type> const *) nullptr;
-			}
-		}
-	}
-
 	if (id)
-		glDeleteTextures(1, &id);
-	log::message::minor << "A " << *this << " was destroyed.";
+		if (auto context = access_context(); context) {
+			for (auto &texture_stack : context->texture_stack) {
+				auto iterator = texture_stack.begin();
+				auto pred = [this](auto &interface) { 
+					return std::get<detail::interface<texture_type> const *>(interface) == this; 
+				};
+				while ((iterator = std::find_if(iterator, texture_stack.end(), pred)) != texture_stack.end()) {
+					log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+					*iterator = (detail::interface<texture_type> const *) nullptr;
+				}
+			}
+
+			glDeleteTextures(1, &id);
+			log::message::minor << "A " << *this << " was destroyed.";
+		}
 }
 
 
@@ -565,15 +567,15 @@ void clap::gl::texture::detail::unbind_texture_callable<texture_type>::operator(
 				log::warning::minor << "Stopping usage of a " << texture_type << " object after it was already destroyed.";
 
 			glActiveTexture(GLenum(GL_TEXTURE0 + unit));
-			if (context->texture_stack[unit].empty()) {
+			detail::interface<texture_type> const *reactivated = nullptr;
+			while (!context->texture_stack[unit].empty() && !(reactivated = std::get<detail::interface<texture_type> const *>(context->texture_stack[unit].peek())))
+				if (!reactivated) auto temp = context->texture_stack[unit].pop();
+			if (reactivated) {
+				log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
+				glBindTexture(gl::detail::convert::to_gl(texture_type), reactivated->id);
+			} else {
 				log::info::major << "Stack is empty.";
 				glBindTexture(gl::detail::convert::to_gl(texture_type), 0);
-			} else {
-				auto reactivated = context->texture_stack[unit].peek();
-				auto reactivated_ptr = std::get<detail::interface<texture_type> const *>(reactivated);
-				log::info::major << "A previously used " << *reactivated_ptr
-					<< " was rebound, as it's the next element on the stack.";
-				glBindTexture(gl::detail::convert::to_gl(texture_type), reactivated_ptr->id);
 			}
 		} else {
 			log::message::negligible << "Removing a " << texture_ref << " from bound texture stack.";
