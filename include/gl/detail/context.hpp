@@ -23,6 +23,7 @@ namespace clap::gl::detail {
 		class shader_program_stack_t {
 			friend clap::gl::shader::detail::lock_program_callable;
 			friend clap::gl::shader::detail::unlock_program_callable;
+			friend shader::program;
 
 		public:
 			[[nodiscard]] inline clap::gl::shader::program const *active_shader_program() const {

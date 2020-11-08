@@ -176,13 +176,17 @@ clap::gl::shader::program::program(unsigned id) : id(id) {
 		log::warning::major << "An attempt to create a shader program object with id = 0.";
 }
 clap::gl::shader::program::~program() {
-	// TODO: Stop using this program (and log a warning) if it's being used on deletion.
-
-	if (id)
-		if (auto context = access_context(); context) {
-			glDeleteProgram(id);
-			log::message::minor << "A " << *this << " was destroyed.";
+	if (auto context = access_context(); context) {
+		auto iterator = context->shader_program_stack.begin();
+		while ((iterator = std::find(iterator, context->shader_program_stack.end(), this)) != context->shader_program_stack.end()) {
+			log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+			*iterator = nullptr;
 		}
+
+		if (id)
+			glDeleteProgram(id);
+		log::message::minor << "A " << *this << " was destroyed.";
+	}
 }
 
 clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::shader::detail::lock_program_callable::operator()() {
@@ -199,9 +203,11 @@ clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::sh
 void clap::gl::shader::detail::unlock_program_callable::operator()(clap::essential::stack<clap::gl::shader::program const *>::iterator iterator) {
 	if (auto context = program_ref.access_context(); context) {
 		if (context->shader_program_stack.is_front(iterator)) {
-			auto active = context->shader_program_stack.pop();
+			if (auto active = context->shader_program_stack.pop(); active)
+				log::message::negligible << "Stopping usage of a " << *active << ".";
+			else
+				log::warning::minor << "Stopping usage of a shader program object after it was already destroyed.";
 
-			log::message::negligible << "Stopping usage of a " << *active << ".";
 			if (context->shader_program_stack.empty()) {
 				log::info::major << "Stack is empty.";
 				glUseProgram(0);
