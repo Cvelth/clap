@@ -176,17 +176,17 @@ clap::gl::shader::program::program(unsigned id) : id(id) {
 		log::warning::major << "An attempt to create a shader program object with id = 0.";
 }
 clap::gl::shader::program::~program() {
-	if (auto context = access_context(); context) {
-		auto iterator = context->shader_program_stack.begin();
-		while ((iterator = std::find(iterator, context->shader_program_stack.end(), this)) != context->shader_program_stack.end()) {
-			log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
-			*iterator = nullptr;
-		}
+	if (id)
+		if (auto context = access_context(); context) {
+			auto iterator = context->shader_program_stack.begin();
+			while ((iterator = std::find(iterator, context->shader_program_stack.end(), this)) != context->shader_program_stack.end()) {
+				log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+				*iterator = nullptr;
+			}
 
-		if (id)
 			glDeleteProgram(id);
-		log::message::minor << "A " << *this << " was destroyed.";
-	}
+			log::message::minor << "A " << *this << " was destroyed.";
+		}
 }
 
 clap::essential::stack<clap::gl::shader::program const *>::iterator clap::gl::shader::detail::lock_program_callable::operator()() {
@@ -208,13 +208,15 @@ void clap::gl::shader::detail::unlock_program_callable::operator()(clap::essenti
 			else
 				log::warning::minor << "Stopping usage of a shader program object after it was already destroyed.";
 
-			if (context->shader_program_stack.empty()) {
-				log::info::major << "Stack is empty.";
-				glUseProgram(0);
-			} else {
-				auto reactivated = context->shader_program_stack.peek();
+			std::remove_cvref<decltype(context->shader_program_stack.peek())>::type reactivated = nullptr;
+			while (!context->shader_program_stack.empty() && !(reactivated = context->shader_program_stack.peek()))
+				if (!reactivated) auto temp = context->shader_program_stack.pop();
+			if (reactivated) {
 				log::info::major << "A previously used " << *reactivated << " is back to being active, as it's the next element on the stack.";
 				glUseProgram(reactivated->id);
+			} else {
+				log::info::major << "Stack is empty.";
+				glUseProgram(0);
 			}
 		} else {
 			log::message::negligible << "Removing a " << program_ref << " from used shader::program stack.";
