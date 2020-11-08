@@ -211,12 +211,12 @@ namespace clap::gl::detail::window::event::detail {
 			auto modificators = clap::gl::detail::convert::to_modificator_mask(modificators_raw);
 			if (auto handler = get(w); handler) {
 				if (!handler->on_key(key, scancode_raw, action, modificators)) {
-					clap::log::warning::minor << "Ignore a key event: \'"
+					clap::log::warning::negligible << "Ignore a key event: \'"
 						<< modificators << key << " was " << action << "\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a key event: \'"
+				clap::log::warning::negligible << "Ignore a key event: \'"
 					<< modificators << key << " was " << action << "\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -225,12 +225,12 @@ namespace clap::gl::detail::window::event::detail {
 			auto codepoint = static_cast<char32_t>(codepoint_raw);
 			if (auto handler = get(w); handler) {
 				if (!handler->on_character(codepoint_raw)) {
-					clap::log::warning::minor << "Ignore a character event: \'"
+					clap::log::warning::negligible << "Ignore a character event: \'"
 						<< codepoint << "\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a character event: \'"
+				clap::log::warning::negligible << "Ignore a character event: \'"
 					<< codepoint << "\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -240,12 +240,12 @@ namespace clap::gl::detail::window::event::detail {
 			auto modificators = clap::gl::detail::convert::to_modificator_mask(modificators_raw);
 			if (auto handler = get(w); handler) {
 				if (!handler->on_character(codepoint_raw)) {
-					clap::log::warning::minor << "Ignore a character event: \'"
+					clap::log::warning::negligible << "Ignore a character event: \'"
 						<< modificators << codepoint << "\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a character event: \'"
+				clap::log::warning::negligible << "Ignore a character event: \'"
 					<< modificators << codepoint << "\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -256,12 +256,12 @@ namespace clap::gl::detail::window::event::detail {
 			auto modificators = clap::gl::detail::convert::to_modificator_mask(modificators_raw);
 			if (auto handler = get(w); handler) {
 				if (!handler->on_mouse_button(button, action, modificators)) {
-					clap::log::warning::minor << "Ignore a mouse event: \'"
+					clap::log::warning::negligible << "Ignore a mouse event: \'"
 						<< modificators << button << " was " << action << "\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a mouse event: \'"
+				clap::log::warning::negligible << "Ignore a mouse event: \'"
 					<< modificators << button << " was " << action << "\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -269,12 +269,12 @@ namespace clap::gl::detail::window::event::detail {
 		static void on_mouse_move(GLFWwindow *w, double x, double y) {
 			if (auto handler = get(w); handler) {
 				if (!handler->on_mouse_move(x, y)) {
-					clap::log::warning::minor << "Ignore a mouse event: \'"
+					clap::log::warning::negligible << "Ignore a mouse event: \'"
 						"Move to (" << x << ", " << y << ")\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a mouse event: \'"
+				clap::log::warning::negligible << "Ignore a mouse event: \'"
 					"Move to (" << x << ", " << y << ")\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -283,31 +283,33 @@ namespace clap::gl::detail::window::event::detail {
 			if (auto handler = get(w); handler) {
 				if (enter_flag_raw) {
 					if (!handler->on_mouse_entering()) {
-						clap::log::warning::minor << "Ignore a mouse event: \'"
+						clap::log::warning::negligible << "Ignore a mouse event: \'"
 							"Enter the window\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 				} else
 					if (!handler->on_mouse_leaving()) {
-						clap::log::warning::minor << "Ignore a mouse event: \'"
+						clap::log::warning::negligible << "Ignore a mouse event: \'"
 							"Leave the window\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 			} else {
-				clap::log::warning::minor << "Ignore mouse events: \'"
-					"Enter the window\' and \'Leave the window\'.";
+				if (enter_flag_raw)
+					clap::log::warning::negligible << "Ignore a mouse event: \'Enter the window\'.";
+				else
+					clap::log::warning::negligible << "Ignore a mouse event: \'Leave the window\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
 		}
 		static void on_scroll(GLFWwindow *w, double dx, double dy) {
 			if (auto handler = get(w); handler) {
 				if (!handler->on_scroll(dx, dy)) {
-					clap::log::warning::minor << "Ignore a scroll event: \'"
+					clap::log::warning::negligible << "Ignore a scroll event: \'"
 						"Scroll for (" << dx << ", " << dy << ")\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a scroll event: \'"
+				clap::log::warning::negligible << "Ignore a scroll event: \'"
 					"Scroll for (" << dx << ", " << dy << ")\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -316,12 +318,12 @@ namespace clap::gl::detail::window::event::detail {
 			size_t x = x_raw, y = y_raw;
 			if (auto handler = get(w); handler) {
 				if (!handler->on_window_resize(x, y)) {
-					clap::log::warning::minor << "Ignore a window event: \'"
+					clap::log::warning::negligible << "Ignore a window event: \'"
 						"Resize to (" << x << ", " << y << ")\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a window event: \'"
+				clap::log::warning::negligible << "Ignore a window event: \'"
 					"Resize to (" << x << ", " << y << ")\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -330,14 +332,14 @@ namespace clap::gl::detail::window::event::detail {
 			auto paths = (char8_t const **) paths_raw;
 			if (auto handler = get(w); handler) {
 				if (!handler->on_file_drop(count, paths)) {
-					clap::log::warning::minor << "Ignore a file drop event.";
+					clap::log::warning::negligible << "Ignore a file drop event.";
 					clap::log::info::major << "Event handler returned 'false'.";
 					clap::log::info::major << "File count: " << count;
 					for (int i = 0; i < count; i++)
 						clap::log::info::minor << i << ": '" << paths[i] << "'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a file drop event.";
+				clap::log::warning::negligible << "Ignore a file drop event.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 				clap::log::info::major << "File count: " << count;
 				for (int i = 0; i < count; i++)
@@ -349,12 +351,12 @@ namespace clap::gl::detail::window::event::detail {
 			size_t x = x_raw, y = y_raw;
 			if (auto handler = get(w); handler) {
 				if (!handler->on_window_move(x, y)) {
-					clap::log::warning::minor << "Ignore a window event: \'"
+					clap::log::warning::negligible << "Ignore a window event: \'"
 						"Move to (" << x << ", " << y << ")\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a window event: \'"
+				clap::log::warning::negligible << "Ignore a window event: \'"
 					"Move to (" << x << ", " << y << ")\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
@@ -362,11 +364,11 @@ namespace clap::gl::detail::window::event::detail {
 		static void on_window_close(GLFWwindow *w) {
 			if (auto handler = get(w); handler) {
 				if (!handler->on_window_close()) {
-					clap::log::warning::minor << "Ignore a window event: \'Close\'.";
+					clap::log::warning::negligible << "Ignore a window event: \'Close\'.";
 					clap::log::info::major << "Event handler returned 'false'.";
 				}
 			} else {
-				clap::log::warning::minor << "Ignore a window event: \'Close\'.";
+				clap::log::warning::negligible << "Ignore a window event: \'Close\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
 		}
@@ -374,17 +376,19 @@ namespace clap::gl::detail::window::event::detail {
 			if (auto handler = get(w); handler) {
 				if (focus_flag_raw) {
 					if (!handler->on_window_focus_gain()) {
-						clap::log::warning::minor << "Ignore a window event: \'Gain Focus\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Gain focus\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 				} else
 					if (!handler->on_window_focus_loss()) {
-						clap::log::warning::minor << "Ignore a window event: \'Lose Focus\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Lose focus\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 			} else {
-				clap::log::warning::minor << "Ignore window events: \'"
-					"Gain Focus\' and \'Lose Focus\'.";
+				if (focus_flag_raw)
+					clap::log::warning::negligible << "Ignore a mouse event: \'Gain focus\'.";
+				else
+					clap::log::warning::negligible << "Ignore a mouse event: \'Lose focus\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
 		}
@@ -392,17 +396,19 @@ namespace clap::gl::detail::window::event::detail {
 			if (auto handler = get(w); handler) {
 				if (flag_raw) {
 					if (!handler->on_window_minimize()) {
-						clap::log::warning::minor << "Ignore a window event: \'Minimize\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Minimize\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 				} else
 					if (!handler->on_restore_minimized()) {
-						clap::log::warning::minor << "Ignore a window event: \'Restore minimized\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Restore minimized\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 			} else {
-				clap::log::warning::minor << "Ignore window events: \'"
-					"Minimize\' and \'Restore minimized\'.";
+				if (flag_raw)
+					clap::log::warning::negligible << "Ignore a mouse event: \'Minimize\'.";
+				else
+					clap::log::warning::negligible << "Ignore a mouse event: \'Restore minimized\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
 		}
@@ -410,17 +416,19 @@ namespace clap::gl::detail::window::event::detail {
 			if (auto handler = get(w); handler) {
 				if (flag_raw) {
 					if (!handler->on_window_maximize()) {
-						clap::log::warning::minor << "Ignore a window event: \'Maximize\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Maximize\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 				} else
 					if (!handler->on_restore_maximized()) {
-						clap::log::warning::minor << "Ignore a window event: \'Restore Maximized\'.";
+						clap::log::warning::negligible << "Ignore a window event: \'Restore maximized\'.";
 						clap::log::info::major << "Event handler returned 'false'.";
 					}
 			} else {
-				clap::log::warning::minor << "Ignore window events: \'"
-					"Maximize\' and \'Restore Maximized\'.";
+				if (flag_raw)
+					clap::log::warning::negligible << "Ignore a mouse event: \'Maximize\'.";
+				else
+					clap::log::warning::negligible << "Ignore a mouse event: \'Restore maximized\'.";
 				clap::log::info::major << "Handler for this event type isn't installed.";
 			}
 		}
