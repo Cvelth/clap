@@ -15,7 +15,7 @@ clap::gl::texture::detail::interface<texture_type>::~interface() {
 					return std::get<detail::interface<texture_type> const *>(interface) == this; 
 				};
 				while ((iterator = std::find_if(iterator, texture_stack.end(), pred)) != texture_stack.end()) {
-					log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+					log::warning::major << "The destructor of a " << *this << " was called while it's still bound.";
 					*iterator = (detail::interface<texture_type> const *) nullptr;
 				}
 			}
@@ -564,7 +564,7 @@ void clap::gl::texture::detail::unbind_texture_callable<texture_type>::operator(
 			if (auto active = context->texture_stack[unit].pop(); std::visit([](auto *a) { return bool(a); }, active))
 				log::message::negligible << "A " << *std::get<detail::interface<texture_type> const *>(active) << " was unbound.";
 			else
-				log::warning::minor << "Stopping usage of a " << texture_type << " object after it was already destroyed.";
+				log::warning::minor << "Unbinding a " << texture_type << " object after it was already destroyed.";
 
 			glActiveTexture(GLenum(GL_TEXTURE0 + unit));
 			detail::interface<texture_type> const *reactivated = nullptr;
