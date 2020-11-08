@@ -178,6 +178,21 @@ namespace clap::log::detail {
 		stream(stream const &) = delete;
 
 		/**
+		 * @brief Move constructor is deleted.
+		*/
+		stream(stream &&) = delete;
+
+		/**
+		 * @brief Copy assignment operator is deleted.
+		*/
+		stream &operator=(stream const &) = delete;
+
+		/**
+		 * @brief Move assignment operator is deleted.
+		*/
+		stream &operator=(stream &&) = delete;
+
+		/**
 		 * @brief Writes the header of the entry.
 		 *
 		 * The header includes type, level, time and id of the entity being logged.
