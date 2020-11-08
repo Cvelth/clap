@@ -15,23 +15,26 @@ clap::gl::vertex::buffer::buffer() : size(0), id(0) {
 		log::message::minor << "A " << *this << " was created.";
 }
 clap::gl::vertex::buffer::~buffer() {
-	if (auto context = access_context(); context) {
-		// Stop using this buffer (and log a warning) if it's being used on deletion.
-		// Make sure no VAOs are bound when the buffer is deleted!
+	if (id)
+		if (auto context = access_context(); context) {
+			for (auto &vertex_buffer_stack : context->vertex_buffer_stack) {
+				auto iterator = vertex_buffer_stack.begin();
+				while ((iterator = std::find(iterator, vertex_buffer_stack.end(), this)) != vertex_buffer_stack.end()) {
+					log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+					*iterator = nullptr;
+				}
+			}
 
-		auto temp_vao = context->bound_vertex_array();
-		if (temp_vao)
-			glBindVertexArray(0);
+			auto temp_vao = context->bound_vertex_array();
+			if (temp_vao)
+				glBindVertexArray(0);
 
-		if (id) {
 			glDeleteBuffers(1, &id);
 			log::message::minor << "A " << *this << " was destroyed.";
+
+			if (temp_vao)
+				glBindVertexArray(temp_vao->id);
 		}
-
-		if (temp_vao)
-			glBindVertexArray(temp_vao->id);
-
-	}
 }
 
 void clap::gl::vertex::buffer::data(void *data, size_t _size, buffer::usage usage, buffer_target target) {
@@ -124,17 +127,22 @@ void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essentia
 		log::error::critical << "Invalid target: " << target << ".";
 	else
 		if (auto context = buffer_ref.access_context(); context) {
-			if (context->vertex_buffer_stack[size_t(target)].is_front(iterator)) {
-				auto active = context->vertex_buffer_stack[size_t(target)].pop();
+			auto &vertex_buffer_stack = context->vertex_buffer_stack[size_t(target)];
+			if (vertex_buffer_stack.is_front(iterator)) {
+				if (auto active = vertex_buffer_stack.pop(); active)
+					log::message::negligible << "A " << *active << " was unbound from '" << target << "'.";
+				else
+					log::warning::minor << "Unbinding a vertex buffer object after it was already destroyed.";
 
-				log::message::negligible << "A " << *active << " was unbound from '" << target << "'.";
-				if (context->vertex_buffer_stack[size_t(target)].empty()) {
-					log::info::major << "Stack is empty.";
-					glBindBuffer(gl::detail::convert::to_gl(target), 0);
-				} else {
-					auto reactivated = context->vertex_buffer_stack[size_t(target)].peek();
+				std::remove_cvref<decltype(vertex_buffer_stack.peek())>::type reactivated = nullptr;
+				while (!vertex_buffer_stack.empty() && !(reactivated = vertex_buffer_stack.peek()))
+					if (!reactivated) auto temp = vertex_buffer_stack.pop();
+				if (reactivated) {
 					log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
 					glBindBuffer(gl::detail::convert::to_gl(target), reactivated->id);
+				} else {
+					log::info::major << "Stack is empty.";
+					glBindBuffer(gl::detail::convert::to_gl(target), 0);
 				}
 			} else {
 				log::message::negligible << "Removing a " << buffer_ref << " from bound vertex::buffer[" << target << "] stack.";
@@ -153,10 +161,14 @@ clap::gl::vertex::array::array() : id(0) {
 		log::message::minor << "A " << *this << " was created.";
 }
 clap::gl::vertex::array::~array() {
-	// Stop using this array (and log a warning) if it's being used on deletion.
-
 	if (id)
 		if (auto context = access_context(); context) {
+			auto iterator = context->vertex_array_stack.begin();
+			while ((iterator = std::find(iterator, context->vertex_array_stack.end(), this)) != context->vertex_array_stack.end()) {
+				log::warning::major << "The destructor of a " << *this << " was called while it's still bound.";
+				*iterator = nullptr;
+			}
+
 			glDeleteVertexArrays(1, &id);
 			log::message::minor << "A " << *this << " was destroyed.";
 		}
@@ -488,16 +500,20 @@ clap::essential::stack<clap::gl::vertex::array const *>::iterator clap::gl::vert
 void clap::gl::vertex::detail::unbind_array_callable::operator()(clap::essential::stack<clap::gl::vertex::array const *>::iterator iterator) {
 	if (auto context = array_ref.access_context(); context) {
 		if (context->vertex_array_stack.is_front(iterator)) {
-			auto active = context->vertex_array_stack.pop();
+			if (auto active = context->vertex_array_stack.pop(); active)
+				log::message::negligible << "A " << *active << " was unbound.";
+			else
+				log::warning::minor << "Unbinding a vertex array object after it was already destroyed.";
 
-			log::message::negligible << "A " << *active << " was unbound.";
-			if (context->vertex_array_stack.empty()) {
-				log::info::major << "Stack is empty.";
-				glBindVertexArray(0);
-			} else {
-				auto reactivated = context->vertex_array_stack.peek();
+			std::remove_cvref<decltype(context->vertex_array_stack.peek())>::type reactivated = nullptr;
+			while (!context->vertex_array_stack.empty() && !(reactivated = context->vertex_array_stack.peek()))
+				if (!reactivated) auto temp = context->vertex_array_stack.pop();
+			if (reactivated) {
 				log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
 				glBindVertexArray(reactivated->id);
+			} else {
+				log::info::major << "Stack is empty.";
+				glBindVertexArray(0);
 			}
 		} else {
 			log::message::negligible << "Removing a " << array_ref << " from bound vertex::array stack.";

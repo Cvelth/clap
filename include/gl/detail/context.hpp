@@ -39,6 +39,7 @@ namespace clap::gl::detail {
 		class vertex_buffer_stack_t {
 			friend clap::gl::vertex::detail::bind_buffer_callable;
 			friend clap::gl::vertex::detail::unbind_buffer_callable;
+			friend clap::gl::vertex::buffer;
 
 		public:
 			[[nodiscard]] inline clap::gl::vertex::buffer const *bound_vertex_buffer(clap::gl::vertex::buffer_target target) const {
@@ -55,6 +56,7 @@ namespace clap::gl::detail {
 		class vertex_array_stack_t {
 			friend clap::gl::vertex::detail::bind_array_callable;
 			friend clap::gl::vertex::detail::unbind_array_callable;
+			friend clap::gl::vertex::array;
 
 		public:
 			[[nodiscard]] inline clap::gl::vertex::array const *bound_vertex_array() const {
