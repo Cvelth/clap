@@ -60,12 +60,12 @@ void clap::log::detail::stream::finish_entry() {
 		);
 
 	if (static_cast<bool>(severity & logger_state_ref.exception_mask)) {
-		std::move(*this) << "\nBecause of the error a 'logger_exception' is raised.\n";
+		std::move(*this) << "\nRaise a 'logger_exception'.\n";
 		throw clap::log::detail::logger_exception();
 	}
 
 	if (static_cast<bool>(severity & logger_state_ref.termination_mask)) {
-		std::move(*this) << "\nBecause of the error the program is being terminated.\n";
+		std::move(*this) << "\nTerminate the program.\n";
 		std::terminate();
 	}
 }
@@ -78,7 +78,7 @@ clap::log::detail::logger_state_t &clap::logger() {
 }
 
 clap::log::detail::logger_state_t::~logger_state_t() {
-	log::message::minor << "Logging is over. Logger destructor was called.";
+	log::message::minor << "Stop the logging. Logger destructor was called.";
 	log::info::major << used_streams.size() << " streams were used.";
 
 	used_streams.clear();
@@ -86,76 +86,78 @@ clap::log::detail::logger_state_t::~logger_state_t() {
 
 void clap::log::detail::logger_state_t::add_stream(std::ostream &stream, logger_mask mask) {
 	if (!stream) {
-		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
+		log::warning::major << "Ignore the stream passed into 'add_stream'.\n"
+			"'clap::detail::logger' doesn't support it.";
 		return;
 	}
 
-	log::message::minor << "Logging to a stream was initialized.";
+	log::message::minor << "Initialize logging to an additional stream.";
 	if (stream.rdbuf() == std::cout.rdbuf()) {
-		log::info::critical << "Stream is 'std::cout'";
+		log::info::critical << "Requested stream is 'std::cout'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::cout' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::cout' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::cout, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else if (stream.rdbuf() == std::cerr.rdbuf()) {
-		log::info::critical << "Stream is 'std::cerr'";
+		log::info::critical << "Requested stream is 'std::cerr'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::cerr' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::cerr' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::cerr, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else if (stream.rdbuf() == std::clog.rdbuf()) {
-		log::info::critical << "Stream is 'std::clog'";
+		log::info::critical << "Requested stream is 'std::clog'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::clog' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::clog' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::clog, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else {
-		log::info::critical << "Stream is a user-controled object";
-		log::info::critical << "Make sure the lifetime of the stream exceeds lifetime of the logger.";
+		log::info::critical << "Requested stream is a user-controled object.\n"
+			"Make sure its lifetime exceeds lifetime of the logger.";
 		used_streams.emplace_back(stream, mask);
 	}
 }
 
 void clap::log::detail::logger_state_t::add_stream(std::wostream &stream, logger_mask mask) {
 	if (!stream) {
-		log::warning::major << "'clap::detail::logger' cannot use the stream passed into 'add_stream'.";
+		log::warning::major << "Ignore the stream passed into 'add_stream'.\n"
+			"'clap::detail::logger' doesn't support it.";
 		return;
 	}
 
-	log::message::minor << "Logging to a stream was initialized.";
+	log::message::minor << "Initialize logging to an additional stream.";
 	if (stream.rdbuf() == std::wcout.rdbuf()) {
-		log::info::critical << "Stream is 'std::wcout'";
+		log::info::critical << "Requested stream is 'std::wcout'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::cout' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::cout' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::cout, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else if (stream.rdbuf() == std::wcerr.rdbuf()) {
-		log::info::critical << "Stream is 'std::wcerr'";
+		log::info::critical << "Requested stream is 'std::wcerr'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::cerr' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::cerr' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::cerr, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else if (stream.rdbuf() == std::wclog.rdbuf()) {
-		log::info::critical << "Stream is 'std::wclog'";
+		log::info::critical << "Requested stream is 'std::wclog'.";
 		if (replace_std_with_nowide) {
-			log::info::critical << "'nowide::clog' is used instead";
-			log::info::critical << "call 'clap::logger::disable_nowide_substitution() to prevent this behaviour";
+			log::info::critical << "'nowide::clog' is used instead.\n"
+				"Call 'clap::logger::disable_nowide_substitution() before adding the stream to prevent this behaviour.";
 			used_streams.emplace_back(nowide::clog, mask);
 		} else
 			used_streams.emplace_back(stream, mask);
 	} else {
-		log::info::critical << "Stream is a user-controled object";
-		log::info::critical << "Make sure the lifetime of the stream exceeds lifetime of the logger.";
+		log::info::critical << "Requested stream is a user-controled object.\n"
+			"Make sure its lifetime exceeds lifetime of the logger.";
 		used_streams.emplace_back(stream, mask);
 	}
 }
@@ -170,18 +172,19 @@ void clap::log::detail::logger_state_t::add_file_wo_timestamp(std::filesystem::p
 
 	if (!std::filesystem::exists(directory_path)) {
 		std::filesystem::create_directories(directory_path);
-		log::message::negligible << "Creating '" << directory_path << "' directory ";
+		log::message::negligible << "Create '" << directory_path << "' directory ";
 	}
 
 	file_wrapper wrapper;
 	(&wrapper).open(nowide::narrow(full_filename.wstring()));
 	if ((&wrapper).fail()) {
-		log::warning::major << "'clap::detail::logger' cannot open file '" << full_filename << "'.";
+		log::warning::major << "Fail opening file: '" << full_filename << "'.\n"
+			"It cannot be used as a logger target.";
 		return;
 	}
 
 	used_streams.emplace_back(std::move(wrapper), mask);
-	log::message::minor << "Logging to '" << full_filename << "' was initialized.";
+	log::message::minor << "Initialize logging to a file: '" << full_filename << "'.";
 }
 
 clap::log::detail::stream_wrapper::operator bool() const {

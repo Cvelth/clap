@@ -255,7 +255,10 @@ namespace clap::log::detail {
 /**
  * @brief Contains objects used to pass messages/warning/errors to logging system.
  *
- * **Usage**: `clap::{type}::{level} << "Your message\n";`
+ * **Usage**: `clap::log::{type}::{level} << "Your message.";`
+ * **Example**: `clap::log::error::critical << "We are doomed!";`
+ * 
+ * Be mindful of the fact that the '\n' at the end is automatically added.
 */
 namespace clap::log {
 	/**
@@ -691,7 +694,7 @@ clap::log::detail::stream &&operator<<(clap::log::detail::stream &&stream, rhs_t
 					wrapper.write_next_info = false; // following info-entries shouldn't be written.
 			}
 		} else {
-			//clap::log::warning::critical << "Cannot write an log entry. One of the streams seems to be corrupted.";
+			//clap::log::warning::critical << "Ignore a stream because its 'operator bool()' returned 'false'.";
 		}
 	}
 	return std::move(stream);
