@@ -1062,21 +1062,21 @@ clap::gl::depth_function clap::gl::detail::convert::to_depth_function(GLenum v) 
 std::ostream &operator<<(std::ostream &stream, clap::gl::depth_function function) {
 	switch (function) {
 		case clap::gl::depth_function::never:
-			stream << "never be passed"; break;
+			stream << "never passed"; break;
 		case clap::gl::depth_function::less:
-			stream << "be passed if new value is less than the current one"; break;
+			stream << "passed if new value is less than the current one"; break;
 		case clap::gl::depth_function::equal:
-			stream << "be passed if new value is equal to the current one"; break;
+			stream << "passed if new value is equal to the current one"; break;
 		case clap::gl::depth_function::less_or_equal:
-			stream << "be passed if new value is less or equal than the current one"; break;
+			stream << "passed if new value is less or equal than the current one"; break;
 		case clap::gl::depth_function::greater:
-			stream << "be passed if new value is greater than the current one"; break;
+			stream << "passed if new value is greater than the current one"; break;
 		case clap::gl::depth_function::not_equal:
-			stream << "be passed if new value is not equal to the current one"; break;
+			stream << "passed if new value is not equal to the current one"; break;
 		case clap::gl::depth_function::greater_or_equal:
-			stream << "be passed if new value is greater or equal than the current one"; break;
+			stream << "passed if new value is greater or equal than the current one"; break;
 		case clap::gl::depth_function::always:
-			stream << "always be passed"; break;
+			stream << "always passed"; break;
 		default:
 			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
