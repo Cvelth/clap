@@ -7,13 +7,20 @@
 
 template <clap::gl::texture::detail::target texture_type>
 clap::gl::texture::detail::interface<texture_type>::~interface() {
-	// TODO: Stop using this texture (and log a warning) if it's being used on deletion.
+	if (auto context = access_context(); context) {
+		for (auto &texture_stack : context->texture_stack) {
+			auto iterator = texture_stack.begin();
+			auto pred = [this](auto &interface) { return std::get<detail::interface<texture_type> const *>(interface) == this; };
+			while ((iterator = std::find_if(iterator, texture_stack.end(), pred)) != texture_stack.end()) {
+				log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+				*iterator = (detail::interface<texture_type> const *) nullptr;
+			}
+		}
+	}
 
 	if (id)
-		if (auto context = access_context(); context) {
-			glDeleteTextures(1, &id);
-			log::message::minor << "A " << *this << " was destroyed.";
-		}
+		glDeleteTextures(1, &id);
+	log::message::minor << "A " << *this << " was destroyed.";
 }
 
 
@@ -552,8 +559,10 @@ void clap::gl::texture::detail::unbind_texture_callable<texture_type>::operator(
 			log::info::major << "Requested target: " << unit << ".";
 			log::info::major << "Available targets: " << context->texture_stack.size();
 		} else if (context->texture_stack[unit].is_front(iterator)) {
-			auto active = context->texture_stack[unit].pop();
-			log::message::negligible << "A " << *std::get<detail::interface<texture_type> const *>(active) << " was unbound.";
+			if (auto active = context->texture_stack[unit].pop(); std::visit([](auto *a) { return bool(a); }, active))
+				log::message::negligible << "A " << *std::get<detail::interface<texture_type> const *>(active) << " was unbound.";
+			else
+				log::warning::minor << "Stopping usage of a " << texture_type << " object after it was already destroyed.";
 
 			glActiveTexture(GLenum(GL_TEXTURE0 + unit));
 			if (context->texture_stack[unit].empty()) {

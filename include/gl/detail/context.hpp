@@ -73,6 +73,9 @@ namespace clap::gl::detail {
 			template <texture::detail::target texture_type>
 			friend struct texture::detail::unbind_texture_callable;
 
+			template <texture::detail::target texture_type>
+			friend class texture::detail::interface;
+
 		public:
 			[[nodiscard]] inline clap::gl::texture::detail::generic_interface bound_texture(size_t unit) const {
 				if (unit >= texture_stack.size())
