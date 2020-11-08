@@ -486,7 +486,7 @@ namespace clap::log::detail {
 		/**
 		 * @brief Adds a text file as an output target for the logger.
 		 *
-		 * File is named "{path} {year}-{month}-{day} {hour}-{minute}-{second}.log"
+		 * File is named "{path} {year}.{month}.{day} {hour}-{minute}-{second} {AM/PM}.log"
 		 *		specifying the moment of its creation
 		 *
 		 * @param path specifies the path where the log file is created.

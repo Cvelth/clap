@@ -27,7 +27,7 @@ std::string verbose_time_stamp() {
 	return current_time_stamp("at %r on %B %d, %Y");
 }
 std::string filename_time_stamp() {
-	return current_time_stamp("%Y-%m-%d %H-%M-%S");
+	return current_time_stamp("%Y.%m.%d %I-%M-%S %p");
 }
 
 void clap::log::detail::stream::initialize_entry() {
