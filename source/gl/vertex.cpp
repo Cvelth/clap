@@ -21,7 +21,7 @@ clap::gl::vertex::buffer::~buffer() {
 				auto iterator = vertex_buffer_stack.begin();
 				while ((iterator = std::find(iterator, vertex_buffer_stack.end(), this)) != vertex_buffer_stack.end()) {
 					log::warning::critical << "Destroy a currently bound " << *this << ".";
-					log::info::critical << "This could lead to weird hard to trace errors.";
+					log::info::critical << "This could lead to some hard to trace errors.";
 					*iterator = nullptr;
 				}
 			}
@@ -136,7 +136,7 @@ void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essentia
 				if (auto active = vertex_buffer_stack.pop(); active)
 					log::message::negligible << "Unbind a " << *active << " from '" << target << "'.";
 				else
-					log::warning::minor << "Unbind a vertex buffer object after it was already destroyed.";
+					log::warning::minor << "Unbind a vertex buffer object only after it was already destroyed.";
 
 				std::remove_cvref<decltype(vertex_buffer_stack.peek())>::type reactivated = nullptr;
 				while (!vertex_buffer_stack.empty() && !(reactivated = vertex_buffer_stack.peek()))
@@ -168,7 +168,7 @@ clap::gl::vertex::array::~array() {
 			auto iterator = context->vertex_array_stack.begin();
 			while ((iterator = std::find(iterator, context->vertex_array_stack.end(), this)) != context->vertex_array_stack.end()) {
 				log::warning::critical << "Destroy a currently bound " << *this << ".";
-				log::info::critical << "This could lead to weird hard to trace errors.";
+				log::info::critical << "This could lead to some hard to trace errors.";
 				*iterator = nullptr;
 			}
 
@@ -505,7 +505,7 @@ void clap::gl::vertex::detail::unbind_array_callable::operator()(clap::essential
 			if (auto active = context->vertex_array_stack.pop(); active)
 				log::message::negligible << "Unbind a " << *active << ".";
 			else
-				log::warning::minor << "Unbind a vertex array object after it was already destroyed.";
+				log::warning::minor << "Unbind a vertex array object after after it was already destroyed.";
 
 			std::remove_cvref<decltype(context->vertex_array_stack.peek())>::type reactivated = nullptr;
 			while (!context->vertex_array_stack.empty() && !(reactivated = context->vertex_array_stack.peek()))
