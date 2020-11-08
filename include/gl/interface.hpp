@@ -1,15 +1,13 @@
 ﻿#pragma once
+#include <ostream>
+
 namespace clap::gl::detail {
-	class object_interface;
-	bool verify_context();
-	bool verify_context(object_interface const &);
-	bool verify_context(object_interface const &, object_interface const &);
-
 	class context;
-	class object_interface {
-		friend bool verify_context(object_interface const &);
-		friend bool verify_context(object_interface const &, object_interface const &);
+	namespace detail {
+		class access_guard;
+	}
 
+	class object_interface {
 	public:
 		object_interface();
 		object_interface(object_interface const &);
@@ -17,12 +15,16 @@ namespace clap::gl::detail {
 		object_interface &operator=(object_interface const &);
 		object_interface &operator=(object_interface &&);
 
-	protected:
-		inline bool verify_context() {
-			return gl::detail::verify_context(*this);
+	public:
+		static detail::access_guard access_context_s();
+		detail::access_guard access_context() const;
+		detail::access_guard access_context(object_interface const &another) const;
+
+		friend inline std::ostream &operator<<(std::ostream &stream, object_interface const &object) {
+			return (object, stream << "polymorphic gl object (passed as an 'gl::object_interface' pointer/reference)");
 		}
 
 	protected:
-		context *const context;
+		context *context_ptr;
 	};
 }

@@ -336,9 +336,10 @@ namespace clap::gl::texture {
 
 			template <target T = texture_type>
 			void data(void *data, size_t offset_x, size_t width,
-					  bool generate_mipmap = true, int level = 0,
+					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte
+					  external_type external_type = external_type::unsigned_byte, 
+					  int level = 0
 			) requires (T == target::_1d);
 			template <target T = texture_type>
 			inline void data(void *data, bool generate_mipmap = true,
@@ -349,9 +350,10 @@ namespace clap::gl::texture {
 			}
 			template <target T = texture_type>
 			void data(void *data, size_t offset_x, size_t offset_y, size_t width, size_t height,
-					  bool generate_mipmap = true, int level = 0,
+					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte
+					  external_type external_type = external_type::unsigned_byte,
+					  int level = 0
 			) requires (T == target::_2d);
 			template <target T = texture_type>
 			inline void data(void *data, bool generate_mipmap = true,
@@ -363,9 +365,10 @@ namespace clap::gl::texture {
 			template <target T = texture_type>
 			void data(void *data, size_t offset_x, size_t offset_y, size_t offset_z,
 					  size_t width, size_t height, size_t depth,
-					  bool generate_mipmap = true, int level = 0,
+					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte
+					  external_type external_type = external_type::unsigned_byte,
+					  int level = 0
 			) requires (T == target::_3d);
 			template <target T = texture_type>
 			inline void data(void *data, bool generate_mipmap = true,
@@ -376,9 +379,10 @@ namespace clap::gl::texture {
 			}
 			template <target T = texture_type>
 			void data(void *data, size_t offset_x, size_t offset_c, size_t width, size_t count,
-					  bool generate_mipmap = true, int level = 0,
+					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte
+					  external_type external_type = external_type::unsigned_byte,
+					  int level = 0
 			) requires (T == target::_1d_array);
 			template <target T = texture_type>
 			inline void data(void *data, bool generate_mipmap = true,
@@ -390,9 +394,10 @@ namespace clap::gl::texture {
 			template <target T = texture_type>
 			void data(void *data, size_t offset_x, size_t offset_y, size_t offset_c,
 					  size_t width, size_t height, size_t count,
-					  bool generate_mipmap = true, int level = 0,
+					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte
+					  external_type external_type = external_type::unsigned_byte,
+					  int level = 0
 			) requires (T == target::_2d_array);
 			template <target T = texture_type>
 			inline void data(void *data, bool generate_mipmap = true,

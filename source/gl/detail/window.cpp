@@ -71,7 +71,7 @@ clap::gl::detail::window::object clap::gl::detail::window::create(std::u8string 
 			glfwMakeContextCurrent(nullptr);
 		}
 
-		return object(out);
+		return object(out, title);
 	} else {
 		log::error::major << "Unable to initialize 'GLFWwindow'.";
 		log::info::major << "'glfwCreateWindow' has returned a 'nullptr'.";

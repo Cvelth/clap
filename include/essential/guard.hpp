@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <mutex>
+#include <shared_mutex>
 
 namespace clap::essential {
 	namespace detail {
@@ -29,7 +30,7 @@ namespace clap::essential {
 			if constexpr (std::is_same<state_t, void>::value || !std::is_invocable<unlock_lambda_t, state_t>::value)
 				unlock_lambda();
 			else
-				 unlock_lambda(detail::guard_state<state_t>::value);
+				unlock_lambda(detail::guard_state<state_t>::value);
 		}
 
 		simple_guard(simple_guard const &) = delete;
@@ -48,5 +49,15 @@ namespace clap::essential {
 														   std::forward<unlock_lambda_t>(unlock_lambda)),
 			std::lock_guard<mutex_t>(mutex) {}
 		~guard() {}
+	};
+
+	template <typename mutex_t, typename lock_lambda_t, typename unlock_lambda_t>
+	class shared_guard : public simple_guard<lock_lambda_t, unlock_lambda_t>, protected std::shared_lock<mutex_t> {
+	public:
+		shared_guard(mutex_t &mutex, lock_lambda_t lock_lambda, unlock_lambda_t unlock_lambda)
+			: simple_guard<lock_lambda_t, unlock_lambda_t>(std::forward<lock_lambda_t>(lock_lambda),
+														   std::forward<unlock_lambda_t>(unlock_lambda)),
+			std::shared_lock<mutex_t>(mutex) {}
+		~shared_guard() {}
 	};
 }
