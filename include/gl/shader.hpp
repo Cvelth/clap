@@ -393,12 +393,21 @@ namespace clap::gl::shader {
 		class storage : protected std::unordered_map<std::string, T> {
 			friend program;
 		public:
-			T const &operator[](std::string const &name) const {
+			T const *try_get(std::string const &name) const {
 				auto found = this->find(name);
 				if (found != this->end())
-					return found->second;
+					return &found->second;
+				else
+					return nullptr;
+			}
+			T const &get(std::string const &name) const {
+				if (auto temp = try_get(name); temp)
+					return *temp;
 				else
 					return unknown_variable_error<T>(name);
+			}
+			T const &operator[](std::string const &name) const {
+				return get(name);
 			}
 
 			using std::unordered_map<std::string, T>::cbegin;
