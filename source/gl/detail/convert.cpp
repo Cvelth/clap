@@ -828,27 +828,27 @@ clap::gl::texture::wrap clap::gl::detail::convert::to_wrap(GLenum v) {
 std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target) {
 	switch (target) {
 		case clap::gl::texture::detail::target::_1d:
-			stream << "texture::_1d"; break;
+			stream << "1d texture"; break;
 		case clap::gl::texture::detail::target::_2d:
-			stream << "texture::_2d"; break;
+			stream << "2d texture"; break;
 		case clap::gl::texture::detail::target::_3d:
-			stream << "texture::_3d"; break;
+			stream << "3d texture"; break;
 		case clap::gl::texture::detail::target::_1d_array:
-			stream << "texture::_1d_array"; break;
+			stream << "1d texture array"; break;
 		case clap::gl::texture::detail::target::_2d_array:
-			stream << "texture::_2d_array"; break;
+			stream << "2d texture array"; break;
 		case clap::gl::texture::detail::target::rectangle:
-			stream << "texture::rectangle"; break;
+			stream << "rectangle texture"; break;
 		case clap::gl::texture::detail::target::cube_map:
-			stream << "texture::cube_map"; break;
+			stream << "cube map texture"; break;
 		case clap::gl::texture::detail::target::cube_map_array:
-			stream << "texture::cube_map_array"; break;
+			stream << "cube map texture array"; break;
 		case clap::gl::texture::detail::target::buffer:
-			stream << "texture::buffer"; break;
+			stream << "buffer texture"; break;
 		case clap::gl::texture::detail::target::multisample:
-			stream << "texture::multisample"; break;
+			stream << "multisample texture"; break;
 		case clap::gl::texture::detail::target::multisample_array:
-			stream << "texture::multisample_array"; break;
+			stream << "multisample texture array"; break;
 		default:
 			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
