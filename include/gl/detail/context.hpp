@@ -156,7 +156,7 @@ namespace clap::gl::detail {
 		[[nodiscard]] activation_guard make_current();
 
 		friend inline std::ostream &operator<<(std::ostream &stream, context const &another) {
-			return stream << "OpenGL context for " << another.window;
+			return stream << "OpenGL context for a " << another.window;
 		}
 
 	protected:

@@ -10,9 +10,9 @@ clap::gl::vertex::buffer::buffer() : size(0), id(0) {
 	if (auto context = access_context(); context)
 		glGenBuffers(1, &id);
 	if (id == 0)
-		log::warning::critical << "Vertex Buffer Object creation failed.";
+		log::warning::critical << "Fail to create a vertex buffer object (vbo).";
 	else
-		log::message::minor << "A " << *this << " was created.";
+		log::message::minor << "Create a " << *this << ".";
 }
 clap::gl::vertex::buffer::~buffer() {
 	if (id)
@@ -20,7 +20,8 @@ clap::gl::vertex::buffer::~buffer() {
 			for (auto &vertex_buffer_stack : context->vertex_buffer_stack) {
 				auto iterator = vertex_buffer_stack.begin();
 				while ((iterator = std::find(iterator, vertex_buffer_stack.end(), this)) != vertex_buffer_stack.end()) {
-					log::warning::major << "The destructor of a " << *this << " was called while it's still in use.";
+					log::warning::critical << "Destroy a currently bound " << *this << ".";
+					log::info::critical << "This could lead to some hard to trace errors.";
 					*iterator = nullptr;
 				}
 			}
@@ -30,7 +31,7 @@ clap::gl::vertex::buffer::~buffer() {
 				glBindVertexArray(0);
 
 			glDeleteBuffers(1, &id);
-			log::message::minor << "A " << *this << " was destroyed.";
+			log::message::minor << "Destroy a " << *this << ".";
 
 			if (temp_vao)
 				glBindVertexArray(temp_vao->id);
@@ -45,23 +46,24 @@ void clap::gl::vertex::buffer::data(void *data, size_t _size, buffer::usage usag
 		glBufferData(gl::detail::convert::to_gl(target), size, data, gl::detail::convert::to_gl(usage));
 
 		if (data)
-			log::message::minor << size << " bytes of data were put into a " << *this << " bound to '" << target << "'.";
+			log::message::minor << "Put " << size << " bytes of data into a " << *this << " bound to '" << target << "'.";
 		else
-			log::message::minor << size << " bytes of space were allocated for a " << *this << " bound to '" << target << "'.";
+			log::message::minor << "Allocate " << size << " bytes of space for a " << *this << " bound to '" << target << "'.";
 	}
 }
 void clap::gl::vertex::buffer::subdata(void *data, size_t _size, size_t offset, buffer_target target) {
 	if (offset + _size > size) {
-		log::error::major << "Attempting to access data with an index bigger than the size of the buffer.";
+		log::warning::major << "Attempt to access data with an index bigger than the size of the buffer.";
 		log::info::major << "When calling 'vertex::buffer::subdata' on a " << *this << ".";
+		return;
 	}
 
 	if (auto context = access_context(); context) {
 		auto guard = bind(target);
 		glBufferSubData(gl::detail::convert::to_gl(target), offset, _size, data);
 
-		log::message::minor << _size << " bytes of data were put into a " << *this << " bound to '"
-			<< target << "' with offset: " << offset << ".";
+		log::message::minor << "Put " << _size << " bytes of data into a " << *this << 
+			" bound to '" << target << "' with offset: " << offset << ".";
 	}
 }
 
@@ -72,51 +74,53 @@ void clap::gl::vertex::buffer::copy_from(buffer const &another, size_t _size,
 		auto destination_guard = this->bind(buffer_target::copy_write);
 
 		if (read_offset + _size > another.size) {
-			log::error::major << "Attempting to access data with an index bigger than the size of the buffer.";
+			log::warning::major << "Attempt to access data with an index bigger than the size of the buffer.";
 			log::info::major << "When calling 'vertex::buffer::copy_from' on a " << another << ".";
+			return;
 		}
 		if (write_offset + _size > another.size) {
-			log::error::major << "Attempting to access data with an index bigger than the size of the buffer.";
+			log::warning::major << "Attempt to access data with an index bigger than the size of the buffer.";
 			log::info::major << "When calling 'vertex::buffer::copy_from' on a " << *this << ".";
+			return;
 		}
 
 		glCopyBufferSubData(gl::detail::convert::to_gl(buffer_target::copy_read),
 							gl::detail::convert::to_gl(buffer_target::copy_write),
 							read_offset, write_offset, size);
 
-		log::message::minor << size << " bytes of data were copied from a " << another <<
+		log::message::minor << "Copy " << size << " bytes of data from a " << another <<
 			" with offset " << read_offset << " into a " << *this << " with offset " << write_offset << ".";
 	}
 }
 void clap::gl::vertex::buffer::invalidate(size_t size, size_t offset) {
 	if (offset + size > size) {
-		log::error::major << "Attempting to access data with an index bigger than the size of the buffer.";
+		log::warning::major << "Attempt to access data with an index bigger than the size of the buffer.";
 		log::info::major << "When calling 'vertex::buffer::invalidate' on a " << *this << ".";
+		return;
 	}
 
 	if (auto context = access_context(); context) {
 		glInvalidateBufferSubData(id, offset, size);
-		log::message::minor << size << " bytes of data were invalidated in a " << *this <<
+		log::message::minor << "Invalidate " << size << " bytes of data in a " << *this <<
 			" with offset: " << offset << ".";
 	}
 }
 void clap::gl::vertex::buffer::invalidate() {
 	if (auto context = access_context(); context) {
 		glInvalidateBufferData(id);
-		log::message::minor << "A " << *this << " was invalidated.";
+		log::message::minor << "Invalidate a " << *this << ".";
 	}
 }
 
 
 clap::essential::stack<clap::gl::vertex::buffer const *>::iterator clap::gl::vertex::detail::bind_buffer_callable::operator()() {
 	if (size_t(target) > size_t(buffer_target::LAST))
-		log::error::critical << "Invalid target: " << target << ".";
+		log::warning::critical << "Encounter unsupported buffer target: " << target << ".";
 	else
 		if (auto context = buffer_ref.access_context(); context) {
 			auto out = context->vertex_buffer_stack[size_t(target)].push(&buffer_ref);
 
-			log::message::negligible << "A " << buffer_ref << " was bound to '" << target << "'.";
-			log::info::major << "It was added to the top of the stack.";
+			log::message::negligible << "Bind a " << buffer_ref << " to '" << target << "'.";
 			glBindBuffer(gl::detail::convert::to_gl(target), buffer_ref.id);
 
 			return out;
@@ -124,28 +128,26 @@ clap::essential::stack<clap::gl::vertex::buffer const *>::iterator clap::gl::ver
 }
 void clap::gl::vertex::detail::unbind_buffer_callable::operator()(clap::essential::stack<clap::gl::vertex::buffer const *>::iterator iterator) {
 	if (size_t(target) > size_t(buffer_target::LAST))
-		log::error::critical << "Invalid target: " << target << ".";
+		log::warning::critical << "Encounter unsupported buffer target: " << target << ".";
 	else
 		if (auto context = buffer_ref.access_context(); context) {
 			auto &vertex_buffer_stack = context->vertex_buffer_stack[size_t(target)];
 			if (vertex_buffer_stack.is_front(iterator)) {
 				if (auto active = vertex_buffer_stack.pop(); active)
-					log::message::negligible << "A " << *active << " was unbound from '" << target << "'.";
+					log::message::negligible << "Unbind a " << *active << " from '" << target << "'.";
 				else
-					log::warning::minor << "Unbinding a vertex buffer object after it was already destroyed.";
+					log::warning::minor << "Unbind a vertex buffer object only after it was already destroyed.";
 
 				std::remove_cvref<decltype(vertex_buffer_stack.peek())>::type reactivated = nullptr;
 				while (!vertex_buffer_stack.empty() && !(reactivated = vertex_buffer_stack.peek()))
 					if (!reactivated) auto temp = vertex_buffer_stack.pop();
 				if (reactivated) {
-					log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
+					log::info::major << "Rebind a previously used " << *reactivated << ", the next element on the stack.";
 					glBindBuffer(gl::detail::convert::to_gl(target), reactivated->id);
-				} else {
-					log::info::major << "Stack is empty.";
+				} else
 					glBindBuffer(gl::detail::convert::to_gl(target), 0);
-				}
 			} else {
-				log::message::negligible << "Removing a " << buffer_ref << " from bound vertex::buffer[" << target << "] stack.";
+				log::message::negligible << "Remove a " << buffer_ref << " from bound vertex::buffer[" << target << "] stack.";
 				log::info::major << "This doesn't affect any currently bound buffers in any way.";
 				context->vertex_buffer_stack[size_t(target)].erase(iterator);
 			}
@@ -156,21 +158,22 @@ clap::gl::vertex::array::array() : id(0) {
 	if (auto context = access_context(); context)
 		glGenVertexArrays(1, &id);
 	if (id == 0)
-		log::warning::critical << "Vertex Array Object creation failed.";
+		log::warning::critical << "Fail to create vertex array object.";
 	else
-		log::message::minor << "A " << *this << " was created.";
+		log::message::minor << "Create a " << *this << ".";
 }
 clap::gl::vertex::array::~array() {
 	if (id)
 		if (auto context = access_context(); context) {
 			auto iterator = context->vertex_array_stack.begin();
 			while ((iterator = std::find(iterator, context->vertex_array_stack.end(), this)) != context->vertex_array_stack.end()) {
-				log::warning::major << "The destructor of a " << *this << " was called while it's still bound.";
+				log::warning::critical << "Destroy a currently bound " << *this << ".";
+				log::info::critical << "This could lead to some hard to trace errors.";
 				*iterator = nullptr;
 			}
 
 			glDeleteVertexArrays(1, &id);
-			log::message::minor << "A " << *this << " was destroyed.";
+			log::message::minor << "Destroy a " << *this << ".";
 		}
 }
 
@@ -214,7 +217,7 @@ void clap::gl::vertex::array::attribute_pointer(vertex::buffer &buffer, shader::
 				}
 			}, variable
 		);
-		log::message::minor << "A " << variable << " uses " << buffer << " as inputs.";
+		log::message::minor << "Use a " << buffer << " as input for a " << variable << ".";
 		log::info::minor << "State is stored in: " << *this << ".";
 		log::info::minor << "Stride: " << stride << ".";
 		log::info::minor << "Shift: " << shift << ".";
@@ -232,7 +235,7 @@ void clap::gl::vertex::array::attribute_divisor(shader::variable::attribute cons
 				}
 			}, variable
 		);
-		log::message::minor << "A " << variable << " uses a divisor: " << divisor << ".";
+		log::message::minor << "Enable usage of a divisor (" << divisor << ") for a " << variable << ".";
 		log::info::minor << "State is stored in: " << *this << ".";
 	}
 }
@@ -272,7 +275,7 @@ void clap::gl::vertex::array::draw(connection connection, size_t count, size_t f
 	if (auto context = access_context(); context) {
 		auto guard = this->bind();
 		glDrawArrays(gl::detail::convert::to_gl(connection), GLint(first), GLint(count));
-		log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
+		log::message::minor << "Draw " << *this << " with " << count << " vertices.";
 	}
 }
 
@@ -280,8 +283,8 @@ void clap::gl::vertex::array::draw_indexed(connection connection, size_t count, 
 										   int base_vertex, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer "
-				"with index data being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_indexed' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -293,7 +296,7 @@ void clap::gl::vertex::array::draw_indexed(connection connection, size_t count, 
 		else
 			glDrawElements(gl::detail::convert::to_gl(connection), GLsizei(count),
 						   gl::detail::convert::to_gl(type), (void *) (first * size_t(type)));
-		log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
+		log::message::minor << "Draw " << *this << " with " << count << " vertices.";
 	}
 }
 
@@ -301,8 +304,8 @@ void clap::gl::vertex::array::draw_indexed(connection connection, size_t start, 
 										   size_t first, int base_vertex, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_indexed' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_indexed' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -315,34 +318,34 @@ void clap::gl::vertex::array::draw_indexed(connection connection, size_t start, 
 			glDrawRangeElements(gl::detail::convert::to_gl(connection), GLuint(start), GLuint(end),
 								GLsizei(count), gl::detail::convert::to_gl(type),
 								(void *) (first * size_t(type)));
-		log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
+		log::message::minor << "Draw " << *this << " with " << count << " vertices.";
 	}
 }
 
 void clap::gl::vertex::array::draw_indirect(connection connection, size_t byte_offset) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
-			log::warning::critical << "'vertex_array::draw_indirect' cannot be called without a buffer with draw data "
-				"being bound to 'buffer::target::indirect_draw'.";
+			log::warning::critical << "Call 'vertex_array::draw_indirect' without "
+				"a buffer with draw data bound to 'buffer::target::indirect_draw'.";
 			return;
 		}
 
 		auto guard = this->bind();
 		glDrawArraysIndirect(gl::detail::convert::to_gl(connection), (void *) (byte_offset));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
 void clap::gl::vertex::array::draw_indexed_indirect(connection connection, size_t byte_offset, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
-			log::warning::critical << "'vertex_array::draw_indexed_indirect' cannot be called without a buffer with draw data "
-				"being bound to 'buffer::target::indirect_draw'.";
+			log::warning::critical << "Call 'vertex_array::draw_indexed_indirect' without "
+				"a buffer with draw data bound to 'buffer::target::indirect_draw'.";
 			return;
 		}
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_indexed_indirect' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::bound_vertex_buffer' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -350,7 +353,7 @@ void clap::gl::vertex::array::draw_indexed_indirect(connection connection, size_
 		glDrawElementsIndirect(gl::detail::convert::to_gl(connection),
 							   gl::detail::convert::to_gl(type),
 							   (void *) (byte_offset));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -360,7 +363,7 @@ void clap::gl::vertex::array::draw_multiple(connection connection, size_t drawco
 		auto guard = this->bind();
 		glMultiDrawArrays(gl::detail::convert::to_gl(connection), (GLint const *) firsts,
 						  (GLint const *) counts, GLsizei(drawcount));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -368,15 +371,15 @@ void clap::gl::vertex::array::draw_multiple_indexed(connection connection, size_
 													int const *byte_offsets, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_multiple_indexed' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
 		auto guard = this->bind();
 		glMultiDrawElements(gl::detail::convert::to_gl(connection), (GLsizei *) counts,
 							gl::detail::convert::to_gl(type), (void **) (byte_offsets), GLsizei(drawcount));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -385,8 +388,8 @@ void clap::gl::vertex::array::draw_multiple_indexed(connection connection, size_
 													int const *base_vertices, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_multiple_indexed' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_multiple_indexed' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -394,7 +397,7 @@ void clap::gl::vertex::array::draw_multiple_indexed(connection connection, size_
 		glMultiDrawElementsBaseVertex(gl::detail::convert::to_gl(connection), (GLsizei *) counts,
 									  gl::detail::convert::to_gl(type), (void **) (byte_offsets),
 									  GLsizei(drawcount), (GLint *) base_vertices);
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -402,15 +405,15 @@ void clap::gl::vertex::array::draw_multiple_indirect(connection connection, size
 													 size_t byte_offset, size_t stride) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
-			log::warning::critical << "'vertex_array::draw_multiple_indirect' cannot be called without a buffer with draw data "
-				"being bound to 'buffer::target::indirect_draw'.";
+			log::warning::critical << "Call 'vertex_array::draw_multiple_indirect' without "
+				"a buffer with draw data bound to 'buffer::target::indirect_draw'.";
 			return;
 		}
 
 		auto guard = this->bind();
 		glMultiDrawArraysIndirect(gl::detail::convert::to_gl(connection), (void *) (byte_offset),
 								  GLsizei(drawcount), GLsizei(stride));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -418,13 +421,13 @@ void clap::gl::vertex::array::draw_multiple_indexed_indirect(connection connecti
 															 size_t stride, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::indirect_draw)) {
-			log::warning::critical << "'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with draw data "
-				"being bound to 'buffer::target::indirect_draw'.";
+			log::warning::critical << "Call 'vertex_array::draw_multiple_indexed_indirect' without "
+				"a buffer with draw data bound to 'buffer::target::indirect_draw'.";
 			return;
 		}
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_multiple_indexed_indirect' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_multiple_indexed_indirect' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -432,7 +435,7 @@ void clap::gl::vertex::array::draw_multiple_indexed_indirect(connection connecti
 		glMultiDrawElementsIndirect(gl::detail::convert::to_gl(connection),
 									gl::detail::convert::to_gl(type),
 									(void *) (byte_offset), GLsizei(drawcount), GLsizei(stride));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -446,7 +449,7 @@ void clap::gl::vertex::array::draw_instanced(connection connection, size_t count
 		else
 			glDrawArraysInstanced(gl::detail::convert::to_gl(connection), GLint(first),
 								  GLsizei(count), GLsizei(draw_count));
-		log::message::negligible << "Draw operation on " << *this << " with " << count << " vertices.";
+		log::message::minor << "Draw " << *this << " with " << count << " vertices.";
 	}
 }
 
@@ -454,8 +457,8 @@ void clap::gl::vertex::array::draw_instanced_indexed(connection connection, size
 													 int base_vertex, int base_instance, index_type type) {
 	if (auto context = access_context(); context) {
 		if (!context->bound_vertex_buffer(vertex::buffer_target::element_array)) {
-			log::warning::critical << "'vertex_array::draw_instanced_indexed' cannot be called without a buffer with index data "
-				"being bound to 'buffer::target::element_array'.";
+			log::warning::critical << "Call 'vertex_array::draw_instanced_indexed' without "
+				"a buffer with index data bound to 'buffer::target::element_array'.";
 			return;
 		}
 
@@ -482,7 +485,7 @@ void clap::gl::vertex::array::draw_instanced_indexed(connection connection, size
 				glDrawElementsInstanced(gl::detail::convert::to_gl(connection), GLsizei(count),
 										gl::detail::convert::to_gl(type),
 										(void *) (first * size_t(type)), GLsizei(draw_count));
-		log::message::negligible << "Draw operation on " << *this << ".";
+		log::message::minor << "Draw " << *this << ".";
 	}
 }
 
@@ -490,8 +493,7 @@ clap::essential::stack<clap::gl::vertex::array const *>::iterator clap::gl::vert
 	if (auto context = array_ref.access_context(); context) {
 		auto out = context->vertex_array_stack.push(&array_ref);
 
-		log::message::negligible << "A " << array_ref << " was bound.";
-		log::info::major << "It was added to the top of the stack.";
+		log::message::negligible << "Bind a " << array_ref << ".";
 		glBindVertexArray(array_ref.id);
 
 		return out;
@@ -501,22 +503,20 @@ void clap::gl::vertex::detail::unbind_array_callable::operator()(clap::essential
 	if (auto context = array_ref.access_context(); context) {
 		if (context->vertex_array_stack.is_front(iterator)) {
 			if (auto active = context->vertex_array_stack.pop(); active)
-				log::message::negligible << "A " << *active << " was unbound.";
+				log::message::negligible << "Unbind a " << *active << ".";
 			else
-				log::warning::minor << "Unbinding a vertex array object after it was already destroyed.";
+				log::warning::minor << "Unbind a vertex array object after after it was already destroyed.";
 
 			std::remove_cvref<decltype(context->vertex_array_stack.peek())>::type reactivated = nullptr;
 			while (!context->vertex_array_stack.empty() && !(reactivated = context->vertex_array_stack.peek()))
 				if (!reactivated) auto temp = context->vertex_array_stack.pop();
 			if (reactivated) {
-				log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
+				log::info::major << "Rebind a previously used " << *reactivated << ", the next element on the stack.";
 				glBindVertexArray(reactivated->id);
-			} else {
-				log::info::major << "Stack is empty.";
+			} else
 				glBindVertexArray(0);
-			}
 		} else {
-			log::message::negligible << "Removing a " << array_ref << " from bound vertex::array stack.";
+			log::message::negligible << "Remove a " << array_ref << " from bound vertex::array stack.";
 			log::info::major << "This doesn't affect any currently bound arrays in any way.";
 			context->vertex_array_stack.erase(iterator);
 		}

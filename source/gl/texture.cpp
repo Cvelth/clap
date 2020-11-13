@@ -15,13 +15,14 @@ clap::gl::texture::detail::interface<texture_type>::~interface() {
 					return std::get<detail::interface<texture_type> const *>(interface) == this; 
 				};
 				while ((iterator = std::find_if(iterator, texture_stack.end(), pred)) != texture_stack.end()) {
-					log::warning::major << "The destructor of a " << *this << " was called while it's still bound.";
+					log::warning::critical << "Destroy a currently bound " << *this << ".";
+					log::info::critical << "This could lead to some hard to trace errors.";
 					*iterator = (detail::interface<texture_type> const *) nullptr;
 				}
 			}
 
 			glDeleteTextures(1, &id);
-			log::message::minor << "A " << *this << " was destroyed.";
+			log::message::minor << "Destroy a " << *this << ".";
 		}
 }
 
@@ -166,10 +167,9 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::in
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::_1d << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::_1d << " texture object.";
+		else {
 			glTexImage1D(gl::detail::convert::to_gl(target::_2d), 0,
 						 gl::detail::convert::to_gl(internal_format),
 						 GLsizei(width), 0,
@@ -177,11 +177,11 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d>::in
 						 gl::detail::convert::to_gl(external_type),
 						 data);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ").";
 			if (generate_mipmap) {
 				glGenerateMipmap(gl::detail::convert::to_gl(target::_1d));
-				log::info::minor << "Mipmap was generated.";
+				log::info::minor << "Generate a mipmap.";
 			}
 		}
 	}
@@ -200,10 +200,9 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::in
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::_2d << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::_2d << " texture object.";
+		else {
 			glTexImage2D(gl::detail::convert::to_gl(target::_2d), 0,
 						 gl::detail::convert::to_gl(internal_format),
 						 GLsizei(width), GLsizei(height), 0,
@@ -211,11 +210,11 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d>::in
 						 gl::detail::convert::to_gl(external_type),
 						 data);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ", " << height << ").";
 			if (generate_mipmap) {
 				glGenerateMipmap(gl::detail::convert::to_gl(target::_2d));
-				log::info::minor << "Mipmap was generated.";
+				log::info::minor << "Generate a mipmap.";
 			}
 		}
 	}
@@ -235,10 +234,9 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::in
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::_3d << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::_3d << " texture object.";
+		else {
 			glTexImage3D(gl::detail::convert::to_gl(target::_3d), 0,
 						 gl::detail::convert::to_gl(internal_format),
 						 GLsizei(width), GLsizei(height), GLsizei(depth), 0,
@@ -246,11 +244,11 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d>::in
 						 gl::detail::convert::to_gl(external_type),
 						 data);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ", " << height << ", " << depth << ").";
 			if (generate_mipmap) {
 				glGenerateMipmap(gl::detail::convert::to_gl(target::_3d));
-				log::info::minor << "Mipmap was generated.";
+				log::info::minor << "Generate a mipmap.";
 			}
 		}
 	}
@@ -269,10 +267,9 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_arra
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::_1d_array << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::_1d_array << " texture object.";
+		else {
 			glTexImage2D(gl::detail::convert::to_gl(target::_1d_array), 0,
 						 gl::detail::convert::to_gl(internal_format),
 						 GLsizei(width), GLsizei(count), 0,
@@ -280,11 +277,11 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d_arra
 						 gl::detail::convert::to_gl(external_type),
 						 data);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ") x " << count << ".";
 			if (generate_mipmap) {
 				glGenerateMipmap(gl::detail::convert::to_gl(target::_1d_array));
-				log::info::minor << "Mipmap was generated.";
+				log::info::minor << "Generate a mipmap.";
 			}
 		}
 	}
@@ -304,10 +301,9 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_arra
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::_2d_array << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::_2d_array << " texture object.";
+		else {
 			glTexImage3D(gl::detail::convert::to_gl(target::_2d_array), 0,
 						 gl::detail::convert::to_gl(internal_format),
 						 GLsizei(width), GLsizei(height), GLsizei(count), 0,
@@ -315,11 +311,11 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d_arra
 						 gl::detail::convert::to_gl(external_type),
 						 data);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ", " << height << ") x " << count << ".";
 			if (generate_mipmap) {
 				glGenerateMipmap(gl::detail::convert::to_gl(target::_2d_array));
-				log::info::minor << "Mipmap was generated.";
+				log::info::minor << "Generate a mipmap.";
 			}
 		}
 	}
@@ -338,16 +334,15 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisam
 {
 		if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::multisample << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::multisample << " texture object.";
+		else {
 			glTexImage2DMultisample(gl::detail::convert::to_gl(target::multisample),
 									GLsizei(sample_count),
 									gl::detail::convert::to_gl(internal_format),
 									GLsizei(width), GLsizei(height), are_samples_fixed);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ", " << height << ").";
 			log::info::major << "Sample count: " << sample_count << ".";
 			log::info::major << "Samples are" << (are_samples_fixed ? " " : " not ") << "fixed.";
@@ -368,17 +363,16 @@ clap::gl::texture::detail::interface<clap::gl::texture::detail::target::multisam
 {
 	if (auto context = access_context(); context) {
 		glGenTextures(1, &id);
-		if (id == 0) {
-			log::warning::critical << "Texture Object creation failed.";
-			log::info::major << "Requested type: " << target::multisample_array << ".";
-		} else {
+		if (id == 0)
+			log::warning::critical << "Fail to create a " << target::multisample_array << " texture object.";
+		else {
 			glTexImage3DMultisample(gl::detail::convert::to_gl(target::multisample_array),
 									GLsizei(sample_count),
 									gl::detail::convert::to_gl(internal_format),
 									GLsizei(width), GLsizei(height), GLsizei(count),
 									are_samples_fixed);
 
-			log::message::minor << "A " << *this << " was created.";
+			log::message::minor << "Create a " << *this << ".";
 			log::info::major << "Dimentions are (" << width << ", " << height << ") x " << count << ".";
 			log::info::major << "Sample count: " << sample_count << ".";
 			log::info::major << "Samples are" << (are_samples_fixed ? " " : " not ") << "fixed.";
@@ -393,7 +387,9 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d
 	external_format external_format, external_type external_type, int level) {
 
 	if (width + offset_x > this->width) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
+		log::warning::critical << "Attempt to change data outside of the texture boundaries.";
+		log::info::major << "Requested: (" << offset_x << ", " << offset_x + width << ").";
+		log::info::major << "Acceptable: (0, " << this->width << ").";
 		return;
 	}
 
@@ -404,11 +400,11 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d
 						gl::detail::convert::to_gl(external_format),
 						gl::detail::convert::to_gl(external_type),
 						data);
-		log::message::minor << "A " << *this << " was modified.";
+		log::message::minor << "Update a " << *this << ".";
 
 		if (generate_mipmap) {
 			glGenerateMipmap(gl::detail::convert::to_gl(target::_1d));
-			log::info::minor << "Mipmap was generated.";
+			log::info::minor << "Generate a mipmap.";
 		}
 	}
 }
@@ -420,7 +416,10 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d
 	external_format external_format, external_type external_type, int level) {
 
 	if (width + offset_x > this->width || height + offset_y > this->height) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
+		log::warning::critical << "Attempt to change data outside of the texture boundaries.";
+		log::info::major << "Requested: {(" << offset_x << ", " << offset_x + width << "), (" 
+			<< offset_y << ", " << offset_y + height << ")}.";
+		log::info::major << "Acceptable: {(0, " << this->width << "), (0, " << this->height << ")}.";
 		return;
 	}
 
@@ -432,11 +431,11 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d
 						gl::detail::convert::to_gl(external_format),
 						gl::detail::convert::to_gl(external_type),
 						data);
-		log::message::minor << "A " << *this << " was modified.";
+		log::message::minor << "Update a " << *this << ".";
 
 		if (generate_mipmap) {
 			glGenerateMipmap(gl::detail::convert::to_gl(target::_2d));
-			log::info::minor << "Mipmap was generated.";
+			log::info::minor << "Generate a mipmap.";
 		}
 	}
 }
@@ -448,7 +447,12 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d
 	external_format external_format, external_type external_type, int level) {
 
 	if (width + offset_x > this->width || height + offset_y > this->height || depth + offset_z > this->depth) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
+		log::warning::critical << "Attempt to change data outside of the texture boundaries.";
+		log::info::major << "Requested: {(" << offset_x << ", " << offset_x + width << "), ("
+			<< offset_y << ", " << offset_y + height << "), (" 
+			<< offset_z << ", " << offset_z + depth << ")}.";
+		log::info::major << "Acceptable: {(0, " << this->width << "), (0, " << this->height 
+			<< "), (0, " << this->depth << ")}.";
 		return;
 	}
 
@@ -460,11 +464,11 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_3d
 						gl::detail::convert::to_gl(external_format),
 						gl::detail::convert::to_gl(external_type),
 						data);
-		log::message::minor << "A " << *this << " was modified.";
+		log::message::minor << "Update a " << *this << ".";
 
 		if (generate_mipmap) {
 			glGenerateMipmap(gl::detail::convert::to_gl(target::_3d));
-			log::info::minor << "Mipmap was generated.";
+			log::info::minor << "Generate a mipmap.";
 		}
 	}
 }
@@ -475,7 +479,10 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d
 	external_format external_format, external_type external_type, int level) {
 
 	if (width + offset_x > this->width || count + offset_c > this->count) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
+		log::warning::critical << "Attempt to change data outside of the texture boundaries.";
+		log::info::major << "Requested: {(" << offset_x << ", " << offset_x + width << "), ("
+			<< offset_c << ", " << offset_c + count << ")}.";
+		log::info::major << "Acceptable: {(0, " << this->width << "), (0, " << this->count << ")}.";
 		return;
 	}
 
@@ -487,11 +494,11 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_1d
 						gl::detail::convert::to_gl(external_format),
 						gl::detail::convert::to_gl(external_type),
 						data);
-		log::message::minor << "A " << *this << " was modified.";
+		log::message::minor << "Update a " << *this << ".";
 
 		if (generate_mipmap) {
 			glGenerateMipmap(gl::detail::convert::to_gl(target::_1d_array));
-			log::info::minor << "Mipmap was generated.";
+			log::info::minor << "Generate a mipmap.";
 		}
 	}
 }
@@ -503,7 +510,12 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d
 	external_format external_format, external_type external_type, int level) {
 
 	if (width + offset_x > this->width || height + offset_y > this->height || count + offset_c > this->count) {
-		log::warning::critical << "Attempt to change data out of texture bounds";
+		log::warning::critical << "Attempt to change data outside of the texture boundaries.";
+		log::info::major << "Requested: {(" << offset_x << ", " << offset_x + width << "), ("
+			<< offset_y << ", " << offset_y + height << "), ("
+			<< offset_c << ", " << offset_c + count << ")}.";
+		log::info::major << "Acceptable: {(0, " << this->width << "), (0, " << this->height
+			<< "), (0, " << this->count << ")}.";
 		return;
 	}
 
@@ -515,11 +527,11 @@ void clap::gl::texture::detail::interface<clap::gl::texture::detail::target::_2d
 						gl::detail::convert::to_gl(external_format),
 						gl::detail::convert::to_gl(external_type),
 						data);
-		log::message::minor << "A " << *this << " was modified.";
+		log::message::minor << "Update a " << *this << ".";
 
 		if (generate_mipmap) {
 			glGenerateMipmap(gl::detail::convert::to_gl(target::_2d_array));
-			log::info::minor << "Mipmap was generated.";
+			log::info::minor << "Generate a mipmap.";
 		}
 	}
 }
@@ -531,21 +543,20 @@ typename clap::essential::stack<clap::gl::texture::detail::generic_interface>::i
 			int value = -1;
 			glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &value);
 			if (value < 0)
-				log::error::critical << "Error attempting to request 'GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS'.";
+				log::error::critical << "Unable to request 'GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS' value.";
 			else
 				context->texture_stack.resize((size_t) value);
 		}
 		if (unit >= context->texture_stack.size()) {
-			log::error::critical << "Attempting to bind texture to a non-existent texture unit.";
-			log::info::major << "Requested target: " << unit << ".";
-			log::info::major << "Available targets: " << context->texture_stack.size();
+			log::error::critical << "Fail to bind a " << texture_ref << " to a non-existent binding point.";
+			log::info::major << "Requested binding point: " << unit << ".";
+			log::info::major << "Available binding point count: " << context->texture_stack.size();
 		}
 
 		detail::generic_interface ptr = &texture_ref;
 		auto out = context->texture_stack[unit].push(ptr);
 
-		log::message::negligible << "A " << texture_ref << " was bound.";
-		log::info::major << "It was added to the top of the stack.";
+		log::message::negligible << "Bind a " << texture_ref << " to a binding point #" << unit << ".";
 		glActiveTexture(GLenum(GL_TEXTURE0 + unit));
 		glBindTexture(gl::detail::convert::to_gl(texture_type), texture_ref.id);
 
@@ -557,28 +568,26 @@ template <clap::gl::texture::detail::target texture_type>
 void clap::gl::texture::detail::unbind_texture_callable<texture_type>::operator()(typename essential::stack<generic_interface>::iterator iterator) {
 	if (auto context = texture_ref.access_context(); context) {
 		if (unit >= context->texture_stack.size()) {
-			log::error::critical << "Attempting to unbind texture from a non-existent texture unit.";
-			log::info::major << "Requested target: " << unit << ".";
-			log::info::major << "Available targets: " << context->texture_stack.size();
+			log::error::critical << "Fail to unbind a " << texture_ref << " from a non-existent binding point.";
+			log::info::major << "Requested binding point: " << unit << ".";
+			log::info::major << "Available binding point count: " << context->texture_stack.size();
 		} else if (context->texture_stack[unit].is_front(iterator)) {
 			if (auto active = context->texture_stack[unit].pop(); std::visit([](auto *a) { return bool(a); }, active))
-				log::message::negligible << "A " << *std::get<detail::interface<texture_type> const *>(active) << " was unbound.";
+				log::message::negligible << "Unbind a " << *std::get<detail::interface<texture_type> const *>(active) << " from a binding point #" << unit << ".";
 			else
-				log::warning::minor << "Unbinding a " << texture_type << " object after it was already destroyed.";
+				log::warning::minor << "Unbind a " << texture_type << " object after it was already destroyed.";
 
 			glActiveTexture(GLenum(GL_TEXTURE0 + unit));
 			detail::interface<texture_type> const *reactivated = nullptr;
 			while (!context->texture_stack[unit].empty() && !(reactivated = std::get<detail::interface<texture_type> const *>(context->texture_stack[unit].peek())))
 				if (!reactivated) auto temp = context->texture_stack[unit].pop();
 			if (reactivated) {
-				log::info::major << "A previously used " << *reactivated << " was rebound, as it's the next element on the stack.";
+				log::info::major << "Rebind a previously used " << *reactivated << ", the next element on the stack.";
 				glBindTexture(gl::detail::convert::to_gl(texture_type), reactivated->id);
-			} else {
-				log::info::major << "Stack is empty.";
+			} else
 				glBindTexture(gl::detail::convert::to_gl(texture_type), 0);
-			}
 		} else {
-			log::message::negligible << "Removing a " << texture_ref << " from bound texture stack.";
+			log::message::negligible << "Remove a " << texture_ref << " from bound texture stack.";
 			log::info::major << "This doesn't affect any currently bound textures in any way.";
 			context->texture_stack[unit].erase(iterator);
 		}

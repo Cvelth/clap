@@ -178,6 +178,21 @@ namespace clap::log::detail {
 		stream(stream const &) = delete;
 
 		/**
+		 * @brief Move constructor is deleted.
+		*/
+		stream(stream &&) = delete;
+
+		/**
+		 * @brief Copy assignment operator is deleted.
+		*/
+		stream &operator=(stream const &) = delete;
+
+		/**
+		 * @brief Move assignment operator is deleted.
+		*/
+		stream &operator=(stream &&) = delete;
+
+		/**
 		 * @brief Writes the header of the entry.
 		 *
 		 * The header includes type, level, time and id of the entity being logged.
@@ -240,7 +255,10 @@ namespace clap::log::detail {
 /**
  * @brief Contains objects used to pass messages/warning/errors to logging system.
  *
- * **Usage**: `clap::{type}::{level} << "Your message\n";`
+ * **Usage**: `clap::log::{type}::{level} << "Your message.";`
+ * **Example**: `clap::log::error::critical << "We are doomed!";`
+ * 
+ * Be mindful of the fact that the '\n' at the end is automatically added.
 */
 namespace clap::log {
 	/**
@@ -486,7 +504,7 @@ namespace clap::log::detail {
 		/**
 		 * @brief Adds a text file as an output target for the logger.
 		 *
-		 * File is named "{path} {year}-{month}-{day} {hour}-{minute}-{second}.log"
+		 * File is named "{path} {year}.{month}.{day} {hour}-{minute}-{second} {AM/PM}.log"
 		 *		specifying the moment of its creation
 		 *
 		 * @param path specifies the path where the log file is created.
@@ -676,7 +694,7 @@ clap::log::detail::stream &&operator<<(clap::log::detail::stream &&stream, rhs_t
 					wrapper.write_next_info = false; // following info-entries shouldn't be written.
 			}
 		} else {
-			//clap::log::warning::critical << "Cannot write an log entry. One of the streams seems to be corrupted.";
+			//clap::log::warning::critical << "Ignore a stream because its 'operator bool()' returned 'false'.";
 		}
 	}
 	return std::move(stream);

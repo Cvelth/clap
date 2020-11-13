@@ -29,7 +29,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer_target v) {
 		case clap::gl::vertex::buffer_target::transform_feedback: return GL_TRANSFORM_FEEDBACK_BUFFER;
 		case clap::gl::vertex::buffer_target::uniform: return GL_UNIFORM_BUFFER;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::vertex::buffer_target clap::gl::detail::convert::to_buffer_target(GLenum v) {
 	switch (v) {
@@ -48,7 +48,7 @@ clap::gl::vertex::buffer_target clap::gl::detail::convert::to_buffer_target(GLen
 		case GL_TRANSFORM_FEEDBACK_BUFFER: return clap::gl::vertex::buffer_target::transform_feedback;
 		case GL_UNIFORM_BUFFER: return clap::gl::vertex::buffer_target::uniform;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::access v) {
@@ -57,7 +57,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::access v) {
 		case clap::gl::vertex::buffer::access::read_write: return GL_READ_WRITE;
 		case clap::gl::vertex::buffer::access::write_only: return GL_WRITE_ONLY;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::vertex::buffer::access clap::gl::detail::convert::to_access(GLenum v) {
 	switch (v) {
@@ -65,7 +65,7 @@ clap::gl::vertex::buffer::access clap::gl::detail::convert::to_access(GLenum v) 
 		case GL_READ_WRITE: return clap::gl::vertex::buffer::access::read_write;
 		case GL_WRITE_ONLY: return clap::gl::vertex::buffer::access::write_only;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::usage v) {
@@ -80,7 +80,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::buffer::usage v) {
 		case clap::gl::vertex::buffer::usage::dynamic_read: return GL_DYNAMIC_READ;
 		case clap::gl::vertex::buffer::usage::dynamic_copy: return GL_DYNAMIC_COPY;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::vertex::buffer::usage clap::gl::detail::convert::to_usage(GLenum v) {
 	switch (v) {
@@ -94,7 +94,7 @@ clap::gl::vertex::buffer::usage clap::gl::detail::convert::to_usage(GLenum v) {
 		case GL_DYNAMIC_READ: return clap::gl::vertex::buffer::usage::dynamic_read;
 		case GL_DYNAMIC_COPY: return clap::gl::vertex::buffer::usage::dynamic_copy;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 std::ostream &operator<<(std::ostream &stream, clap::gl::vertex::buffer_target target) {
@@ -128,7 +128,7 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::vertex::buffer_target t
 		case clap::gl::vertex::buffer_target::uniform:
 			stream << "vertex::buffer_target::uniform"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::critical << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -142,7 +142,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::shader::type v) {
 		case clap::gl::shader::type::tesselation_control:		return GL_TESS_CONTROL_SHADER;
 		case clap::gl::shader::type::tesselation_evaluation:	return GL_TESS_EVALUATION_SHADER;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
 	switch (v) {
@@ -153,7 +153,7 @@ clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
 		case GL_TESS_CONTROL_SHADER:	return clap::gl::shader::type::tesselation_control;
 		case GL_TESS_EVALUATION_SHADER: return clap::gl::shader::type::tesselation_evaluation;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std::string const &v) {
@@ -170,7 +170,7 @@ clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std
 	else if (v == "tesselation_evaluation")
 		return clap::gl::shader::type::tesselation_evaluation;
 
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 struct attribute_type_visitor {
@@ -274,7 +274,7 @@ clap::gl::shader::variable::type::attribute clap::gl::detail::convert::to_attrib
 		case GL_DOUBLE_MAT4x2: return clap::gl::shader::variable::type::detail::mat4x2<double>{};
 		case GL_DOUBLE_MAT4x3: return clap::gl::shader::variable::type::detail::mat4x3<double>{};
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 struct uniform_type_visitor : public attribute_type_visitor {
@@ -464,7 +464,7 @@ clap::gl::shader::variable::type::uniform clap::gl::detail::convert::to_uniform(
 		case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return clap::gl::shader::variable::type::detail::image_2d_multisample_array<unsigned>{};
 		case GL_UNSIGNED_INT_ATOMIC_COUNTER: return clap::gl::shader::variable::type::detail::atomic_counter<unsigned>{};
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
@@ -476,7 +476,7 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::shader::type type) {
 		case clap::gl::shader::type::tesselation_control:		stream << "tesselation control"; break;
 		case clap::gl::shader::type::tesselation_evaluation:	stream << "tesselation evaluation"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -495,7 +495,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::detail::target v) {
 		case clap::gl::texture::detail::target::multisample: return GL_TEXTURE_2D_MULTISAMPLE;
 		case clap::gl::texture::detail::target::multisample_array: return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::detail::target clap::gl::detail::convert::to_texture_target(GLenum v) {
 	switch (v) {
@@ -511,7 +511,7 @@ clap::gl::texture::detail::target clap::gl::detail::convert::to_texture_target(G
 		case GL_TEXTURE_2D_MULTISAMPLE: return clap::gl::texture::detail::target::multisample;
 		case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return clap::gl::texture::detail::target::multisample_array;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::internal_format v) {
@@ -584,7 +584,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::internal_format v) {
 		case texture::internal_format::rgba32i: return GL_RGBA32I;
 		case texture::internal_format::rgba32ui: return GL_RGBA32UI;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::internal_format clap::gl::detail::convert::to_internal_format(GLenum v) {
 	switch (v) {
@@ -656,7 +656,7 @@ clap::gl::texture::internal_format clap::gl::detail::convert::to_internal_format
 		case GL_RGBA32I: return texture::internal_format::rgba32i;
 		case GL_RGBA32UI: return texture::internal_format::rgba32ui;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::external_format v) {
@@ -677,7 +677,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::external_format v) {
 		case texture::external_format::depth_component: return GL_DEPTH_COMPONENT;
 		case texture::external_format::depth_stencil: return GL_DEPTH_STENCIL;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::external_format clap::gl::detail::convert::to_external_format(GLenum v) {
 	switch (v) {
@@ -697,7 +697,7 @@ clap::gl::texture::external_format clap::gl::detail::convert::to_external_format
 		case GL_DEPTH_COMPONENT: return texture::external_format::depth_component;
 		case GL_DEPTH_STENCIL: return texture::external_format::depth_stencil;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::external_type v) {
@@ -723,7 +723,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::external_type v) {
 		case texture::external_type::unsigned_int_10_10_10_2: return GL_UNSIGNED_INT_10_10_10_2;
 		case texture::external_type::unsigned_int_2_10_10_10_r: return GL_UNSIGNED_INT_2_10_10_10_REV;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::external_type clap::gl::detail::convert::to_texture_type(GLenum v) {
 	switch (v) {
@@ -748,7 +748,7 @@ clap::gl::texture::external_type clap::gl::detail::convert::to_texture_type(GLen
 		case GL_UNSIGNED_INT_10_10_10_2: return texture::external_type::unsigned_int_10_10_10_2;
 		case GL_UNSIGNED_INT_2_10_10_10_REV: return texture::external_type::unsigned_int_2_10_10_10_r;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::depth_stencil_texture_mode v) {
@@ -756,14 +756,14 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::depth_stencil_texture
 		case texture::depth_stencil_texture_mode::depth_component: return GL_DEPTH_COMPONENT;
 		case texture::depth_stencil_texture_mode::stencil_index: return GL_STENCIL_INDEX;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::depth_stencil_texture_mode clap::gl::detail::convert::to_depth_stencil_texture_mode(GLenum v) {
 	switch (v) {
 		case GL_DEPTH_COMPONENT: return texture::depth_stencil_texture_mode::depth_component;
 		case GL_STENCIL_INDEX: return texture::depth_stencil_texture_mode::stencil_index;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::min_filter v) {
@@ -775,7 +775,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::min_filter v) {
 		case texture::min_filter::nearest_mipmap_linear: return GL_NEAREST_MIPMAP_LINEAR;
 		case texture::min_filter::linear_mipmap_linear: return GL_LINEAR_MIPMAP_LINEAR;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::min_filter clap::gl::detail::convert::to_min_filter(GLenum v) {
 	switch (v) {
@@ -786,7 +786,7 @@ clap::gl::texture::min_filter clap::gl::detail::convert::to_min_filter(GLenum v)
 		case GL_NEAREST_MIPMAP_LINEAR: return texture::min_filter::nearest_mipmap_linear;
 		case GL_LINEAR_MIPMAP_LINEAR: return texture::min_filter::linear_mipmap_linear;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::mag_filter v) {
@@ -794,14 +794,14 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::mag_filter v) {
 		case texture::mag_filter::nearest: return GL_NEAREST;
 		case texture::mag_filter::linear: return GL_LINEAR;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::mag_filter clap::gl::detail::convert::to_mag_filter(GLenum v) {
 	switch (v) {
 		case GL_NEAREST: return texture::mag_filter::nearest;
 		case GL_LINEAR: return texture::mag_filter::linear;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::wrap v) {
@@ -812,7 +812,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::texture::wrap v) {
 		case texture::wrap::repeat: return GL_REPEAT;
 		case texture::wrap::mirror_clamp_to_edge: return GL_MIRROR_CLAMP_TO_EDGE;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::texture::wrap clap::gl::detail::convert::to_wrap(GLenum v) {
 	switch (v) {
@@ -822,35 +822,35 @@ clap::gl::texture::wrap clap::gl::detail::convert::to_wrap(GLenum v) {
 		case GL_REPEAT: return texture::wrap::repeat;
 		case GL_MIRROR_CLAMP_TO_EDGE: return texture::wrap::mirror_clamp_to_edge;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target) {
 	switch (target) {
 		case clap::gl::texture::detail::target::_1d:
-			stream << "texture::_1d"; break;
+			stream << "1d texture"; break;
 		case clap::gl::texture::detail::target::_2d:
-			stream << "texture::_2d"; break;
+			stream << "2d texture"; break;
 		case clap::gl::texture::detail::target::_3d:
-			stream << "texture::_3d"; break;
+			stream << "3d texture"; break;
 		case clap::gl::texture::detail::target::_1d_array:
-			stream << "texture::_1d_array"; break;
+			stream << "1d texture array"; break;
 		case clap::gl::texture::detail::target::_2d_array:
-			stream << "texture::_2d_array"; break;
+			stream << "2d texture array"; break;
 		case clap::gl::texture::detail::target::rectangle:
-			stream << "texture::rectangle"; break;
+			stream << "rectangle texture"; break;
 		case clap::gl::texture::detail::target::cube_map:
-			stream << "texture::cube_map"; break;
+			stream << "cube map texture"; break;
 		case clap::gl::texture::detail::target::cube_map_array:
-			stream << "texture::cube_map_array"; break;
+			stream << "cube map texture array"; break;
 		case clap::gl::texture::detail::target::buffer:
-			stream << "texture::buffer"; break;
+			stream << "buffer texture"; break;
 		case clap::gl::texture::detail::target::multisample:
-			stream << "texture::multisample"; break;
+			stream << "multisample texture"; break;
 		case clap::gl::texture::detail::target::multisample_array:
-			stream << "texture::multisample_array"; break;
+			stream << "multisample texture array"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -870,7 +870,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::array::connection v) {
 		case clap::gl::vertex::array::connection::triangle_fan: return GL_TRIANGLE_FAN;
 		case clap::gl::vertex::array::connection::patches: return GL_PATCHES;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 clap::gl::vertex::array::connection clap::gl::detail::convert::to_connection_type(GLenum v) {
@@ -888,7 +888,7 @@ clap::gl::vertex::array::connection clap::gl::detail::convert::to_connection_typ
 		case GL_TRIANGLE_FAN:				  return clap::gl::vertex::array::connection::triangle_fan;
 		case GL_PATCHES:					  return clap::gl::vertex::array::connection::patches;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::array::index_type v) {
@@ -897,7 +897,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::vertex::array::index_type v) {
 		case clap::gl::vertex::array::index_type::unsigned_short: return GL_UNSIGNED_SHORT;
 		case clap::gl::vertex::array::index_type::unsigned_int: return GL_UNSIGNED_INT;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 clap::gl::vertex::array::index_type clap::gl::detail::convert::to_index_type(GLenum v) {
@@ -906,7 +906,7 @@ clap::gl::vertex::array::index_type clap::gl::detail::convert::to_index_type(GLe
 		case GL_UNSIGNED_SHORT: return clap::gl::vertex::array::index_type::unsigned_short;
 		case GL_UNSIGNED_INT: return clap::gl::vertex::array::index_type::unsigned_int;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 GLenum clap::gl::detail::convert::to_gl(clap::gl::detail::blend_function v) {
@@ -931,7 +931,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::detail::blend_function v) {
 		case clap::gl::detail::blend_function::source_1_alpha: return GL_SRC1_ALPHA;
 		case clap::gl::detail::blend_function::one_minus_source_1_alpha: return GL_ONE_MINUS_SRC1_ALPHA;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::detail::blend_function clap::gl::detail::convert::to_blend_function(GLenum v) {
 	switch (v) {
@@ -955,7 +955,7 @@ clap::gl::detail::blend_function clap::gl::detail::convert::to_blend_function(GL
 		case GL_SRC1_ALPHA: return clap::gl::detail::blend_function::source_1_alpha;
 		case GL_ONE_MINUS_SRC1_ALPHA: return clap::gl::detail::blend_function::one_minus_source_1_alpha;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 std::ostream &operator<<(std::ostream &stream, clap::gl::detail::blend_function function) {
 	switch (function) {
@@ -998,7 +998,7 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::detail::blend_function 
 		case clap::gl::detail::blend_function::one_minus_source_1_alpha:
 			stream << "1 - source_1_alpha"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -1009,7 +1009,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::face v) {
 		case clap::gl::face::both: return GL_FRONT_AND_BACK;
 		case clap::gl::face::front: return GL_FRONT;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::face clap::gl::detail::convert::to_face(GLenum v) {
 	switch (v) {
@@ -1017,7 +1017,7 @@ clap::gl::face clap::gl::detail::convert::to_face(GLenum v) {
 		case GL_FRONT_AND_BACK: return clap::gl::face::both;
 		case GL_FRONT: return clap::gl::face::front;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 std::ostream &operator<<(std::ostream &stream, clap::gl::face function) {
 	switch (function) {
@@ -1028,7 +1028,7 @@ std::ostream &operator<<(std::ostream &stream, clap::gl::face function) {
 		case clap::gl::face::front:
 			stream << "front faces"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -1044,7 +1044,7 @@ GLenum clap::gl::detail::convert::to_gl(clap::gl::depth_function v) {
 		case clap::gl::depth_function::greater_or_equal: return GL_GEQUAL;
 		case clap::gl::depth_function::always: return GL_ALWAYS;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::depth_function clap::gl::detail::convert::to_depth_function(GLenum v) {
 	switch (v) {
@@ -1057,28 +1057,28 @@ clap::gl::depth_function clap::gl::detail::convert::to_depth_function(GLenum v) 
 		case GL_GEQUAL: return clap::gl::depth_function::greater_or_equal;
 		case GL_ALWAYS: return clap::gl::depth_function::always;
 	}
-	log::error::critical << "Unsupported enum value.";
+	log::error::critical << "Encounter an unexpected enum class value.";
 }
 std::ostream &operator<<(std::ostream &stream, clap::gl::depth_function function) {
 	switch (function) {
 		case clap::gl::depth_function::never:
-			stream << "never be passed"; break;
+			stream << "never passed"; break;
 		case clap::gl::depth_function::less:
-			stream << "be passed if new value is less than the current one"; break;
+			stream << "passed if new value is less than the current one"; break;
 		case clap::gl::depth_function::equal:
-			stream << "be passed if new value is equal to the current one"; break;
+			stream << "passed if new value is equal to the current one"; break;
 		case clap::gl::depth_function::less_or_equal:
-			stream << "be passed if new value is less or equal than the current one"; break;
+			stream << "passed if new value is less or equal than the current one"; break;
 		case clap::gl::depth_function::greater:
-			stream << "be passed if new value is greater than the current one"; break;
+			stream << "passed if new value is greater than the current one"; break;
 		case clap::gl::depth_function::not_equal:
-			stream << "be passed if new value is not equal to the current one"; break;
+			stream << "passed if new value is not equal to the current one"; break;
 		case clap::gl::depth_function::greater_or_equal:
-			stream << "be passed if new value is greater or equal than the current one"; break;
+			stream << "passed if new value is greater or equal than the current one"; break;
 		case clap::gl::depth_function::always:
-			stream << "always be passed"; break;
+			stream << "always passed"; break;
 		default:
-			clap::log::warning::major << "Unsupported enum value.";
+			clap::log::warning::major << "Encounter an unexpected enum class value.";
 	}
 	return stream;
 }
@@ -1228,7 +1228,7 @@ int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::key v) {
 		case clap::gl::detail::window::event::key::super_right: return GLFW_KEY_RIGHT_SUPER;
 		case clap::gl::detail::window::event::key::menu: return GLFW_KEY_MENU;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::detail::window::event::key clap::gl::detail::convert::to_key(int v) {
 	switch (v) {
@@ -1354,7 +1354,7 @@ clap::gl::detail::window::event::key clap::gl::detail::convert::to_key(int v) {
 		case GLFW_KEY_RIGHT_SUPER: return clap::gl::detail::window::event::key::super_right;
 		case GLFW_KEY_MENU: return clap::gl::detail::window::event::key::menu;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::key_action v) {
@@ -1363,7 +1363,7 @@ int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::key_acti
 		case clap::gl::detail::window::event::key_action::release: return GLFW_RELEASE;
 		case clap::gl::detail::window::event::key_action::repeat: return GLFW_REPEAT;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::detail::window::event::key_action clap::gl::detail::convert::to_key_action(int v) {
 	switch (v) {
@@ -1371,7 +1371,7 @@ clap::gl::detail::window::event::key_action clap::gl::detail::convert::to_key_ac
 		case GLFW_RELEASE: return clap::gl::detail::window::event::key_action::release;
 		case GLFW_REPEAT: return clap::gl::detail::window::event::key_action::repeat;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::mouse_button v) {
@@ -1385,7 +1385,7 @@ int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::mouse_bu
 		case clap::gl::detail::window::event::mouse_button::b_7: return GLFW_MOUSE_BUTTON_7;
 		case clap::gl::detail::window::event::mouse_button::b_8: return GLFW_MOUSE_BUTTON_8;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::detail::window::event::mouse_button clap::gl::detail::convert::to_mouse_button(int v) {
 	switch (v) {
@@ -1398,7 +1398,7 @@ clap::gl::detail::window::event::mouse_button clap::gl::detail::convert::to_mous
 		case GLFW_MOUSE_BUTTON_7: return clap::gl::detail::window::event::mouse_button::b_7;
 		case GLFW_MOUSE_BUTTON_8: return clap::gl::detail::window::event::mouse_button::b_8;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::mouse_button_action v) {
@@ -1406,14 +1406,14 @@ int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::mouse_bu
 		case clap::gl::detail::window::event::mouse_button_action::press: return GLFW_PRESS;
 		case clap::gl::detail::window::event::mouse_button_action::release: return GLFW_RELEASE;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 clap::gl::detail::window::event::mouse_button_action clap::gl::detail::convert::to_mouse_button_action(int v) {
 	switch (v) {
 		case GLFW_PRESS: return clap::gl::detail::window::event::mouse_button_action::press;
 		case GLFW_RELEASE: return clap::gl::detail::window::event::mouse_button_action::release;
 	}
-	clap::log::error::critical << "Unsupported enum value.";
+	clap::log::error::critical << "Encounter an unexpected enum class value.";
 }
 
 int clap::gl::detail::convert::to_glfw(clap::gl::detail::window::event::modificator_mask v) {
@@ -1547,8 +1547,8 @@ std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::key v
 		case clap::gl::detail::window::event::key::alt_right: return s << "right alt";
 		case clap::gl::detail::window::event::key::super_right: return s << "right super";
 		case clap::gl::detail::window::event::key::menu: return s << "menu";
+		default: clap::log::warning::critical << "Encounter an unexpected enum class value.";
 	}
-	clap::log::warning::critical << "Unsupported enum value.";
 	return s;
 }
 std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::key_action v) {
@@ -1556,8 +1556,8 @@ std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::key_a
 		case clap::gl::detail::window::event::key_action::press: return s << "pressed";
 		case clap::gl::detail::window::event::key_action::release: return s << "released";
 		case clap::gl::detail::window::event::key_action::repeat: return s << "repeated";
+		default: clap::log::warning::critical << "Encounter an unexpected enum class value.";
 	}
-	clap::log::warning::critical << "Unsupported enum value.";
 	return s;
 }
 std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::mouse_button v) {
@@ -1570,16 +1570,16 @@ std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::mouse
 		case clap::gl::detail::window::event::mouse_button::b_6: return s << "sixth mouse button";
 		case clap::gl::detail::window::event::mouse_button::b_7: return s << "seventh mouse button";
 		case clap::gl::detail::window::event::mouse_button::b_8: return s << "eighth mouse button";
+		default: clap::log::warning::critical << "Encounter an unexpected enum class value.";
 	}
-	clap::log::warning::critical << "Unsupported enum value.";
 	return s;
 }
 std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::mouse_button_action v) {
 	switch (v) {
 		case clap::gl::detail::window::event::mouse_button_action::press: return s << "pressed";
 		case clap::gl::detail::window::event::mouse_button_action::release: return s << "released";
+		default: clap::log::warning::critical << "Encounter an unexpected enum class value.";
 	}
-	clap::log::warning::critical << "Unsupported enum value.";
 	return s;
 }
 std::ostream &operator<<(std::ostream &s, clap::gl::detail::window::event::modificator_mask v) {

@@ -34,7 +34,6 @@ namespace clap::gl::detail::window {
 
 	void initialize();
 	void terminate();
-	void ensure_initialized();
 
 	object create(std::u8string title, size_t width, size_t height,
 				  struct_handle<GLFWmonitor> monitor,
@@ -81,7 +80,7 @@ namespace clap::gl::detail::window {
 		GLFWwindow const *operator*() const { return *handle; }
 
 		friend inline std::ostream &operator<<(std::ostream &stream, object const &another) {
-			return stream << "window (glfw, titled \"" << (char const *) another.title.c_str() << "\")";
+			return stream << "glfw window titled \"" << (char const *) another.title.c_str() << "\"";
 		}
 
 		void swap_buffers();
