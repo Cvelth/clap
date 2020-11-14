@@ -259,8 +259,6 @@ namespace clap::impromptu {
 	}
 
 	template <typename tag_t>
-	clap::gl::shader::type get_shader_type();
-	template <typename tag_t>
 	identified_resource_map_t *get_shader_container();
 	template <typename tag_t> inline std::shared_ptr<clap::gl::shader::detail::object> get_shader(std::u8string const &identificator) {
 		return get_resource<clap::gl::shader::detail::object, identified_resource_map_t, tag_t>(get_shader_container<tag_t>(), identificator);
@@ -272,22 +270,14 @@ namespace clap::impromptu {
 	static auto get_texture = std::bind_front(get_resource<clap::gl::texture::_2d, identified_resource_map_t>, &identified::texture);
 	static auto try_get_texture = std::bind_front(try_get_resource<clap::gl::texture::_2d, identified_resource_map_t>, &identified::texture);
 	static auto try_get_unknown = std::bind_front(try_get_resource<std::filesystem::directory_entry, identified_resource_map_t>, &identified::unknown);
-
 }
 
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::fragment_tag_t>() { return clap::gl::shader::type::fragment; }
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::vertex_tag_t>() { return clap::gl::shader::type::vertex; }
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::geometry_tag_t>() { return clap::gl::shader::type::geometry; }
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::compute_tag_t>() { return clap::gl::shader::type::compute; }
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::tesselation_control_tag_t>() { return clap::gl::shader::type::tesselation_control; }
-template<> clap::gl::shader::type clap::impromptu::get_shader_type<clap::impromptu::resource::detail::tesselation_evaluation_tag_t>() { return clap::gl::shader::type::tesselation_evaluation; }
-
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::fragment_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::fragment_tag_t>(), identificator, path); }
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::vertex_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::vertex_tag_t>(), identificator, path); }
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::geometry_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::geometry_tag_t>(), identificator, path); }
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::compute_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::compute_tag_t>(), identificator, path); }
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_control_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::tesselation_control_tag_t>(), identificator, path); }
-template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_evaluation_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(get_shader_type<clap::impromptu::resource::detail::tesselation_evaluation_tag_t>(), identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::fragment_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::fragment, identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::vertex_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::vertex, identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::geometry_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::geometry, identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::compute_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::compute, identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_control_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::tesselation_control, identificator, path); }
+template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_evaluation_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path) { return load_shader(clap::gl::shader::type::tesselation_evaluation, identificator, path); }
 
 template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::get_shader_container<clap::impromptu::resource::detail::fragment_tag_t>() { return &identified::shader::fragment; }
 template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::get_shader_container<clap::impromptu::resource::detail::vertex_tag_t>() { return &identified::shader::vertex; }
@@ -295,20 +285,6 @@ template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::g
 template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::get_shader_container<clap::impromptu::resource::detail::compute_tag_t>() { return &identified::shader::compute; }
 template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::get_shader_container<clap::impromptu::resource::detail::tesselation_control_tag_t>() { return &identified::shader::tesselation_control; }
 template<> inline clap::impromptu::identified_resource_map_t *clap::impromptu::get_shader_container<clap::impromptu::resource::detail::tesselation_evaluation_tag_t>() { return &identified::shader::tesselation_evaluation; }
-
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::fragment_tag_t>(std::u8string const &identificator);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::vertex_tag_t>(std::u8string const &identificator);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::geometry_tag_t>(std::u8string const &identificator);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::compute_tag_t>(std::u8string const &identificator);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::tesselation_control_tag_t>(std::u8string const &identificator);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::get_shader<clap::impromptu::resource::detail::tesselation_evaluation_tag_t>(std::u8string const &identificator);
-
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::fragment_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::vertex_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::geometry_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::compute_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_control_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
-template std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::load_resource<clap::gl::shader::detail::object, clap::impromptu::resource::detail::tesselation_evaluation_tag_t>(std::u8string const &identificator, std::filesystem::directory_entry const &path);
 
 template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::resource::detail::storage<clap::gl::shader::detail::object, clap::impromptu::resource::detail::fragment_tag_t>::get(std::u8string const &identificator) { return get_shader<detail::fragment_tag_t>(identificator); }
 template<> std::shared_ptr<clap::gl::shader::detail::object> clap::impromptu::resource::detail::storage<clap::gl::shader::detail::object, clap::impromptu::resource::detail::vertex_tag_t>::get(std::u8string const &identificator) { return get_shader<detail::vertex_tag_t>(identificator); }
