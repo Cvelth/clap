@@ -157,17 +157,17 @@ clap::gl::shader::type clap::gl::detail::convert::to_shader_type(GLenum v) {
 }
 
 clap::gl::shader::type clap::gl::detail::convert::to_shader_type_from_string(std::string const &v) {
-	if (v == "fragment")
+	if (v == "fragment" || v == "Fragment")
 		return clap::gl::shader::type::fragment;
-	else if (v == "vertex")
+	else if (v == "vertex" || v == "Vertex")
 		return clap::gl::shader::type::vertex;
-	else if (v == "geometry")
+	else if (v == "geometry" || v == "Geometry")
 		return clap::gl::shader::type::geometry;
-	else if (v == "compute")
+	else if (v == "compute" || v == "Compute")
 		return clap::gl::shader::type::compute;
-	else if (v == "tesselation_control")
+	else if (v == "tesselation_control" || v == "Tesselation_control")
 		return clap::gl::shader::type::tesselation_control;
-	else if (v == "tesselation_evaluation")
+	else if (v == "tesselation_evaluation" || v == "Tesselation_evaluation")
 		return clap::gl::shader::type::tesselation_evaluation;
 
 	log::error::critical << "Encounter an unexpected enum class value.";
