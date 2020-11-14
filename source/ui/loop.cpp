@@ -36,7 +36,6 @@ inline static void draw_iteration_impl(clap::ui::zone *zone,
 }
 inline static void clean_up_impl(clap::ui::zone *zone) {
 	zone->clean_up();
-	clap::resource::clear();
 }
 
 template <context_activation_t context_activation>
@@ -120,7 +119,6 @@ int clap::ui::loop(int argc, char **argv) {
 		log::info::major << '\t' << i << ": " << argv[i] << ".";
 
 	clap::impromptu::resource::identify();
-	clap::resource::identify();
 
 	std::vector<std::thread> threads;
 	auto on_add_lambda = [&threads](ui::zone *zone, gl::detail::context &context) {

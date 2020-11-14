@@ -9,6 +9,9 @@ namespace std::filesystem {
 	class directory_entry;
 }
 namespace clap::gl {
+	namespace shader::detail {
+		class object;
+	}
 	namespace texture {
 		class _2d;
 	};
@@ -18,7 +21,7 @@ namespace clap::impromptu::resource {
 	void identify();
 
 	namespace detail {
-		template <typename contained_t>
+		template <typename contained_t, typename tag_t = void>
 		class storage {
 		public:
 			std::shared_ptr<contained_t> get(std::u8string const &identificator);
@@ -31,12 +34,22 @@ namespace clap::impromptu::resource {
 				return get((char8_t *) identificator.c_str());
 			}
 		};
+		class fragment_tag_t; class vertex_tag_t; class geometry_tag_t; class compute_tag_t;
+		class tesselation_control_tag_t; class tesselation_evaluation_tag_t;
 	}
 
+	namespace shader {
+		extern detail::storage<gl::shader::detail::object, detail::fragment_tag_t> fragment;
+		extern detail::storage<gl::shader::detail::object, detail::vertex_tag_t> vertex;
+		extern detail::storage<gl::shader::detail::object, detail::geometry_tag_t> geometry;
+		extern detail::storage<gl::shader::detail::object, detail::compute_tag_t> compute;
+		extern detail::storage<gl::shader::detail::object, detail::tesselation_control_tag_t> tesselation_control;
+		extern detail::storage<gl::shader::detail::object, detail::tesselation_evaluation_tag_t> tesselation_evaluation;
+	}
 	extern detail::storage<gl::texture::_2d> texture;
 	extern detail::storage<std::filesystem::directory_entry> unknown;
 }
-
+/*
 // origin
 // ******
 #include <memory>
@@ -94,3 +107,4 @@ namespace clap::resource {
 	extern detail::storage<std::shared_ptr<render::font>, detail::font_t> font;
 	extern detail::storage<std::filesystem::directory_entry const *, detail::unknown_t> unknown;
 }
+*/
