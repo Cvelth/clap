@@ -12,16 +12,38 @@
 #include <unordered_map>
 
 #include "essential/log.hpp"
+#include "gl/texture.hpp"
+
+#include "lodepng/lodepng.h"
 
 namespace clap::impromptu {
 	static std::shared_mutex identification_mutex;
 
 	namespace identified {
+		static std::unordered_map<std::u8string, std::filesystem::directory_entry> texture;
 		static std::unordered_map<std::u8string, std::filesystem::directory_entry> unknown;
 	}
 	namespace resource {
+		detail::storage<gl::texture::_2d> texture;
 		detail::storage<std::filesystem::directory_entry> unknown;
 	}
+
+	template <typename container_t>
+	inline void identify_file(container_t *container, std::filesystem::directory_entry const &path) {
+		for (auto subpath : std::filesystem::recursive_directory_iterator(path))
+			if (!subpath.is_directory()) {
+				auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
+				if (container->contains(identificator))
+					clap::log::warning::minor << "Ignored the second instance of a duplicate resource with identificator '" << path.path() << "'.";
+				else
+					container->emplace(
+						identificator,
+						subpath
+					);
+			}
+	}
+	auto identify_texture = std::bind_front(identify_file<decltype(identified::texture)>, &identified::texture);
+	auto identify_unknown = std::bind_front(identify_file<decltype(identified::unknown)>, &identified::unknown);
 
 	using path_set_t = std::set<std::filesystem::path>;
 	using identify_function_t = std::function<void(std::filesystem::directory_entry)>;
@@ -53,11 +75,11 @@ namespace clap::impromptu {
 		//		u8"shader", u8"shaders", u8"Shader", u8"Shaders"
 		//	}, &identify_shaders
 		//},
-		//{
-		//	std::set<std::filesystem::path>{
-		//		u8"texture", u8"textures", u8"Texture", u8"Textures"
-		//	}, &identify_textures
-		//},
+		{
+			std::set<std::filesystem::path>{
+				u8"texture", u8"textures", u8"Texture", u8"Textures"
+			}, identify_texture
+		},
 		//{
 		//	std::set<std::filesystem::path>{
 		//		u8"font", u8"fonts", u8"Font", u8"Fonts"
@@ -65,15 +87,7 @@ namespace clap::impromptu {
 		//}
 	};
 
-	void identify_unknown(std::filesystem::directory_entry const &path) {
-		for (auto subpath : std::filesystem::recursive_directory_iterator(path))
-			if (!subpath.is_directory()) {
-				auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
-				identified::unknown.emplace(identificator, subpath);
-			}
-	}
-
-	void identify_folder(std::filesystem::directory_entry const &path) {
+	inline void identify_folder(std::filesystem::directory_entry const &path) {
 		for (auto pair : resource_folder_names)
 			for (auto const &entry : pair.first)
 				if (path.path().filename() == entry)
@@ -82,7 +96,7 @@ namespace clap::impromptu {
 	}
 
 	template <typename name_t, typename container_t>
-	void log_resource(name_t const &name, container_t const &container) {
+	inline void log_resource(name_t const &name, container_t const &container) {
 		//if (!container.empty()) {
 		clap::log::info::major << name << " count: " << container.size() << ".";
 		for (auto &entry : container)
@@ -108,64 +122,71 @@ void clap::impromptu::resource::identify() {
 				}
 
 			log::message::major << "Finalize resource identification.";
+			log_resource("Texture", identified::texture);
 			log_resource("Unknown resource", identified::unknown);
-			//print_lambda("Fragment shader", ::fragment_shaders);
-			//print_lambda("Vertex shader", ::vertex_shaders);
-			//print_lambda("Geometry shader", ::geometry_shaders);
-			//print_lambda("Compute shader", ::compute_shaders);
-			//print_lambda("Tesselation control shader", ::tesselation_control_shaders);
-			//print_lambda("Tesselation evaluation shader", ::tesselation_evaluation_shaders);
-			//print_lambda("Texture", ::textures);
-			//print_lambda("Font", ::fonts);
-			//print_lambda("Unknown resource", ::unknown);
 		}
 	).detach();
-}
-void clap::impromptu::resource::clean_up() {
-	//fragment_shaders.clear();
-	//vertex_shaders.clear();
-	//geometry_shaders.clear();
-	//compute_shaders.clear();
-	//tesselation_control_shaders.clear();
-	//tesselation_evaluation_shaders.clear();
-	//textures.clear();
-	//fonts.clear();
-	//::unknown.clear();
-	//log::message::major << "Resources were cleared.";
-	//was_identified = false;
 }
 
 namespace clap::impromptu {
 	template <typename contained_t>
-	std::optional<contained_t> load_resource(std::filesystem::directory_entry const path);
+	std::shared_ptr<contained_t> load_resource(std::u8string const &identificator, std::filesystem::directory_entry const path);
+
+	template<> inline std::shared_ptr<std::filesystem::directory_entry> load_resource(std::u8string const &identificator, std::filesystem::directory_entry const path) {
+		return std::make_shared<std::filesystem::directory_entry>(path);
+	}
+	template<> inline std::shared_ptr<clap::gl::texture::_2d> load_resource(std::u8string const &identificator, std::filesystem::directory_entry const path) {
+		std::vector<unsigned char> image_data;
+		unsigned width, height;
+		unsigned error_code = lodepng::decode(image_data, width, height, path.path());
+		if (error_code != 0) {
+			clap::log::warning::major << "Fail to decode a texture file.";
+			clap::log::info::critical << "Error code: " << error_code << '.';
+			clap::log::info::critical << lodepng_error_text(error_code);
+			return nullptr;
+		} else {
+			auto out = std::make_shared<clap::gl::texture::_2d>(image_data.data(), width, height);
+			clap::log::message::minor << "Load a " << *out << " (" << image_data.size() << " bytes).";
+			clap::log::info::major << "Identificator: '" << identificator << "'.";
+			clap::log::info::minor << "Path: '" << path.path() << "'.";
+			return std::move(out);
+		}
+	}
+	template<typename contained_t, typename container_t>
+	inline std::shared_ptr<contained_t> get_resource_impl(container_t *container, std::u8string const &identificator) {
+		if (auto iterator = container->find(identificator); iterator != container->end())
+			return load_resource<contained_t>(identificator, iterator->second);
+		else {
+			clap::log::warning::major << "Fail to load an unidentified resorce: '" << identificator << "'.";
+			return nullptr;
+		}
+	}
+	template<typename contained_t, typename container_t>
+	inline std::shared_ptr<contained_t> get_resource(container_t *container, std::u8string const &identificator) {
+		std::shared_lock guard(identification_mutex);
+		return get_resource_impl<contained_t>(container, identificator);
+	}
+	template<typename contained_t, typename container_t>
+	inline std::shared_ptr<contained_t> try_get_resource(container_t *container, std::u8string const &identificator) {
+		if (identification_mutex.try_lock_shared()) {
+			std::shared_lock guard(identification_mutex, std::adopt_lock);
+			return get_resource_impl<contained_t>(container, identificator);
+		} else {
+			clap::log::warning::negligible << "Fail to lock 'storage<...>::try_get(...)' mutex. Resource manager is already in use.";
+			return nullptr;
+		}
+	}
+
+	auto get_texture = std::bind_front(get_resource<clap::gl::texture::_2d, decltype(identified::texture)>, &identified::texture);
+	auto try_get_texture = std::bind_front(try_get_resource<clap::gl::texture::_2d, decltype(identified::texture)>, &identified::texture);
+	auto get_unknown = std::bind_front(get_resource<std::filesystem::directory_entry, decltype(identified::unknown)>, &identified::unknown);
+	auto try_get_unknown = std::bind_front(try_get_resource<std::filesystem::directory_entry, decltype(identified::unknown)>, &identified::unknown);
 }
 
-template<> std::optional<std::filesystem::directory_entry> clap::impromptu::load_resource(std::filesystem::directory_entry const path) {
-	return path;
-}
-
-template<typename contained_t>
-std::optional<contained_t> clap::impromptu::resource::detail::storage<contained_t>::get(std::u8string const &identificator) {
-	std::shared_lock guard(identification_mutex);
-	if (auto iterator = identified::unknown.find(identificator); iterator != identified::unknown.end())
-		return load_resource<contained_t>(iterator->second);
-	else
-		return std::nullopt;
-}
-template<typename contained_t>
-std::optional<contained_t> clap::impromptu::resource::detail::storage<contained_t>::try_get(std::u8string const &identificator) {
-	if (identification_mutex.try_lock_shared()) {
-		std::shared_lock guard(identification_mutex, std::adopt_lock);
-		if (auto iterator = identified::unknown.find(identificator); iterator != identified::unknown.end())
-			return load_resource<contained_t>(iterator->second);
-		else
-			return std::nullopt;
-	} else
-		return std::nullopt;
-}
-
-template std::optional<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::get(std::u8string const &identificator);
-template std::optional<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::try_get(std::u8string const &identificator);
+template<> std::shared_ptr<clap::gl::texture::_2d> clap::impromptu::resource::detail::storage<clap::gl::texture::_2d>::get(std::u8string const &identificator) { return get_texture(identificator); }
+template<> std::shared_ptr<clap::gl::texture::_2d> clap::impromptu::resource::detail::storage<clap::gl::texture::_2d>::try_get(std::u8string const &identificator) { return try_get_texture(identificator); }
+template<> std::shared_ptr<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::get(std::u8string const &identificator) { return get_unknown(identificator); }
+template<> std::shared_ptr<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::try_get(std::u8string const &identificator) { return try_get_unknown(identificator); }
 
 // origin
 // ******

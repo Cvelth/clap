@@ -2,7 +2,7 @@
 
 // impromptu
 // *********
-#include <optional>
+#include <memory>
 #include <string>
 
 namespace std::filesystem {
@@ -16,14 +16,13 @@ namespace clap::gl {
 
 namespace clap::impromptu::resource {
 	void identify();
-	void clean_up();
 
 	namespace detail {
 		template <typename contained_t>
 		class storage {
 		public:
-			std::optional<contained_t> get(std::u8string const &identificator);
-			std::optional<contained_t> try_get(std::u8string const &identificator);
+			std::shared_ptr<contained_t> get(std::u8string const &identificator);
+			std::shared_ptr<contained_t> try_get(std::u8string const &identificator);
 			
 			inline auto operator[](std::u8string const &identificator) {
 				return get(identificator);
@@ -34,7 +33,7 @@ namespace clap::impromptu::resource {
 		};
 	}
 
-	//extern detail::storage<gl::texture::_2d> texture;
+	extern detail::storage<gl::texture::_2d> texture;
 	extern detail::storage<std::filesystem::directory_entry> unknown;
 }
 

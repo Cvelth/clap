@@ -36,7 +36,6 @@ inline static void draw_iteration_impl(clap::ui::zone *zone,
 }
 inline static void clean_up_impl(clap::ui::zone *zone) {
 	zone->clean_up();
-	clap::impromptu::resource::clean_up();
 	clap::resource::clear();
 }
 
