@@ -111,7 +111,14 @@ namespace clap::gl::texture {
 			multisample = 9, multisample_array = 10,
 			LAST = multisample_array
 		};
+	}
+}
 
+#include <ostream>
+std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target);
+
+namespace clap::gl::texture {
+	namespace detail {
 		template<target texture_type>
 		constexpr bool needs_width =
 			(texture_type == target::_1d) ||
@@ -266,6 +273,8 @@ namespace clap::gl::texture {
 			~interface();
 
 			interface(interface const &another) = delete;
+			interface &operator=(interface const &another) = delete;
+			interface &operator=(interface &&another) = delete;
 
 			template <target T = texture_type>
 			inline interface(interface &&another) noexcept
@@ -338,7 +347,7 @@ namespace clap::gl::texture {
 			void data(void *data, size_t offset_x, size_t width,
 					  bool generate_mipmap = true,
 					  external_format external_format = external_format::rgba,
-					  external_type external_type = external_type::unsigned_byte, 
+					  external_type external_type = external_type::unsigned_byte,
 					  int level = 0
 			) requires (T == target::_1d);
 			template <target T = texture_type>
@@ -583,6 +592,3 @@ namespace clap::gl::detail::convert {
 	GLenum to_gl(clap::gl::texture::wrap v);
 	clap::gl::texture::wrap to_wrap(GLenum v);
 }
-
-#include <ostream>
-std::ostream &operator<<(std::ostream &stream, clap::gl::texture::detail::target target);
