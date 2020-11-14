@@ -1,5 +1,174 @@
 ﻿#include "resource/resource.hpp"
 
+// impromptu
+// *********
+#include <filesystem>
+#include <functional>
+#include <map>
+#include <mutex>
+#include <set>
+#include <shared_mutex>
+#include <thread>
+#include <unordered_map>
+
+#include "essential/log.hpp"
+
+namespace clap::impromptu {
+	static std::shared_mutex identification_mutex;
+
+	namespace identified {
+		static std::unordered_map<std::u8string, std::filesystem::directory_entry> unknown;
+	}
+	namespace resource {
+		detail::storage<std::filesystem::directory_entry> unknown;
+	}
+
+	using path_set_t = std::set<std::filesystem::path>;
+	using identify_function_t = std::function<void(std::filesystem::directory_entry)>;
+	using path_function_map_t = std::map<path_set_t, identify_function_t>;
+
+	// To be moved to the settings once they're implemented.
+	const std::set<std::filesystem::path> paths = {
+		std::filesystem::absolute(u8"resource"),
+		std::filesystem::absolute(u8"../resource"),
+		std::filesystem::absolute(u8"../../resource"),
+		std::filesystem::absolute(u8"../../../resource"),
+		std::filesystem::absolute(u8"../../../../resource"),
+
+		std::filesystem::absolute(u8"clap/resource"),
+		std::filesystem::absolute(u8"../clap/resource"),
+		std::filesystem::absolute(u8"../../clap/resource"),
+		std::filesystem::absolute(u8"../../../clap/resource"),
+		std::filesystem::absolute(u8"../../../../clap/resource"),
+
+		std::filesystem::absolute(u8"engine/resource"),
+		std::filesystem::absolute(u8"../engine/resource"),
+		std::filesystem::absolute(u8"../../engine/resource"),
+		std::filesystem::absolute(u8"../../../engine/resource"),
+		std::filesystem::absolute(u8"../../../../engine/resource"),
+	};
+	const path_function_map_t resource_folder_names = {
+		//{
+		//	std::set<std::filesystem::path>{
+		//		u8"shader", u8"shaders", u8"Shader", u8"Shaders"
+		//	}, &identify_shaders
+		//},
+		//{
+		//	std::set<std::filesystem::path>{
+		//		u8"texture", u8"textures", u8"Texture", u8"Textures"
+		//	}, &identify_textures
+		//},
+		//{
+		//	std::set<std::filesystem::path>{
+		//		u8"font", u8"fonts", u8"Font", u8"Fonts"
+		//	}, &identify_fonts
+		//}
+	};
+
+	void identify_unknown(std::filesystem::directory_entry const &path) {
+		for (auto subpath : std::filesystem::recursive_directory_iterator(path))
+			if (!subpath.is_directory()) {
+				auto identificator = subpath.path().lexically_relative(path).replace_extension().u8string();
+				identified::unknown.emplace(identificator, subpath);
+			}
+	}
+
+	void identify_folder(std::filesystem::directory_entry const &path) {
+		for (auto pair : resource_folder_names)
+			for (auto const &entry : pair.first)
+				if (path.path().filename() == entry)
+					return pair.second(path);
+		identify_unknown(path);
+	}
+
+	template <typename name_t, typename container_t>
+	void log_resource(name_t const &name, container_t const &container) {
+		//if (!container.empty()) {
+		clap::log::info::major << name << " count: " << container.size() << ".";
+		for (auto &entry : container)
+			clap::log::info::minor << '\t' << entry.first;
+		//}
+	}
+}
+
+void clap::impromptu::resource::identify() {
+	std::thread(
+		[]() {
+			std::scoped_lock guard(identification_mutex);
+			for (auto &path : paths)
+				if (std::filesystem::exists(path)) {
+					clap::log::message::major << "Identify resources from '" << path << "'.";
+					for (auto &subpath : std::filesystem::directory_iterator(path))
+						if (std::filesystem::is_directory(subpath))
+							identify_folder(subpath);
+						else {
+							log::warning::major << "Ignore a resource: '" << subpath.path() << "'.";
+							log::info::major << "It was found outside any folders specifying resource type.";
+						}
+				}
+
+			log::message::major << "Finalize resource identification.";
+			log_resource("Unknown resource", identified::unknown);
+			//print_lambda("Fragment shader", ::fragment_shaders);
+			//print_lambda("Vertex shader", ::vertex_shaders);
+			//print_lambda("Geometry shader", ::geometry_shaders);
+			//print_lambda("Compute shader", ::compute_shaders);
+			//print_lambda("Tesselation control shader", ::tesselation_control_shaders);
+			//print_lambda("Tesselation evaluation shader", ::tesselation_evaluation_shaders);
+			//print_lambda("Texture", ::textures);
+			//print_lambda("Font", ::fonts);
+			//print_lambda("Unknown resource", ::unknown);
+		}
+	).detach();
+}
+void clap::impromptu::resource::clean_up() {
+	//fragment_shaders.clear();
+	//vertex_shaders.clear();
+	//geometry_shaders.clear();
+	//compute_shaders.clear();
+	//tesselation_control_shaders.clear();
+	//tesselation_evaluation_shaders.clear();
+	//textures.clear();
+	//fonts.clear();
+	//::unknown.clear();
+	//log::message::major << "Resources were cleared.";
+	//was_identified = false;
+}
+
+namespace clap::impromptu {
+	template <typename contained_t>
+	std::optional<contained_t> load_resource(std::filesystem::directory_entry const path);
+}
+
+template<> std::optional<std::filesystem::directory_entry> clap::impromptu::load_resource(std::filesystem::directory_entry const path) {
+	return path;
+}
+
+template<typename contained_t>
+std::optional<contained_t> clap::impromptu::resource::detail::storage<contained_t>::get(std::u8string const &identificator) {
+	std::shared_lock guard(identification_mutex);
+	if (auto iterator = identified::unknown.find(identificator); iterator != identified::unknown.end())
+		return load_resource<contained_t>(iterator->second);
+	else
+		return std::nullopt;
+}
+template<typename contained_t>
+std::optional<contained_t> clap::impromptu::resource::detail::storage<contained_t>::try_get(std::u8string const &identificator) {
+	if (identification_mutex.try_lock_shared()) {
+		std::shared_lock guard(identification_mutex, std::adopt_lock);
+		if (auto iterator = identified::unknown.find(identificator); iterator != identified::unknown.end())
+			return load_resource<contained_t>(iterator->second);
+		else
+			return std::nullopt;
+	} else
+		return std::nullopt;
+}
+
+template std::optional<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::get(std::u8string const &identificator);
+template std::optional<std::filesystem::directory_entry> clap::impromptu::resource::detail::storage<std::filesystem::directory_entry>::try_get(std::u8string const &identificator);
+
+// origin
+// ******
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -199,7 +368,7 @@ void clap::resource::identify() {
 		}
 	};
 
-	log::message::major << "Resource identificaion is complete.";
+	log::message::major << "Resource identification is complete.";
 	print_lambda("Fragment shader", ::fragment_shaders);
 	print_lambda("Vertex shader", ::vertex_shaders);
 	print_lambda("Geometry shader", ::geometry_shaders);

@@ -1,4 +1,45 @@
 ﻿#pragma once
+
+// impromptu
+// *********
+#include <optional>
+#include <string>
+
+namespace std::filesystem {
+	class directory_entry;
+}
+namespace clap::gl {
+	namespace texture {
+		class _2d;
+	};
+}
+
+namespace clap::impromptu::resource {
+	void identify();
+	void clean_up();
+
+	namespace detail {
+		template <typename contained_t>
+		class storage {
+		public:
+			std::optional<contained_t> get(std::u8string const &identificator);
+			std::optional<contained_t> try_get(std::u8string const &identificator);
+			
+			inline auto operator[](std::u8string const &identificator) {
+				return get(identificator);
+			}
+			inline auto operator[](std::string const &identificator) {
+				return get((char8_t *) identificator.c_str());
+			}
+		};
+	}
+
+	//extern detail::storage<gl::texture::_2d> texture;
+	extern detail::storage<std::filesystem::directory_entry> unknown;
+}
+
+// origin
+// ******
 #include <memory>
 #include <optional>
 #include <string>

@@ -36,8 +36,7 @@ inline static void draw_iteration_impl(clap::ui::zone *zone,
 }
 inline static void clean_up_impl(clap::ui::zone *zone) {
 	zone->clean_up();
-
-	//To replace with a context-specific resource clean up!
+	clap::impromptu::resource::clean_up();
 	clap::resource::clear();
 }
 
@@ -121,6 +120,7 @@ int clap::ui::loop(int argc, char **argv) {
 	for (int i = 0; i < argc; i++)
 		log::info::major << '\t' << i << ": " << argv[i] << ".";
 
+	clap::impromptu::resource::identify();
 	clap::resource::identify();
 
 	std::vector<std::thread> threads;
