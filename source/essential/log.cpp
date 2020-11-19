@@ -304,19 +304,19 @@ static bool is_there_a_next_entry() {
 	return !logger_queue.empty();
 }
 
+static std::ostringstream stream;
+static bool once = false;
+static size_t message_counter = 0;
 class header_t {
 public:
 	explicit header_t(clap::logger::detail::entry_type_t const &type)
 		: header_string(*type), type(type) {
-		static std::ostringstream stream;
-		static bool once = false;
 		if (!once) {
 			stream << std::hex;
 			once = true;
 		} else
 			stream.str("");
 
-		static size_t message_counter = 0;
 		stream << message_counter++;
 
 		header_string = header_string + u8" [0x" + (char8_t const *) stream.str().c_str() + u8"] "
@@ -393,6 +393,9 @@ static void start_logging() {
 				}
 			}
 		);
+
+		struct auto_stopper_t { ~auto_stopper_t() { clap::logger::stop(); } };
+		static auto_stopper_t auto_stopper;
 	}
 }
 static void log_impl(clap::logger::detail::entry_type_t &&type,
@@ -446,11 +449,13 @@ clap::logger::detail::entry_t::~entry_t() {
 
 void clap::logger::start() { start_logging(); }
 void clap::logger::stop() {
-	clap::log << cL::important << "clap"_tag << "essential"_tag << "log"_tag << "logger"_tag
-		<< "Stop the logger." << cL::extra << used_streams.size() << " streams were used.";
-	is_active = false;
-	if (logger_thread.joinable())
-		logger_thread.join();
+	if (is_active) {
+		clap::log << cL::important << "clap"_tag << "essential"_tag << "log"_tag << "logger"_tag
+			<< "Stop the logger." << cL::extra << used_streams.size() << " streams were used.";
+		is_active = false;
+		if (logger_thread.joinable())
+			logger_thread.join();
+	}
 }
 bool clap::logger::is_logging() {
 	return is_active;
