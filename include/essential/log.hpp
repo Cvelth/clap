@@ -351,7 +351,7 @@ template<> inline void clap::logger::detail::entry_t::append(entry_type_t &&valu
 	if (is_in_use) {
 		clap::log << cL::warning << cL::critical
 			<< "clap"_tag << "essential"_tag << "log"_tag << "stream"_tag
-			<< "Ignore an attempt to change log entry time after the logging has already begun."
+			<< "Ignore an attempt to change the type of a log entry after the logging has already begun."
 			<< cL::extra
 			<< "Entry type can only be changed before something is written to the stream.";
 	} else
@@ -361,7 +361,7 @@ template<> inline void clap::logger::detail::entry_t::append(entry_type_t const 
 	if (is_in_use) {
 		clap::log << cL::warning << cL::critical
 			<< "clap"_tag << "essential"_tag << "log"_tag << "stream"_tag
-			<< "Ignore an attempt to change log entry time after the logging has already begun."
+			<< "Ignore an attempt to change the type of a log entry after the logging has already begun."
 			<< cL::extra
 			<< "Entry type can only be changed before something is written to the stream.";
 	} else
