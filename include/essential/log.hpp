@@ -1,725 +1,422 @@
 ﻿#pragma once
 #include <filesystem>
-#include <mutex>
 #include <ostream>
 #include <sstream>
-#include <string>
 #include <variant>
 #include <vector>
 
-namespace nowide {
-	template<typename CharType, typename Traits>
-	class basic_ofstream;
-	typedef basic_ofstream<char, std::char_traits<char>> ofstream;
-
-	std::string narrow(const std::wstring &s);
-	inline std::wstring widen(const std::string &s);
-
-	namespace utf {
-		template<typename CharOut, typename CharIn>
-		std::basic_string<CharOut> convert_string(const CharIn *begin, const CharIn *end);
-	}
-}
-
-/**
- * @brief Contains implementation details
- *
- * Members of this namespaces are discouraged to be directly mentioned outside of the implementation of the logger.
-*/
-namespace clap::log::detail {
-
-	/**
-	 * @brief lists all the acceptable severity levels available for log entries.
-	*/
-	enum class severity : unsigned {
-		none = 0x0000,
-
-		error_4 = 0x1000,
-		error_3 = 0x2000,
-		error_2 = 0x4000,
-		error_1 = 0x8000,
-		error_0 = 0x0000,
-
-		warning_4 = 0x0100,
-		warning_3 = 0x0200,
-		warning_2 = 0x0400,
-		warning_1 = 0x0800,
-		warning_0 = 0x0000,
-
-		message_4 = 0x0010,
-		message_3 = 0x0020,
-		message_2 = 0x0040,
-		message_1 = 0x0080,
-		message_0 = 0x0000,
-
-		info_4 = 0x0001,
-		info_3 = 0x0002,
-		info_2 = 0x0004,
-		info_1 = 0x0008,
-		info_0 = 0x0000
-	};
-
-	/**
-	 * @brief defines several `severity` level combinations to be used when specifying severity masks
-	*/
-	enum class severity_mask : unsigned {
-		none = (int) severity::none,
-
-		error_4 = (int) severity::error_4,
-		error_3 = (int) severity::error_3,
-		error_2 = (int) severity::error_2,
-		error_1 = (int) severity::error_1,
-		error_0 = (int) severity::error_0,
-
-		warning_4 = (int) severity::warning_4,
-		warning_3 = (int) severity::warning_3,
-		warning_2 = (int) severity::warning_2,
-		warning_1 = (int) severity::warning_1,
-		warning_0 = (int) severity::warning_0,
-
-		message_4 = (int) severity::message_4,
-		message_3 = (int) severity::message_3,
-		message_2 = (int) severity::message_2,
-		message_1 = (int) severity::message_1,
-		message_0 = (int) severity::message_0,
-
-		info_4 = (int) severity::info_4,
-		info_3 = (int) severity::info_3,
-		info_2 = (int) severity::info_2,
-		info_1 = (int) severity::info_1,
-		info_0 = (int) severity::info_0,
-
-		error_1_4 = error_1 | error_2 | error_3 | error_4,
-		error_1_3 = error_1 | error_2 | error_3,
-		error_1_2 = error_1 | error_2,
-
-		error_critical = error_1,
-		error_major = error_1_2,
-		error_minor = error_1_3,
-		error_every = error_1_4,
-		error_none = error_0,
-
-		warning_1_4 = warning_1 | warning_2 | warning_3 | warning_4,
-		warning_1_3 = warning_1 | warning_2 | warning_3,
-		warning_1_2 = warning_1 | warning_2,
-
-		warning_critical = warning_1,
-		warning_major = warning_1_2,
-		warning_minor = warning_1_3,
-		warning_every = warning_1_4,
-		warning_none = warning_0,
-
-		message_1_4 = message_1 | message_2 | message_3 | message_4,
-		message_1_3 = message_1 | message_2 | message_3,
-		message_1_2 = message_1 | message_2,
-
-		message_critical = message_1,
-		message_major = message_1_2,
-		message_minor = message_1_3,
-		message_every = message_1_4,
-		message_none = message_0,
-
-		info_1_4 = info_1 | info_2 | info_3 | info_4,
-		info_1_3 = info_1 | info_2 | info_3,
-		info_1_2 = info_1 | info_2,
-
-		info_critical = info_1,
-		info_major = info_1_2,
-		info_minor = info_1_3,
-		info_every = info_1_4,
-		info_none = info_0,
-
-		every = error_every | warning_every | message_every | info_every
-	};
-
-	template <clap::log::detail::severity severity> class log_t;
-	class logger_state_t;
-	class stream;
-}
-template <typename rhs_t>
-clap::log::detail::stream &&operator<<(clap::log::detail::stream &&stream, rhs_t const &rhs);
-
 namespace clap {
-	/**
-	 * @brief Provides access to a singleton `logger_state_t` class
-	 * @return A reference to an object of said class
-	 * @see clap::log::detail::logger_state_t
-	*/
-	log::detail::logger_state_t &logger();
-}
-
-namespace clap::log::detail {
-	/**
-	 * @brief Defines operator<< for log entry definition.
-	*/
-	class stream {
-		template <clap::log::detail::severity level> friend class log_t;
-
-	public:
-		~stream() {
-			finish_entry();
-			mutex.unlock();
-		}
-
-	private:
-		/**
-		 * @brief Initializes new log entry.
-		 * @param logger_state is the state of the logger.
-		 * @param severity describes type and level of given log entry.
-		*/
-		stream(logger_state_t &logger_state, severity severity) : logger_state_ref(logger_state), severity(severity) {
-			mutex.lock();
-			initialize_entry();
-		}
-
-		/**
-		 * @brief Copy constructor is deleted.
-		*/
-		stream(stream const &) = delete;
-
-		/**
-		 * @brief Move constructor is deleted.
-		*/
-		stream(stream &&) = delete;
-
-		/**
-		 * @brief Copy assignment operator is deleted.
-		*/
-		stream &operator=(stream const &) = delete;
-
-		/**
-		 * @brief Move assignment operator is deleted.
-		*/
-		stream &operator=(stream &&) = delete;
-
-		/**
-		 * @brief Writes the header of the entry.
-		 *
-		 * The header includes type, level, time and id of the entity being logged.
-		*/
-		void initialize_entry();
-
-		/**
-		 * @brief Finalizes current entry
-		 *
-		 * Throws clap::detail::logger_exception or calles std::terminate if applicable
-		 * @see clap::detail::logger_exception
-		 * @see clap::detail::logger_state_t::enable_exceptions
-		 * @see clap::detail::logger_state_t::enable_termination
-		*/
-		void finish_entry();
-
-		/**
-		 * @brief Writes passed object (`rhs`) to currently active output streams
-		 * @tparam rhs_t is the type of `rhs` object
-		 * @param stream is the reference to the stream object used
-		 * @param rhs is the object to be written into active output streams
-		 * @return a reference to the stream object used
-		*/
-		template <typename rhs_t>
-		friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
-
-	private:
-		/**
-		 * @brief A reference to the logger the stream object writes to
-		*/
-		logger_state_t &logger_state_ref;
-
-		/**
-		 * @brief A severity level of the entry processed by the stream
-		*/
-		log::detail::severity severity;
-
-		/**
-		 * @brief Mutex used to ensure that only one thread is writing a log entry at a time.
-		*/
-		static std::mutex mutex;
-	};
-
-	/**
-	 * @brief Base class used to define standard log-objects.
-	*/
-	template <clap::log::detail::severity severity>
-	class log_t {
-
-	public:
-		/**
-		 * @brief Implisit conversion from 'log_t' to 'stream'.
-		*/
-		operator stream() const {
-			return stream(logger(), severity);
-		}
-	};
-}
-
-/**
- * @brief Contains objects used to pass messages/warning/errors to logging system.
- *
- * **Usage**: `clap::log::{type}::{level} << "Your message.";`
- * **Example**: `clap::log::error::critical << "We are doomed!";`
- * 
- * Be mindful of the fact that the '\n' at the end is automatically added.
-*/
-namespace clap::log {
-	/**
-	 * @brief Contains object used to pass errors into logging system.
-	*/
-	namespace error {
-		/**
-		 * @brief Indicates a critical error with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::error_1> critical;
-		/**
-		 * @brief Indicates a major error with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::error_2> major;
-		/**
-		 * @brief Indicates a minor error with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::error_3> minor;
-		/**
-		 * @brief Indicates a negligible error with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::error_4> negligible;
-	}
-	/**
-	 * @brief Contains object used to pass warnings into logging system.
-	*/
-	namespace warning {
-		/**
-		 * @brief Indicates a critical warning with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::warning_1> critical;
-		/**
-		 * @brief Indicates a major warning with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::warning_2> major;
-		/**
-		 * @brief Indicates a minor warning with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::warning_3> minor;
-		/**
-		 * @brief Indicates a negligible warning with message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::warning_4> negligible;
-	}
-	/**
-	 * @brief Contains object used to pass messages into logging system.
-	*/
-	namespace message {
-		/**
-		 * @brief Indicates a critical message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::message_1> critical;
-		/**
-		 * @brief Indicates a major message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::message_2> major;
-		/**
-		 * @brief Indicates a minor message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::message_3> minor;
-		/**
-		 * @brief Indicates a negligible message passed using operator<<()
-		*/
-		inline detail::log_t<detail::severity::message_4> negligible;
-	}
-	/**
-	 * @brief Contains object used to pass extra information into logging system.
-	*/
-	namespace info {
-		/**
-		 * @brief Indicates an additional information to be bundled with previous
-		 *		error, warning or message.
-		 *
-		 * It's only logged if both previous error/warning/message was written (its severity level was acceptable)
-		 *		and the severity level of info itself is acceptable.
-		*/
-		inline detail::log_t<detail::severity::info_1> critical;
-		/**
-		 * @brief Indicates an additional information to be bundled with previous
-		 *		error, warning or message.
-		 *
-		 * It's only logged if both previous error/warning/message was written (its severity level was acceptable)
-		 *		and the severity level of info itself is acceptable.
-		*/
-		inline detail::log_t<detail::severity::info_2> major;
-		/**
-		 * @brief Indicates an additional information to be bundled with previous
-		 *		error, warning or message.
-		 *
-		 * It's only logged if both previous error/warning/message was written (its severity level was acceptable)
-		 *		and the severity level of info itself is acceptable.
-		*/
-		inline detail::log_t<detail::severity::info_3> minor;
-		/**
-		 * @brief Indicates an additional information to be bundled with previous
-		 *		error, warning or message.
-		 *
-		 * It's only logged if both previous error/warning/message was written (its severity level was acceptable)
-		 *		and the severity level of info itself is acceptable.
-		*/
-		inline detail::log_t<detail::severity::info_4> negligible;
-	}
-}
-
-namespace clap::log::detail {
-	template <typename interface_t, typename actual_t,
-		typename destructor_t = std::default_delete<typename actual_t>>
-		class basic_polymorphic_wrapper {
+	namespace logger {
+		class exception : public std::runtime_error {
 		public:
-			template <typename ...Ts>
-			basic_polymorphic_wrapper(Ts const &...ts) : pointer(new actual_t{ ts... }) {}
-			basic_polymorphic_wrapper() : pointer(new actual_t{}) {}
-			~basic_polymorphic_wrapper() { if (pointer) destructor_t{}((actual_t *) pointer); }
+			inline explicit exception() : std::runtime_error("A log entry has caused an exception to be thrown.") {}
+		};
+		namespace detail {
+			using severity_level_t = uint8_t;
+			template <severity_level_t level>
+			struct severity_t {
+				static constexpr severity_level_t value = level;
+			};
+		}
+		namespace entry {
+			enum class type : uint32_t {
+				message = 0x0,
+				warning = 0x8,
+				error = 0x10,
+				custom = 0x18
+			};
+			namespace severity {
+				constexpr inline detail::severity_t<0x00> ignored;
+				constexpr inline detail::severity_t<0x01> minimum;
+				constexpr inline detail::severity_t<0x20> negligible;
+				constexpr inline detail::severity_t<0x40> insignificant;
+				constexpr inline detail::severity_t<0x60> minor;
+				constexpr inline detail::severity_t<0x80> major;
+				constexpr inline detail::severity_t<0xa0> serious;
+				constexpr inline detail::severity_t<0xc0> important;
+				constexpr inline detail::severity_t<0xe0> critical;
+				constexpr inline detail::severity_t<0xff> maximum;
 
-			basic_polymorphic_wrapper(basic_polymorphic_wrapper const &) = delete;
-			basic_polymorphic_wrapper(basic_polymorphic_wrapper &&other) noexcept
-				: pointer(other.pointer) {
-				other.pointer = nullptr;
+				template <detail::severity_level_t level >
+				constexpr inline detail::severity_t<level> severity;
+			}
+		}
+		namespace detail {
+			template <severity_level_t severity_level>
+			constexpr inline uint32_t operator<<(severity_t<severity_level>, entry::type rhs) {
+				return uint32_t(severity_level) << uint32_t(rhs);
 			}
 
-			operator interface_t *() { return pointer; }
-			operator interface_t &() { return *pointer; }
+			class severity_mask_t {
+			public:
+				template <severity_level_t severity_level>
+				constexpr severity_mask_t(entry::type const &type,
+										  detail::severity_t<severity_level> const &severity)
+					: value(severity << type) {}
+				constexpr inline severity_mask_t operator|=(severity_mask_t const &another) { return value |= another.value; }
+				constexpr inline severity_mask_t operator&=(severity_mask_t const &another) { return value &= another.value; }
+				constexpr inline severity_mask_t operator^=(severity_mask_t const &another) { return value ^= another.value; }
+				constexpr inline severity_mask_t operator|(severity_mask_t const &another) const { return value | another.value; }
+				constexpr inline severity_mask_t operator&(severity_mask_t const &another) const { return value & another.value; }
+				constexpr inline severity_mask_t operator^(severity_mask_t const &another) const { return value ^ another.value; }
+				constexpr inline severity_mask_t operator==(severity_mask_t const &another) const { return value == another.value; }
+				constexpr inline severity_mask_t operator!=(severity_mask_t const &another) const { return value != another.value; }
 
-			interface_t *operator->() { return pointer; };
-			interface_t *operator->() const { return pointer; };
-			interface_t &operator*() { return *pointer; };
-			interface_t &operator*() const { return *pointer; };
-			actual_t &operator&() { return *(actual_t *) pointer; };
-			actual_t &operator&() const { return *(actual_t *) pointer; };
-		private:
-			interface_t *pointer;
-	};
+				inline bool operator()(entry::type const &type, severity_level_t const &severity) const {
+					auto masked = (value & (entry::severity::maximum << type)) >> uint32_t(type);
+					return masked && masked <= severity;
+				}
+				template <severity_level_t severity_level>
+				inline bool operator()(entry::type const &type,
+									   detail::severity_t<severity_level> const &severity) const {
+					return operator()(type, severity_level);
+				}
+			protected:
+				constexpr severity_mask_t(uint32_t value) : value(value) {}
+			private:
+				uint32_t value;
+			};
+			template <severity_level_t severity_level>
+			constexpr inline severity_mask_t operator*(entry::type const &type, detail::severity_t<severity_level> const &severity) {
+				return severity_mask_t(type, severity);
+			}
 
-	struct nowide_ofstream_destructor_callable {
-		void operator()(nowide::ofstream *ptr);
-	};
-	using file_wrapper = basic_polymorphic_wrapper<
-		std::ostream, nowide::ofstream,
-		nowide_ofstream_destructor_callable
-	>;
+			class entry_t;
+			template <typename value_t> struct entry_mode_visitor_t;
+			class entry_type_t {
+				friend entry_t;
+			public:
+				entry_type_t(entry::type value = entry::type::message,
+							 std::u8string const &name = u8"message")
+					: value(value), name(name) {}
+				std::u8string const &operator*() const { return name; }
+				std::u8string const *operator->() const { return &name; }
+				operator entry::type() const { return value; }
+			private:
+				entry::type value;
+				std::u8string name;
+			};
+			class extra_t {};
 
-	/**
-	 * @brief A single class able to wrap all the supported underlying stream types.
-	*/
-	class stream_wrapper {
-		friend class logger_state_t;
-		template <typename rhs_t> friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
-	public:
-		stream_wrapper(std::ostream &stream, log::detail::severity_mask mask)
-			: stream(&stream), mask(mask), write_next_info(false) {}
-		stream_wrapper(std::wostream &stream, log::detail::severity_mask mask)
-			: stream(&stream), mask(mask), write_next_info(false) {}
-		stream_wrapper(file_wrapper &&stream, log::detail::severity_mask mask)
-			: stream(std::move(stream)), mask(mask), write_next_info(false) {}
-		~stream_wrapper() = default;
-
-		stream_wrapper(stream_wrapper const &) = delete;
-		stream_wrapper(stream_wrapper &&other) noexcept
-			: stream(std::move(other.stream)), mask(other.mask),
-			write_next_info(other.write_next_info) {}
-
-		/**
-		 * @brief Default operator<<().
-		 * @tparam rhs_t type of passed object
-		 * @param rhs passed object
-		 * @return `*this`
-		*/
-		template<typename rhs_t>
-		stream_wrapper &operator<<(rhs_t const &rhs);
-
-		inline stream_wrapper &operator<<(char8_t const *rhs) {
-			return *this << (char *) rhs;
+			class normal_t {};
+			class special_t {
+				friend entry_t;
+				template <typename value_t> friend struct entry_mode_visitor_t;
+			public:
+				special_t(std::u8string &&value) : value(std::move(value)) {}
+			private:
+				std::u8string value;
+			};
+			class tag_t : public special_t { public: using special_t::special_t; };
+			class variable_t : public special_t { public: using special_t::special_t; };
+			class function_t : public special_t { public: using special_t::special_t; };
 		}
-		inline stream_wrapper &operator<<(wchar_t const *rhs) {
-			return *this << nowide::narrow(rhs);
+		namespace mask {
+			constexpr inline detail::severity_mask_t no_errors = entry::type::error * entry::severity::ignored;
+			constexpr inline detail::severity_mask_t all_errors = entry::type::error * entry::severity::minimum;
+			constexpr inline detail::severity_mask_t minimum_errors = entry::type::error * entry::severity::minimum;
+			constexpr inline detail::severity_mask_t negligible_errors = entry::type::error * entry::severity::negligible;
+			constexpr inline detail::severity_mask_t insignificant_errors = entry::type::error * entry::severity::insignificant;
+			constexpr inline detail::severity_mask_t minor_errors = entry::type::error * entry::severity::minor;
+			constexpr inline detail::severity_mask_t major_errors = entry::type::error * entry::severity::major;
+			constexpr inline detail::severity_mask_t serious_errors = entry::type::error * entry::severity::serious;
+			constexpr inline detail::severity_mask_t important_errors = entry::type::error * entry::severity::important;
+			constexpr inline detail::severity_mask_t critical_errors = entry::type::error * entry::severity::critical;
+
+			constexpr inline detail::severity_mask_t no_warnings = entry::type::warning * entry::severity::ignored;
+			constexpr inline detail::severity_mask_t all_warnings = entry::type::warning * entry::severity::minimum;
+			constexpr inline detail::severity_mask_t negligible_warnings = entry::type::warning * entry::severity::negligible;
+			constexpr inline detail::severity_mask_t insignificant_warnings = entry::type::warning * entry::severity::insignificant;
+			constexpr inline detail::severity_mask_t minor_warnings = entry::type::warning * entry::severity::minor;
+			constexpr inline detail::severity_mask_t major_warnings = entry::type::warning * entry::severity::major;
+			constexpr inline detail::severity_mask_t serious_warnings = entry::type::warning * entry::severity::serious;
+			constexpr inline detail::severity_mask_t important_warnings = entry::type::warning * entry::severity::important;
+			constexpr inline detail::severity_mask_t critical_warnings = entry::type::warning * entry::severity::critical;
+
+			constexpr inline detail::severity_mask_t no_messages = entry::type::message * entry::severity::ignored;
+			constexpr inline detail::severity_mask_t all_messages = entry::type::message * entry::severity::minimum;
+			constexpr inline detail::severity_mask_t negligible_messages = entry::type::message * entry::severity::negligible;
+			constexpr inline detail::severity_mask_t insignificant_messages = entry::type::message * entry::severity::insignificant;
+			constexpr inline detail::severity_mask_t minor_messages = entry::type::message * entry::severity::minor;
+			constexpr inline detail::severity_mask_t major_messages = entry::type::message * entry::severity::major;
+			constexpr inline detail::severity_mask_t serious_messages = entry::type::message * entry::severity::serious;
+			constexpr inline detail::severity_mask_t important_messages = entry::type::message * entry::severity::important;
+			constexpr inline detail::severity_mask_t critical_messages = entry::type::message * entry::severity::critical;
+
+			constexpr inline detail::severity_mask_t no_custom_entries = entry::type::custom * entry::severity::ignored;
+			constexpr inline detail::severity_mask_t all_custom_entries = entry::type::custom * entry::severity::minimum;
+			constexpr inline detail::severity_mask_t negligible_custom_entries = entry::type::custom * entry::severity::negligible;
+			constexpr inline detail::severity_mask_t insignificant_custom_entries = entry::type::custom * entry::severity::insignificant;
+			constexpr inline detail::severity_mask_t minor_custom_entries = entry::type::custom * entry::severity::minor;
+			constexpr inline detail::severity_mask_t major_custom_entries = entry::type::custom * entry::severity::major;
+			constexpr inline detail::severity_mask_t serious_custom_entries = entry::type::custom * entry::severity::serious;
+			constexpr inline detail::severity_mask_t important_custom_entries = entry::type::custom * entry::severity::important;
+			constexpr inline detail::severity_mask_t critical_custom_entries = entry::type::custom * entry::severity::critical;
+
+			constexpr inline detail::severity_mask_t nothing = no_errors | no_warnings | no_messages | no_custom_entries;
+			constexpr inline detail::severity_mask_t everything = all_errors | all_warnings | all_messages | all_custom_entries;
 		}
-		inline stream_wrapper &operator<<(char32_t const rhs) {
-			return *this << nowide::utf::convert_string<char8_t>(&rhs, &rhs + 1).c_str();
+
+		namespace literals {
+			inline detail::tag_t operator""_tag(char const *value, size_t size) { return std::u8string((char8_t const *) value, size); };
+			inline detail::variable_t operator""_var(char const *value, size_t size) { return std::u8string((char8_t const *) value, size); };
+			inline detail::function_t operator""_fun(char const *value, size_t size) { return std::u8string((char8_t const *) value, size); };
+			//inline detail::tag_t operator""_tag(char8_t const *value, size_t) { return value; };
+			//inline detail::value_t operator""_var(char8_t const *value, size_t) { return value; };
+			//inline detail::variable_t operator""_var(char8_t const *value, size_t) { return value; };
+			//inline detail::function_t operator""_fun(char8_t const *value, size_t) { return value; };
 		}
-		template <typename Elem, typename Traits>
-		inline stream_wrapper &operator<<(std::basic_string<Elem, Traits> const &rhs) {
-			return *this << nowide::utf::convert_string<char8_t>(rhs.c_str(), rhs.c_str() + rhs.size()).c_str();
+		namespace manipulators {
+			using namespace entry::severity;
+
+			inline detail::entry_type_t const error(entry::type::error, u8"error");
+			inline detail::entry_type_t const warning(entry::type::warning, u8"warning");
+			inline detail::entry_type_t const message(entry::type::message, u8"message");
+
+			class custom : public detail::entry_type_t {
+			public:
+				custom(std::u8string const &name) : entry_type_t(entry::type::custom, name) {}
+			};
+
+			constexpr inline detail::extra_t extra;
 		}
-		template <typename Elem, typename Traits>
-		inline stream_wrapper &operator<<(std::basic_string_view<Elem, Traits> const &rhs) {
-			return *this << nowide::utf::convert_string<char8_t>(rhs.data(), rhs.data() + rhs.size()).c_str();
+		namespace detail {
+			class universal_stream;
+			class universal_stream_preferences {
+			public:
+				universal_stream_preferences(universal_stream *ptr) : stream_ptr(ptr) {}
+				universal_stream_preferences &with_tags(bool enable = true);
+				universal_stream_preferences &with_auto_flush(bool enable = true);
+
+				universal_stream_preferences(universal_stream_preferences const &) = delete;
+				universal_stream_preferences(universal_stream_preferences &&) = delete;
+				universal_stream_preferences operator=(universal_stream_preferences const &) = delete;
+				universal_stream_preferences operator=(universal_stream_preferences &&) = delete;
+			private:
+				universal_stream *stream_ptr;
+			};
 		}
 
-		inline stream_wrapper &operator<<(std::filesystem::path const &path) {
-			return *this << path.u8string();
-		}
+		detail::universal_stream_preferences add_stream(std::ostream &stream, detail::severity_mask_t mask, detail::severity_mask_t extra);
+		detail::universal_stream_preferences add_stream(std::wostream &stream, detail::severity_mask_t mask, detail::severity_mask_t extra);
+		detail::universal_stream_preferences add_file(std::filesystem::path const &path, detail::severity_mask_t mask, detail::severity_mask_t extra);
+		detail::universal_stream_preferences add_file_wo_timestamp(std::filesystem::path const &path, detail::severity_mask_t mask, detail::severity_mask_t extra);
 
-		/**
-		 * @brief Returns 'operator bool()' of an underlying stream.
-		*/
-		operator bool() const;
+		inline detail::universal_stream_preferences add_stream(std::ostream &stream, detail::severity_mask_t mask) { return add_stream(stream, mask, mask); }
+		inline detail::universal_stream_preferences add_stream(std::wostream &stream, detail::severity_mask_t mask) { return add_stream(stream, mask, mask); }
+		inline detail::universal_stream_preferences add_file(std::filesystem::path const &path, detail::severity_mask_t mask) { return add_file(path, mask, mask); }
+		inline detail::universal_stream_preferences add_file_wo_timestamp(std::filesystem::path const &path, detail::severity_mask_t mask) { return add_file_wo_timestamp(path, mask, mask); }
 
-		/**
-		 * @brief Returns a reference to an unrelying stream.
-		 * @return
-		*/
-		auto &operator*() { return stream; };
+		void enable_exceptions(detail::severity_mask_t mask);
+		void enable_termination(detail::severity_mask_t mask);
+		void enable_nowide_substitution(bool value = true);
 
-	protected:
-		std::variant<
-			std::ostream *,
-			std::wostream *,
-			file_wrapper
-		> stream;
-
-		log::detail::severity_mask mask;
-		mutable bool write_next_info;
-	};
-
-	/**
-	 * @brief Allows to change logger state.
-	*/
-	class logger_state_t {
-		friend clap::log::detail::stream;
-		friend logger_state_t &clap::logger();
-		template <typename rhs_t> friend stream &&::operator<<(stream &&stream, rhs_t const &rhs);
-	public:
-		~logger_state_t();
-
-		/**
-		 * @brief Adds a stream (e.g. `std::cout`) as an output target for the logger.
-		 * @param stream is the stream reference.
-		 * @param mask is the mask defining which entries are to be sent to the stream.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_stream(std::ostream &stream, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Adds a **wide** stream (e.g. `std::wcout`) as an output target for the logger.
-		 * @param stream is the stream reference.
-		 * @param mask is the mask defining which entries are to be sent to the stream.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_stream(std::wostream &stream, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Adds a text file as an output target for the logger.
-		 *
-		 * File is named "{path} {year}.{month}.{day} {hour}-{minute}-{second} {AM/PM}.log"
-		 *		specifying the moment of its creation
-		 *
-		 * @param path specifies the path where the log file is created.
-		 * @param mask is the mask defining which entries are to be written to this file.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_file(std::filesystem::path const &path, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Adds a text file as an output target for the logger.
-		 *
-		 * File is named "{filename}.log"
-		 *
-		 * @param path specifies the path where the log file is created.
-		 * @param mask is the mask defining which error/messages are to be written to this file.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		*/
-		void add_file_wo_timestamp(std::filesystem::path const &path, log::detail::severity_mask mask);
-
-		/**
-		 * @brief Enables an exception to be thrown when a new entry with specified severity is logged.
-		 * @param mask is the mask defining which entries are to be logged.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		 *
-		 * It's disabled by default.
-		*/
-		inline void enable_exceptions(log::detail::severity_mask mask) { exception_mask = mask; }
-		/**
-		 * @brief Disables an exception thrown when a new entry with specified severity is logged.
-		 *
-		 * It's disabled by default.
-		*/
-		inline void disable_exceptions() { enable_exceptions(log::detail::severity_mask::none); }
-
-		/**
-		 * @brief Enables std::terminate() to be called when a new entry with specified severity is logged.
-		 * @param mask is the mask defining which entries are to be logged.
-		 *		It's recommended to only use masks defined in clap::logger_mask.
-		 *		@see clap::logger_mask
-		 *
-		 * It's enabled for errors by default.
-		*/
-		inline void enable_termination(log::detail::severity_mask mask) { termination_mask = mask; }
-
-		/**
-		 * @brief Disables std::terminate() called when a new entry with specified severity is logged.
-		 *
-		 * It's enabled for errors by default.
-		*/
-		inline void disable_termination() { enable_termination(log::detail::severity_mask::none); }
-
-		/**
-		 * @brief Causes standard output streams (e.g. 'std::cout') passed to 'add_stream' to be substituted with nowide alternatives (e.g. 'nowide::cout').
-		 * @param value is the new value of the option.
-		 * @see logger_state_t::add_stream
-		 *
-		 * It's enabled by default.
-		*/
-		inline void enable_nowide_substitution(bool value = true) { replace_std_with_nowide = value; }
-
-		/**
-		 * @brief Disables substitution of standard output streams (e.g. 'std::cout') passed to 'add_stream' with 'nowide' alternatives (e.g. 'nowide::cout').
-		 * @param value is the new value of the option.
-		 * @see logger_state_t::add_stream
-		 *
-		 * It's enabled by default.
-		*/
+		inline void disable_exceptions() { enable_exceptions(mask::nothing); }
+		inline void disable_termination() { enable_termination(mask::nothing); }
 		inline void disable_nowide_substitution() { enable_nowide_substitution(false); }
 
+		void start();
+		void stop();
+		bool is_logging();
 
-	protected:
-		logger_state_t()
-			: exception_mask(log::detail::severity_mask::none),
-			termination_mask(log::detail::severity_mask::error_every),
-			replace_std_with_nowide(true) {}
+		namespace detail {
+			class logger_t;
+			class entry_stream_t;
+			class entry_t {
+				friend entry_stream_t;
+			protected:
+				template <typename value_t> void append(value_t &&value);
+				template <severity_level_t level> void append(severity_t<level> const &value);
+			private:
+				entry_t()
+					: is_in_use(false), is_extra(false)
+					, current_type(manipulators::message)
+					, current_severity(manipulators::minor.value)
+					, current_extra_severity(manipulators::important.value)
+					, current_mode(detail::normal_t{}) {}
+				~entry_t();
+				entry_t(entry_t const &) = delete;
+				entry_t(entry_t &&) = delete;
+				entry_t &operator=(entry_t const &) = delete;
+				entry_t &operator=(entry_t &&) = delete;
+			public:
+				struct chunk_t {
+					std::u8string value;
+					severity_level_t severity;
+					bool is_extra;
+					bool is_special;
 
-	private:
+					chunk_t(severity_level_t level, bool is_extra = false, bool is_special = false)
+						: severity(level), is_extra(is_extra), is_special(is_special) {}
+					template <severity_level_t level> chunk_t(severity_t<level> severity, bool is_extra)
+						: severity(level), is_extra(is_extra) {}
+					chunk_t &operator=(std::u8string const &new_value) { value = new_value; return *this; }
+					chunk_t &operator=(std::u8string &&new_value) { value = std::move(new_value); return *this; }
+					chunk_t &operator+=(std::u8string const &new_value) { value += new_value; return *this; }
+					chunk_t &operator+=(std::u8string &&new_value) { value += std::move(new_value); return *this; }
+					operator std::u8string() const { return value; }
+				};
+			private:
+				std::basic_ostringstream<char8_t> underlying;
+				std::vector<chunk_t> chunks;
+				std::vector<std::u8string> tags;
 
-		/**
-		 * @brief Stores pointers to the streams used by this logger.
-		 */
-		std::vector<stream_wrapper> used_streams;
+				bool is_in_use, is_extra;
+				entry_type_t current_type;
+				severity_level_t current_severity;
+				severity_level_t current_extra_severity;
+				std::variant<detail::normal_t, detail::function_t, detail::variable_t>
+					current_mode;
+			};
+			class entry_stream_t {
+				friend logger_t;
+				struct entry_deleter_t { inline void operator()(entry_t *ptr) { delete ptr; } };
+			public:
+				entry_stream_t()
+					: underlying(is_logging() ? new entry_t() : nullptr, entry_deleter_t{}) {}
 
-		/**
-		 * @brief Stores mask specifying errors/warnings/messages that require an exception to be thrown.
-		 *
-		 * It's disabled by default.
-		*/
-		log::detail::severity_mask exception_mask;
+				template <typename value_t>
+				friend inline entry_stream_t operator<<(entry_stream_t stream, value_t &&value) {
+					stream.append(std::forward<value_t>(value));
+					return std::move(stream);
+				}
+				auto *operator->() { return underlying.get(); }
+				auto const *operator->() const { return underlying.get(); }
+			protected:
+				template <typename value_t> inline void append(value_t &&value) {
+					if (underlying)
+						underlying->append(std::forward<value_t>(value));
+				}
+				template <severity_level_t level> void append(severity_t<level> const &value) {
+					if (underlying)
+						underlying->append(value);
+				}
+			private:
+				std::shared_ptr<entry_t> underlying;
+			};
+			class logger_t {
+			public:
+				constexpr logger_t() = default;
+				template <typename value_t>
+				friend inline entry_stream_t operator<<(logger_t const &logger, value_t const &value) {
+					return (logger.add_entry() << value);
+				}
+				entry_stream_t add_entry() const { return entry_stream_t{}; }
+			private:
+				logger_t(logger_t const &) = delete;
+				logger_t(logger_t &&) = delete;
+				logger_t &operator=(logger_t const &) = delete;
+				logger_t &operator=(logger_t &&) = delete;
+			};
 
-		/**
-		 * @brief Stores mask specifying errors/warnings/messages that require a std::terminate() call.
-		 *
-		 * It's enabled for errors by default.
-		*/
-		log::detail::severity_mask termination_mask;
-
-		/**
-		 * @brief Determines whether standard output (e.g. 'std::cout') should be replaced with nowide provided alternative (e.g. 'nowide::cout').
-		 *
-		 * It's enabled by default.
-		*/
-		bool replace_std_with_nowide;
-	};
-
-	/**
-	 * @brief Is throws for every error/warning/message requiring an exception to be thrown.
-	 * @see clap::detail::logger_state_t::enable_exceptions()
-	 * @see clap::detail::logger_state_t::diable_exceptions()
-	*/
-	class logger_exception : public std::exception {
-	public:
-		using std::exception::exception;
-	};
-}
-
-namespace clap {
-	/**
-	 * @brief lists all the acceptable mask values to be used when specifying an entry type and level.
-	*/
-	using logger_mask = log::detail::severity_mask;
-}
-
-inline clap::log::detail::severity_mask operator|(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) |
-														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
-}
-inline clap::log::detail::severity_mask operator&(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) &
-														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
-}
-inline clap::log::detail::severity_mask operator^(clap::log::detail::severity_mask const lhs, clap::log::detail::severity_mask const rhs) {
-	return static_cast<clap::log::detail::severity_mask>(static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs) ^
-														 static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(rhs));
-}
-inline clap::log::detail::severity_mask operator~(clap::log::detail::severity_mask const lhs) {
-	return static_cast<clap::log::detail::severity_mask>(~static_cast<std::underlying_type_t<clap::log::detail::severity_mask>>(lhs));
-}
-
-inline clap::log::detail::severity_mask operator|(clap::log::detail::severity const lhs, clap::log::detail::severity const rhs) {
-	return clap::log::detail::severity_mask(lhs) | clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator&(clap::log::detail::severity const lhs, clap::log::detail::severity const rhs) {
-	return clap::log::detail::severity_mask(lhs) & clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator^(clap::log::detail::severity const lhs, clap::log::detail::severity const rhs) {
-	return clap::log::detail::severity_mask(lhs) ^ clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator~(clap::log::detail::severity const lhs) {
-	return ~clap::log::detail::severity_mask(lhs);
-}
-
-inline clap::log::detail::severity_mask operator|(clap::log::detail::severity_mask const lhs, clap::log::detail::severity const rhs) {
-	return lhs | clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator|(clap::log::detail::severity const lhs, clap::log::detail::severity_mask const rhs) {
-	return clap::log::detail::severity_mask(lhs) | rhs;
-}
-inline clap::log::detail::severity_mask operator&(clap::log::detail::severity_mask const lhs, clap::log::detail::severity const rhs) {
-	return lhs & clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator&(clap::log::detail::severity const lhs, clap::log::detail::severity_mask const rhs) {
-	return clap::log::detail::severity_mask(lhs) & rhs;
-}
-inline clap::log::detail::severity_mask operator^(clap::log::detail::severity_mask const lhs, clap::log::detail::severity const rhs) {
-	return lhs ^ clap::log::detail::severity_mask(rhs);
-}
-inline clap::log::detail::severity_mask operator^(clap::log::detail::severity const lhs, clap::log::detail::severity_mask const rhs) {
-	return clap::log::detail::severity_mask(lhs) ^ rhs;
-}
-
-template<typename rhs_t>
-clap::log::detail::stream &&operator<<(clap::log::detail::stream &&stream, rhs_t const &rhs) {
-	for (auto &wrapper : stream.logger_state_ref.used_streams) {
-		if (wrapper) { // is wrapped stream healthy?
-			if (static_cast<bool>(stream.severity & clap::log::detail::severity_mask::info_every)) { // is this an info-entry?
-				if (static_cast<bool>(wrapper.mask & stream.severity) && wrapper.write_next_info) // should the entry be written? 
-					wrapper << rhs; // write it.
-			} else { // it isn't an info entry
-				if (static_cast<bool>(wrapper.mask & stream.severity)) { // should the entry be written? 
-					wrapper << rhs; // write it.
-					wrapper.write_next_info = true; // following info-entries should be written.
-				} else
-					wrapper.write_next_info = false; // following info-entries shouldn't be written.
+			namespace concepts {
+				template<typename LHS, typename RHS>
+				concept Printable = requires (LHS & lhs, RHS const &rhs) {
+					{ lhs << rhs } -> std::same_as<LHS &>;
+				};
+				template<typename T>
+				concept Convertible_To_String = requires (T const &t) {
+					{ std::to_string(t) } -> std::same_as<std::string>;
+				};
+				template<typename T>
+				concept Convertible_To_WString = requires (T const &t) {
+					{ std::to_wstring(t) } -> std::same_as<std::wstring>;
+				};
 			}
-		} else {
-			//clap::log::warning::critical << "Ignore a stream because its 'operator bool()' returned 'false'.";
+			template<class> struct always_false { static inline constexpr bool value = false; };
 		}
 	}
-	return std::move(stream);
-}
+	constexpr inline logger::detail::logger_t log;
 
-namespace clap::log::detail {
-	template<typename...Fs> struct overload : Fs... { using Fs::operator()...; };
-	template<typename...Fs> overload(Fs...)->overload<Fs...>;
+	namespace logger_literals = logger::literals;
+	namespace literals = logger_literals;
 }
+namespace cL = clap::logger::manipulators;
+using namespace clap::literals;
 
-template<typename rhs_t>
-inline clap::log::detail::stream_wrapper &clap::log::detail::stream_wrapper::operator<<(rhs_t const &rhs) {
+template<clap::logger::detail::severity_level_t level>
+inline void clap::logger::detail::entry_t::append(severity_t<level> const &) { current_severity = level; }
+template<> inline void clap::logger::detail::entry_t::append(extra_t const &) { is_extra = true; }
+template<> inline void clap::logger::detail::entry_t::append(tag_t const &tag) { tags.emplace_back(tag.value); }
+template<> inline void clap::logger::detail::entry_t::append(tag_t &&tag) { tags.emplace_back(std::move(tag.value)); }
+template<> inline void clap::logger::detail::entry_t::append(function_t const &in) { current_mode = in; }
+template<> inline void clap::logger::detail::entry_t::append(function_t &&in) { current_mode = std::move(in); }
+template<> inline void clap::logger::detail::entry_t::append(variable_t const &in) { current_mode = in; }
+template<> inline void clap::logger::detail::entry_t::append(variable_t &&in) { current_mode = std::move(in); }
+template<> inline void clap::logger::detail::entry_t::append(std::filesystem::path const &path) { append(path.u8string()); }
+template<> inline void clap::logger::detail::entry_t::append(std::filesystem::path &path) { append(path.u8string()); }
+template<> inline void clap::logger::detail::entry_t::append(std::filesystem::path &&path) { append(path.u8string()); }
+
+template<> inline void clap::logger::detail::entry_t::append(entry_type_t &&value) {
+	if (is_in_use) {
+		clap::log << cL::warning << cL::critical
+			<< "clap"_tag << "essential"_tag << "log"_tag << "stream"_tag
+			<< "Ignore an attempt to change log entry time after the logging has already begun."
+			<< cL::extra
+			<< "Entry type can only be changed before something is written to the stream.";
+	} else
+		current_type = std::move(value);
+}
+template<> inline void clap::logger::detail::entry_t::append(entry_type_t const &value) {
+	if (is_in_use) {
+		clap::log << cL::warning << cL::critical
+			<< "clap"_tag << "essential"_tag << "log"_tag << "stream"_tag
+			<< "Ignore an attempt to change log entry time after the logging has already begun."
+			<< cL::extra
+			<< "Entry type can only be changed before something is written to the stream.";
+	} else
+		current_type = value;
+}
+template<> inline void clap::logger::detail::entry_t::append(manipulators::custom &&value) { append((entry_type_t &&) std::move(value)); }
+template<> inline void clap::logger::detail::entry_t::append(manipulators::custom const &value) { append((entry_type_t const &) value); }
+
+template<typename value_t>
+inline void clap::logger::detail::entry_t::append(value_t &&value) {
+	while (!chunks.empty() && chunks.back().value == u8"")
+		chunks.pop_back();
 	std::visit(
-		overload{
-			[&rhs](std::ostream *stream) {
-				*stream << rhs;
-			},
-			[&rhs](std::wostream *stream) {
-				// Temporary solution.
-				std::ostringstream temp; temp << rhs;
-				*stream << nowide::widen(temp.str());
-			},
-			[&rhs](file_wrapper const &stream) {
-				*stream << rhs;
+		[this, &value](auto mode) {
+			using mode_t = std::decay_t<decltype(mode)>;
+			if constexpr (std::is_same<normal_t, mode_t>::value) {
+				is_in_use = true;
+
+				underlying.str(u8"");
+				if constexpr (concepts::Printable<decltype(underlying), decltype(std::forward<value_t>(value))>)
+					underlying << std::forward<value_t>(value) << '\n';
+				else if constexpr (std::is_constructible<std::u8string, decltype(std::forward<value_t>(value))>::value)
+					underlying << std::u8string(std::forward<value_t>(value));
+				else if constexpr (std::is_constructible<std::string, decltype(std::forward<value_t>(value))>::value)
+					underlying << (char8_t const *) std::string(std::forward<value_t>(value)).c_str();
+				else if constexpr (concepts::Convertible_To_String<decltype(std::forward<value_t>(value))>)
+					underlying << (char8_t const *) std::to_string(std::forward<value_t>(value)).c_str();
+				else
+					static_assert(!always_false<value_t>::value,
+								  "Fail to log an object. Make sure operator<<(std::ostream&, [object_t] const &) is defined.");
+
+				if (underlying.str() != u8"") {
+					if (chunks.empty() || chunks.back().severity != current_severity
+						|| chunks.back().is_extra != is_extra || chunks.back().is_special)
+						chunks.emplace_back(current_severity, is_extra);
+					chunks.back() += std::move(underlying.str());
+				}
+			} else {
+				current_mode = normal_t{};
+				if (!chunks.empty())
+					chunks.back().is_special = true;
+
+				if constexpr (std::is_same<function_t, mode_t>::value)
+					append(u8"A call to '" + mode.value + u8"' has returned '");
+				else if constexpr (std::is_same<variable_t, mode_t>::value)
+					append(u8"The value of '" + mode.value + u8"' is '");
+				else
+					static_assert(!always_false<mode_t>::value,
+								  "Fail to log an object. The mode of the logging stream is not supported.");
+
+				append(std::forward<value_t>(value));
+				append(u8"'");
+				if (!chunks.empty())
+					chunks.back().is_special = true;
 			}
-		}, stream);
-	return *this;
+		}
+	, std::move(current_mode));
 }
