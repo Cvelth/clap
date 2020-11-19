@@ -159,9 +159,9 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\gl.hpp" />
     <ClInclude Include="..\..\include\gl\detail\context.hpp" />
     <ClInclude Include="..\..\include\gl\detail\window.hpp" />
-    <ClInclude Include="..\..\include\gl\gl.hpp" />
     <ClInclude Include="..\..\include\gl\interface.hpp" />
     <ClInclude Include="..\..\include\gl\misc.hpp" />
     <ClInclude Include="..\..\include\gl\shader.hpp" />
