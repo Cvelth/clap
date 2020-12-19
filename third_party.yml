@@ -1,0 +1,42 @@
+glfw:
+- github_release:
+    owner: glfw
+    tag: "3.3.2"
+    file: glfw-3.3.2.zip
+- cmake: 
+    debug_options: >
+        -DUSE_MSVC_RUNTIME_LIBRARY_DLL=ON
+    linux_options: >
+        -G "Unix Makefiles"
+        -DGLFW_USE_OSMESA=ON
+- depend:
+    include: include
+    lib: lib/*
+
+vkfw:
+- github_clone:
+    owner: cvelth
+    tag: main
+- install:
+    include: default
+- depend:
+    include: default
+
+nowide:
+- github_release:
+    owner: boostorg
+    tag: v11.0.0
+    file: nowide_standalone_v11.0.0.tar.gz
+- cmake: default
+- depend:
+    include: default
+
+freetype:
+- github_release:
+    owner: freetype
+    name: freetype2
+    tag: VER-2-10-2
+- cmake:
+    options: >
+        -Wno-dev
+- depend: default
