@@ -1,0 +1,72 @@
+
+### Specifies the name of the application.
+### Default value: "Unnamed clap application"
+application_name: "clap example: triangle"
+
+### Specifies the version of the application.
+### Default values: [0, 0, 0]
+application_version_major: 0
+application_version_minor: 1
+application_version_patch: 0
+
+### Specifies instance extensions to consider required. 
+### The application would only be functional if these extensions are supported,
+### Otherwise, an error is logged and the application is aborted.
+# instance_extensions:
+# - instance_extension_1
+# - instance_extension_2
+
+### Specifies instance layers to consider required.
+### The application would only be functional if these layers are supported.
+# instance_layers:
+# - instance_layer_1
+# - instance_layer_2
+
+### Specifies device extensions to consider required. 
+### The application would only be functional if these extensions are supported.
+# device_extensions:
+# - device_extension_1
+# - device_extension_2
+
+### Specifies device layers to consider required.
+### The application would only be functional if these layers are supported.
+# device_layers:
+# - device_layer_1
+# - device_layer_2
+
+### Specifies additional directories to scan for resources.
+### Paths are scanned in the exact order they are provided:
+### Default ones take priority and are scanned in the exact order they are mentioned here.
+### After which additional paths are scanned in the order they are read.
+### Inifinite loops are prevented, each file can only be scanned once.
+### Default paths: 
+###   - "resource"
+###   - "../resource"
+###   - "../../resource"
+###   - "clap/resource"
+###   - "../clap/resource"
+###   - "../../clap/resource"
+###   - "engine/resource"
+###   - "../engine/resource"
+###   - "../../engine/resource"
+# additional_resourse_paths:
+# - local/path
+# - c:\windows\global\path
+# - /usr/linux/global/path
+
+### Specifies filenames of files to be processed as a configuration file
+### Files must still be located in directories defined as 'additional_resourse_paths'
+### Default filename:
+###   - "configuration.yml"
+# additional_configuration_filenames:
+# - filename.yml
+# - 日本語_config.yml
+
+### Specifies filenames of files to be ignored when identifying resources
+### Default filenames:
+###   - "license"
+###   - "LICENSE"
+###   - "license.md"
+###   - "LICENSE.MD"
+# ignored_resource_filenames:
+# - custom_license_name.md

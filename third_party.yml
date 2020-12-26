@@ -4,11 +4,11 @@ glfw:
     tag: "3.3.2"
     file: glfw-3.3.2.zip
 - cmake: 
-    debug_options: >
+    options: >
+        -DGLFW_BUILD_EXAMPLES=OFF
+        -DGLFW_BUILD_TESTS=OFF
+        -DGLFW_BUILD_DOCS=OFF
         -DUSE_MSVC_RUNTIME_LIBRARY_DLL=ON
-    linux_options: >
-        -G "Unix Makefiles"
-        -DGLFW_USE_OSMESA=ON
 - depend:
     include: include
     lib: lib/*
@@ -22,14 +22,16 @@ vkfw:
 - depend:
     include: default
 
-nowide:
+ryml:
 - github_release:
-    owner: boostorg
-    tag: v11.0.0
-    file: nowide_standalone_v11.0.0.tar.gz
+    owner: biojppm
+    name: rapidyaml
+    tag: v0.1.0
+    file: ryml-0.1.0-src.zip
 - cmake: default
-- depend:
+- depend: 
     include: default
+    lib: default
 
 freetype:
 - github_release:
@@ -40,3 +42,8 @@ freetype:
     options: >
         -Wno-dev
 - depend: default
+
+vulkan:
+- global:
+    include: $VULKAN_SDK/Include
+    lib: $VULKAN_SDK/Lib/vulkan-1
