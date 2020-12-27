@@ -12,24 +12,32 @@ application_version_patch: 0
 ### Specifies instance extensions to consider required. 
 ### The application would only be functional if these extensions are supported,
 ### Otherwise, an error is logged and the application is aborted.
+### Default value is equivalent to what 'glfwGetRequiredInstanceExtensions()' function returns.
 # instance_extensions:
 # - instance_extension_1
 # - instance_extension_2
 
 ### Specifies instance layers to consider required.
 ### The application would only be functional if these layers are supported.
+### Default value is 
+###     [VK_LAYER_KHRONOS_validation] when clap is built in debug mode ('NDEBUG' is not defined),
+###     [] otherwise
 # instance_layers:
 # - instance_layer_1
 # - instance_layer_2
 
 ### Specifies device extensions to consider required. 
 ### The application would only be functional if these extensions are supported.
+### Default value is [VK_KHR_swapchain]
 # device_extensions:
 # - device_extension_1
 # - device_extension_2
 
 ### Specifies device layers to consider required.
 ### The application would only be functional if these layers are supported.
+### Default value is 
+###     [VK_LAYER_KHRONOS_validation] when clap is built in debug mode ('NDEBUG' is not defined),
+###     [] otherwise
 # device_layers:
 # - device_layer_1
 # - device_layer_2

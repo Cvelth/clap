@@ -28,6 +28,10 @@ namespace clap::resource::detail {
 		static void load(std::string_view name, ryml::NodeRef const &node,
 						 std::queue<std::filesystem::path> &left_to_identify,
 						 std::filesystem::path const &absolute_filename);
+		static void update_instance_extensions(std::span<char const *> extensions) {
+			std::ranges::copy(extensions, std::inserter(configuration::instance_extensions.underlying,
+														configuration::instance_extensions.underlying.begin()));
+			}
 	};
 
 	template<>
@@ -145,6 +149,10 @@ namespace clap::resource::detail {
 	}
 }
 
+void clap::resource::detail::update_instance_extensions(std::span<char const *> extensions) {
+	configuration_loader::update_instance_extensions(std::move(extensions));
+}
+
 static void on_ryml_error(const char *msg, size_t msg_len, ryml::Location, void *) {
 	clap::log << cL::error << cL::important << "clap"_tag << "resource"_tag << "configuration"_tag << "ryml"_tag
 		<< "RYML error: '" << std::string_view{ msg, msg_len } << "'\n";
@@ -232,13 +240,14 @@ void clap::resource::identify() {
 	if (!identification_status)
 		std::thread(
 			[] {
+				std::scoped_lock guard(identification_mutex);
+
 				static std::queue<std::filesystem::path> left_to_identify(
 					typename std::queue<std::filesystem::path>::container_type(
 						configuration::default_resourse_paths->begin(), 
 						configuration::default_resourse_paths->end()
 					)
 				);
-				std::scoped_lock guard(identification_mutex);
 				while (!left_to_identify.empty()) {
 					[[maybe_unused]] auto target = std::filesystem::absolute(left_to_identify.front());
 					if (std::filesystem::exists(left_to_identify.front())) {

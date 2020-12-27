@@ -2,14 +2,14 @@
 
 using namespace std::literals;
 
-inline void zone_loop(clap::ui::zone &zone, vkfw::Window &window) {
+inline void zone_loop(clap::ui::zone &zone, clap::ui::detail::window_handle handle) {
 	clap::log << cL::message << cL::important << "clap"_tag << "ui"_tag << "zone_loop"_tag
 		<< "Start a zone loop for " << zone.name();
 	if (zone.on_initialize)
 		zone.on_initialize();
 
 	auto last_frame = std::chrono::high_resolution_clock::now();
-	while (!window.shouldClose()) {
+	while (!handle.window.shouldClose()) {
 		constexpr static auto frame_limit = 1'000'000us / 60;
 
 		auto start_time = std::chrono::high_resolution_clock::now();
@@ -18,7 +18,7 @@ inline void zone_loop(clap::ui::zone &zone, vkfw::Window &window) {
 
 		if (zone.on_update)
 			if (zone.on_update(timestep))
-				window.swapBuffers();
+				handle.window.swapBuffers();
 
 		auto end_time = std::chrono::high_resolution_clock::now();
 		auto frame_duration = end_time - start_time;
@@ -48,16 +48,16 @@ int clap::ui::loop(int argc, char **argv) {
 	}
 
 	std::vector<std::thread> threads;
-	detail::manager::zone_loop = [&threads](zone *zone_ptr, vkfw::Window *window_ptr) {
+	detail::manager::zone_loop = [&threads](zone *zone_ptr, clap::ui::detail::window_handle handle) {
 		if (!zone_ptr)
 			clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone_loop"_tag
 			<< "Fail to start zone loop. Received 'ui::zone' is nullptr.";
-		else if (!window_ptr)
+		else if (!handle)
 			clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone_loop"_tag
-			<< "Fail to start zone loop. Received 'vkfw::Window' is nullptr.";
+			<< "Fail to start zone loop. Received 'window handle is ' is nullptr.";
 		else
-			threads.emplace_back([zone_ptr, window_ptr] {
-				zone_loop(*zone_ptr, *window_ptr);
+			threads.emplace_back([zone_ptr, thread_handle = std::move(handle)] {
+				zone_loop(*zone_ptr, std::move(thread_handle));
 				detail::manager::remove(*zone_ptr);
 			});
 	};

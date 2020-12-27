@@ -1,19 +1,14 @@
 ﻿#pragma once
+#include "essential/utility.hpp"
+
 #include <filesystem>
-#include <iterator>
 #include <list>
 #include <set>
+#include <span>
 #include <string>
 
 namespace clap::resource {
 	namespace detail {
-		namespace concepts {
-			template <typename T>
-			concept iteratable = requires(T a) {
-				{ a.begin() } -> std::input_iterator<>;
-				{ a.end() } -> std::input_iterator<>;
-			};
-		}
 		class configuration_loader;
 		template<typename T>
 		class value {
@@ -24,8 +19,10 @@ namespace clap::resource {
 			T const &operator*() const { return underlying; }
 			operator T const &() const { return underlying; }
 
-			decltype(auto) begin() const requires concepts::iteratable<T> { return underlying.begin(); }
-			decltype(auto) end() const requires concepts::iteratable<T> { return underlying.end(); }
+			decltype(auto) begin() const requires utility::iteratable<T> { return underlying.begin(); }
+			decltype(auto) end() const requires utility::iteratable<T> { return underlying.end(); }
+			size_t size() const requires utility::iteratable<T> { return underlying.size(); }
+			bool empty() const requires utility::iteratable<T> { return underlying.empty(); }
 
 			template <typename another_T, typename = 
 				typename std::enable_if<std::is_convertible<T const &, another_T>::value>::type>
@@ -35,6 +32,8 @@ namespace clap::resource {
 		private:
 			T underlying;
 		};
+
+		void update_instance_extensions(std::span<char const *> extensions);
 	}
 }
 namespace clap::configuration {
@@ -44,9 +43,19 @@ namespace clap::configuration {
 	inline resource::detail::value<uint32_t> application_version_patch(0u);
 
 	inline resource::detail::value<std::set<std::string>> instance_extensions({});
-	inline resource::detail::value<std::set<std::string>> instance_layers({});
-	inline resource::detail::value<std::set<std::string>> device_extensions({});
-	inline resource::detail::value<std::set<std::string>> device_layers({});
+	inline resource::detail::value<std::set<std::string>> instance_layers({
+#ifndef NDEBUG
+		"VK_LAYER_KHRONOS_validation"
+#endif
+	});
+	inline resource::detail::value<std::set<std::string>> device_extensions({
+		"VK_KHR_swapchain"
+	});
+	inline resource::detail::value<std::set<std::string>> device_layers({
+#ifndef NDEBUG
+		"VK_LAYER_KHRONOS_validation"
+#endif
+	});
 
 	inline resource::detail::value<std::list<std::filesystem::path>> const default_resourse_paths({
 		"resource",

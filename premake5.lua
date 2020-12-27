@@ -15,7 +15,7 @@ templated.vpaths = function(project_name) return {
 			"example/" .. project_name .. "/include/detail/**.h*"
 		 }
 	}, {
-		["source/include/detail"] = {
+		["source/detail/include"] = {
 			"source/" .. project_name .. "/detail/**.h*",
 			"example/" .. project_name .. "/source/detail/**.h*"
 		}
@@ -58,17 +58,11 @@ templated.project "resource"
 	templated.files "resource"
 	links "essential"
 	depends "ryml"
-templated.project "vk"
-	templated.kind "StaticLib"
-	templated.files "vk"
-	templated.pch "vk"
-	links "resource"
-	depends { "glfw", "vkfw", "vulkan" }
 templated.project "ui"
 	templated.kind "StaticLib"
 	templated.files "ui"
 	templated.pch "ui"
-	links "vk"
+	links "resource"
 	depends { "glfw", "vkfw", "vulkan" }
 
 group "example"
