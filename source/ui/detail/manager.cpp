@@ -62,6 +62,7 @@ std::optional<clap::ui::detail::window_handle> clap::ui::detail::manager::add(ui
 					if (iterator->second && iterator->second.check_swapchain()) {
 						std::lock_guard local_guard(local_mutex);
 						added_queue.emplace_back(&zone_ref);
+						vkfw::postEmptyEvent();
 						return iterator->second;
 					} else {
 						clap::log << cL::warning << cL::critical << "clap"_tag << "ui"_tag << "manager"_tag
@@ -88,6 +89,7 @@ std::optional<clap::ui::detail::window_handle> clap::ui::detail::manager::add(ui
 void clap::ui::detail::manager::remove(ui::zone &zone_ref) {
 	std::lock_guard guard(local_mutex);
 	removed_queue.emplace_back(&zone_ref);
+	vkfw::postEmptyEvent();
 }
 
 bool clap::ui::detail::manager::empty() {
