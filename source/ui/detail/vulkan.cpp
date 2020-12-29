@@ -15,11 +15,12 @@ concept VulkanLayer = requires (layer_t layer) {
 	{ layer.specVersion } -> Printable;
 };
 
-template <clap::utility::iteratable container_t>
-inline void log(container_t const &container, std::string_view description, std::string_view when_empty) {
+template <clap::utility::iteratable container_t, clap::logger::detail::severity_level_t level>
+inline void log(container_t const &container, clap::logger::detail::severity_t<level> const &severity,
+				std::string_view description, std::string_view when_empty) {
 	if (!container.empty()) {
 		auto logger_stream = clap::log.add_entry();
-		logger_stream << cL::message << cL::insignificant << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
+		logger_stream << cL::message << severity << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
 			<< description << " (" << container.size() << "):";
 		for (auto const &element : container)
 			if constexpr (VulkanExtension<decltype(element)>)
@@ -33,7 +34,7 @@ inline void log(container_t const &container, std::string_view description, std:
 			else
 				logger_stream << "\n    " << element;
 	} else
-		clap::log << cL::message << cL::insignificant << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
+		clap::log << cL::message << severity << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
 		<< when_empty;
 }
 static vk::PhysicalDeviceFeatures log(vk::PhysicalDeviceFeatures device_features) {
@@ -134,19 +135,14 @@ vk::UniqueInstance clap::ui::vulkan::detail::create_instance() {
 
 	if (auto &vkfw_instance = vulkan::vkfw(); vkfw_instance) {
 		resource::detail::update_instance_extensions(vkfw::getRequiredInstanceExtensions());
-		::log(clap::configuration::instance_extensions,
-			  "Required Vulkan instance extensions",
-			  "No required instance extensions.");
-		::log(vk::enumerateInstanceExtensionProperties(),
-			  "Available Vulkan instance extensions",
-			  "No available instance extensions.");
-
-		::log(clap::configuration::instance_layers,
-			  "Required Vulkan instance layers",
-			  "No required instance layers.");
-		::log(vk::enumerateInstanceLayerProperties(),
-			  "Available Vulkan instance layers",
-			  "No available instance layers.");
+		::log(clap::configuration::instance_extensions, cL::insignificant,
+			  "Required Vulkan instance extensions", "No required instance extensions.");
+		::log(vk::enumerateInstanceExtensionProperties(), cL::negligible,
+			  "Available Vulkan instance extensions", "No available instance extensions.");
+		::log(clap::configuration::instance_layers, cL::insignificant,
+			  "Required Vulkan instance layers", "No required instance layers.");
+		::log(vk::enumerateInstanceLayerProperties(), cL::negligible,
+			  "Available Vulkan instance layers", "No available instance layers.");
 
 		std::vector<char const *> continuous_required_extensions;
 		continuous_required_extensions.reserve(clap::configuration::instance_extensions.size());
@@ -197,84 +193,84 @@ vk::PhysicalDevice clap::ui::vulkan::detail::choose_device() {
 	return {};
 }
 vk::UniqueDevice clap::ui::vulkan::detail::initialize_device() {
-	if (auto &physical_device = vulkan::physical_device(); physical_device) {
-		auto queue_families = physical_device.getQueueFamilyProperties();
-		if (!queue_families.empty()) {
-			auto logger_stream = clap::log.add_entry();
-			logger_stream << cL::message << cL::minor << "clap"_tag << "vk"_tag << "instance"_tag << "initialize"_tag
-				<< "Queue families available to the physical device (" << queue_families.size() << "):";
-			for (auto &family : queue_families) {
-				logger_stream << "\n    x" << family.queueCount << ": "
-					<< (family.queueFlags & ::vk::QueueFlagBits::eGraphics ? "Graphics " : "")
-					<< (family.queueFlags & ::vk::QueueFlagBits::eCompute ? "Compute " : "")
-					<< (family.queueFlags & ::vk::QueueFlagBits::eTransfer ? "Transfer " : "")
-					<< (family.queueFlags & ::vk::QueueFlagBits::eSparseBinding ? "SparseBinding " : "")
-					<< (family.queueFlags & ::vk::QueueFlagBits::eProtected ? "Protected " : "")
-					<< "(Glanularity: {"
-					<< family.minImageTransferGranularity.width << ", "
-					<< family.minImageTransferGranularity.height << ", "
-					<< family.minImageTransferGranularity.depth << "})";
+	if (auto &physical_device = vulkan::physical_device(); physical_device)
+		if (auto queue_families = physical_device.getQueueFamilyProperties(); !queue_families.empty())
+			if (queue_families.size() <= queue_family_id())
+				clap::log << cL::error << cL::important << "clap"_tag << "vk"_tag << "instance"_tag << "initialize"_tag
+					<< "Requested queue family (with id = " << queue_family_id() << ") is not available.";
+			else {
+				auto logger_stream = clap::log.add_entry();
+				logger_stream << cL::message << cL::minor << "clap"_tag << "vk"_tag << "instance"_tag << "initialize"_tag
+					<< "Queue families available to the physical device (" << queue_families.size() << "):";
+				size_t id = 0;
+				for (auto &family : queue_families) {
+					logger_stream << "\n    " << id++ << " (x" << family.queueCount << "): "
+						<< (family.queueFlags & ::vk::QueueFlagBits::eGraphics ? "Graphics, " : "")
+						<< (family.queueFlags & ::vk::QueueFlagBits::eCompute ? "Compute, " : "")
+						<< (family.queueFlags & ::vk::QueueFlagBits::eTransfer ? "Transfer, " : "")
+						<< (family.queueFlags & ::vk::QueueFlagBits::eSparseBinding ? "SparseBinding, " : "")
+						<< (family.queueFlags & ::vk::QueueFlagBits::eProtected ? "Protected, " : "")
+						<< "with Glanularity: {"
+						<< family.minImageTransferGranularity.width << ", "
+						<< family.minImageTransferGranularity.height << ", "
+						<< family.minImageTransferGranularity.depth << "}";
+				}
+				logger_stream << "\nChoose a queue with id = " << queue_family_id() << ".";
+
+				float priority = 1.f;
+				::vk::DeviceQueueCreateInfo queue_info{
+					.queueFamilyIndex = queue_family_id(),
+					.queueCount = 1,
+					.pQueuePriorities = &priority
+				};
+
+				::log(configuration::device_extensions, cL::insignificant,
+					  "Required Vulkan device extensions", "No required device extensions.");
+				::log(physical_device.enumerateDeviceExtensionProperties(), cL::negligible,
+					  "Available Vulkan device extensions", "No available device extensions.");
+				::log(configuration::device_layers, cL::insignificant,
+					  "Required Vulkan device layers", "No required device layers.");
+				::log(physical_device.enumerateDeviceLayerProperties(), cL::negligible,
+					  "Available Vulkan device layers", "No available device layers.");
+
+				std::vector<char const *> continuous_required_extensions;
+				continuous_required_extensions.reserve(clap::configuration::device_extensions->size());
+				std::ranges::transform(clap::configuration::device_extensions,
+									   std::back_inserter(continuous_required_extensions),
+									   [](std::string const &view) -> char const * { return view.data(); });
+				std::vector<char const *> continuous_required_layers;
+				continuous_required_layers.reserve(clap::configuration::device_layers->size());
+				std::ranges::transform(clap::configuration::device_layers,
+									   std::back_inserter(continuous_required_layers),
+									   [](std::string const &view) -> char const * { return view.data(); });
+
+				auto device_features = ::log(physical_device.getFeatures());
+				::vk::DeviceCreateInfo device_info = {
+					.queueCreateInfoCount = 1,
+					.pQueueCreateInfos = &queue_info,
+					.enabledLayerCount = static_cast<uint32_t>(continuous_required_layers.size()),
+					.ppEnabledLayerNames = continuous_required_layers.data(),
+					.enabledExtensionCount = static_cast<uint32_t>(continuous_required_extensions.size()),
+					.ppEnabledExtensionNames = continuous_required_extensions.data(),
+					.pEnabledFeatures = &device_features
+				};
+				auto output = physical_device.createDeviceUnique(device_info);
+				if (output)
+					clap::log << cL::message << cL::minor << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
+					<< "Initialize a logical Vulkan device.";
+				else
+					clap::log << cL::error << cL::important << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
+					<< "Fail to initialize a logical Vulkan device.";
+				return output;
 			}
-			logger_stream << "\nChoose the first one.";
-		} else
+		else
 			clap::log << cL::warning << cL::major << "clap"_tag << "vk"_tag << "instance"_tag << "initialize"_tag
 				<< "No queue families available.";
-
-		float priority = 1.f;
-		::vk::DeviceQueueCreateInfo queue_info{
-			.queueFamilyIndex = 0,
-			.queueCount = 1,
-			.pQueuePriorities = &priority
-		};
-
-		::log(configuration::device_extensions,
-			  "Required Vulkan device extensions",
-			  "No required device extensions.");
-		::log(physical_device.enumerateDeviceExtensionProperties(),
-			  "Available Vulkan device extensions",
-			  "No available device extensions.");
-		::log(configuration::device_layers,
-			  "Required Vulkan device layers",
-			  "No required device layers.");
-		::log(physical_device.enumerateDeviceLayerProperties(),
-			  "Available Vulkan device layers",
-			  "No available device layers.");
-
-		std::vector<char const *> continuous_required_extensions;
-		continuous_required_extensions.reserve(clap::configuration::device_extensions->size());
-		std::ranges::transform(clap::configuration::device_extensions,
-							   std::back_inserter(continuous_required_extensions),
-							   [](std::string const &view) -> char const * { return view.data(); });
-		std::vector<char const *> continuous_required_layers;
-		continuous_required_layers.reserve(clap::configuration::device_layers->size());
-		std::ranges::transform(clap::configuration::device_layers,
-							   std::back_inserter(continuous_required_layers),
-							   [](std::string const &view) -> char const * { return view.data(); });
-
-		auto device_features = ::log(physical_device.getFeatures());
-		::vk::DeviceCreateInfo device_info = {
-			.queueCreateInfoCount = 1,
-			.pQueueCreateInfos = &queue_info,
-			.enabledLayerCount = static_cast<uint32_t>(continuous_required_layers.size()),
-			.ppEnabledLayerNames = continuous_required_layers.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(continuous_required_extensions.size()),
-			.ppEnabledExtensionNames = continuous_required_extensions.data(),
-			.pEnabledFeatures = &device_features
-		};
-		auto output = physical_device.createDeviceUnique(device_info);
-		if (output)
-			clap::log << cL::message << cL::minor << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
-			<< "Initialize a logical Vulkan device.";
-		else
-			clap::log << cL::error << cL::important << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
-			<< "Fail to initialize a logical Vulkan device.";
-		return output;
-	}
 	return {};
 }
 vk::Queue clap::ui::vulkan::detail::initialize_queue() {
 	if (auto &device = vulkan::device(); device)
-		return device.getQueue(0, 0);
+		return device.getQueue(queue_family_id(), 0);
 	return {};
 }
 vk::DispatchLoaderDynamic clap::ui::vulkan::detail::initialize_loader() {

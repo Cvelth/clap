@@ -32,6 +32,10 @@ namespace clap::ui::vulkan {
 		static auto device = detail::initialize_device();
 		return *device;
 	}
+	[[nodiscard]] inline uint32_t &queue_family_id() {
+		static uint32_t id = 0;
+		return id;
+	}
 	[[nodiscard]] inline vk::Queue &queue() {
 		static auto queue = detail::initialize_queue();
 		return queue;
