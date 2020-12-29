@@ -15,8 +15,9 @@ namespace clap::ui {
 		struct window_handle {
 			::vkfw::Window &window;
 			::vk::SurfaceKHR &surface;
+			::vk::SwapchainKHR &swapchain;
 
-			operator bool() const { return window && surface; }
+			operator bool() const { return window && surface && swapchain; }
 		};
 
 		class manager {
