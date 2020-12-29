@@ -219,7 +219,7 @@ void identify(std::filesystem::directory_entry directory_entry,
 			clap::log << cL::warning << cL::minor << "clap"_tag << "resource"_tag << "identify"_tag
 				<< "limited"_tag << "unfinished"_tag << "to_do"_tag
 				<< "Ignore a resource directory: '"
-				<< std::filesystem::absolute(left_to_identify.front()) << "'.\n"
+				<< std::filesystem::absolute(directory_entry.path()) << "'.\n"
 				<< "Configuration files are the only supported resource type "
 					"and they must be put in the root of 'resource' directory.\n"
 				<< "More resource type support is to be added in future iterations.";
@@ -228,7 +228,7 @@ void identify(std::filesystem::directory_entry directory_entry,
 		else
 			clap::log << cL::warning << cL::major << "clap"_tag << "resource"_tag << "identify"_tag
 				<< "Ignore a resource: '"
-				<< std::filesystem::absolute(left_to_identify.front()) << "'.\n"
+				<< std::filesystem::absolute(directory_entry.path()) << "'.\n"
 				<< cL::extra << "Resource identification failed. "
 					"The resource is either unsupported or broken.";
 	}
