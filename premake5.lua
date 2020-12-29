@@ -1,4 +1,5 @@
 local templated = require "script/premake/template"
+local clapped = require "script/template"
 templated.third_party "third_party"
 
 templated.language = "C++"
@@ -39,6 +40,18 @@ templated.vpaths = function(project_name) return {
 			"include/" .. project_name .. "/**.h*",
 			"example/" .. project_name .. "/include/**.h*"
 		}
+	}, {
+		["shader/include/*"] = {
+			"include/" .. project_name .. "/shader/*/**.glsl",
+			"example/" .. project_name .. "/include/shader/*/**.glsl"
+		 }
+	}, {
+		["shader/*"] = {
+			"source/" .. project_name .. "/shader/*/**.glsl",
+			"example/" .. project_name .. "/source/shader/*/**.glsl"
+		 }
+	}, {
+		[""] = "**.manifest"
 	}
 } end
 
@@ -52,15 +65,15 @@ templated.workspace "clap"
 
 templated.project "essential"
 	templated.kind "StaticLib"
-	templated.files "essential"
+	clapped.files "essential"
 templated.project "resource"
 	templated.kind "StaticLib"
-	templated.files "resource"
+	clapped.files "resource"
 	links "essential"
 	depends "ryml"
 templated.project "ui"
 	templated.kind "StaticLib"
-	templated.files "ui"
+	clapped.files "ui"
 	templated.pch "ui"
 	links "resource"
 	depends { "glfw", "vkfw", "vulkan" }
@@ -69,6 +82,6 @@ group "example"
 templated.project "triangle"
 	templated.location "../example/triangle/build"
 	templated.kind "ConsoleApp"
-	templated.files("triangle", "example")
+	clapped.files("triangle", "example")
 	templated.pch("triangle", "example")
 	links "ui"
