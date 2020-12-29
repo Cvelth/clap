@@ -13,6 +13,7 @@
 #include "ui/zone.hpp"
 using namespace clap::literals;
 
+#include <algorithm>
 #include <concepts>
 #include <functional>
 #include <iterator>
