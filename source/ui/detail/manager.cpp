@@ -38,7 +38,13 @@ void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 struct owning_window_handle {
 	vkfw::UniqueWindow window;
 	vk::UniqueSurfaceKHR surface;
+
 	vk::UniqueSwapchainKHR swapchain;
+	vk::Format swapchain_image_format;
+	vk::Extent2D swapchain_extent;
+
+	std::vector<vk::Image> swapchain_images;
+	std::vector<vk::UniqueImageView> swapchain_image_views;
 
 	explicit owning_window_handle(clap::ui::zone &zone_ref, std::string_view title) {
 		using namespace clap::ui;
@@ -119,6 +125,29 @@ struct owning_window_handle {
 							.clipped = true
 						};
 						swapchain = device.createSwapchainKHRUnique(swapchain_info);
+						if (swapchain) {
+							swapchain_image_format = chosen_format.format;
+							swapchain_extent = chosen_extent;
+							swapchain_images = device.getSwapchainImagesKHR(*swapchain);
+
+							vk::ImageViewCreateInfo image_view_info{
+								.viewType = vk::ImageViewType::e2D,
+								.format = swapchain_image_format,
+								.subresourceRange = vk::ImageSubresourceRange {
+									.aspectMask = vk::ImageAspectFlagBits::eColor,
+									.baseMipLevel = 0,
+									.levelCount = 1,
+									.baseArrayLayer = 0,
+									.layerCount = 1
+								}
+							};
+							for (auto &image : swapchain_images) {
+								image_view_info.image = image;
+								swapchain_image_views.emplace_back(
+									device.createImageViewUnique(image_view_info)
+								);
+							}
+						}
 					}
 				}
 			}
