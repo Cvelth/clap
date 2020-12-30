@@ -11,6 +11,7 @@
 #include "ui/vulkan/pipeline.hpp"
 #include "ui/compound.hpp"
 #include "ui/loop.hpp"
+#include "ui/resource.hpp"
 #include "ui/zone.hpp"
 using namespace clap::literals;
 

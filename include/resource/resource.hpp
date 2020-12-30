@@ -15,11 +15,10 @@ namespace std::filesystem {
 }
 namespace clap::resource {
 	namespace detail {
-		template <typename tag_t>
-		class storage {
+		template <typename tag_t> class storage {
 		public:
-			std::filesystem::directory_entry *get(std::string_view const &identificator);
-			std::filesystem::directory_entry *try_get(std::string_view const &identificator);
+			static std::filesystem::directory_entry *get(std::string_view const &identificator);
+			static std::filesystem::directory_entry *try_get(std::string_view const &identificator);
 			inline decltype(auto) operator[](std::string_view const &identificator) {
 				return get(identificator);
 			}
