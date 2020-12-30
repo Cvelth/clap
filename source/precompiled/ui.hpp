@@ -8,6 +8,7 @@
 #include "resource/resource.hpp"
 #include "ui/detail/manager.hpp"
 #include "ui/vulkan/core.hpp"
+#include "ui/vulkan/pipeline.hpp"
 #include "ui/compound.hpp"
 #include "ui/loop.hpp"
 #include "ui/zone.hpp"

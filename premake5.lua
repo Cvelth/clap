@@ -11,32 +11,32 @@ templated.vpaths = function(project_name) return {
 	}, {
 		["precompiled/source"] = "**/precompiled/**.c*"
 	}, {
-		["include/detail"] = {
+		["include/detail/**"] = {
 			"include/" .. project_name .. "/detail/**.h*",
 			"example/" .. project_name .. "/include/detail/**.h*"
 		 }
 	}, {
-		["source/detail/include"] = {
+		["source/detail/include/**"] = {
 			"source/" .. project_name .. "/detail/**.h*",
 			"example/" .. project_name .. "/source/detail/**.h*"
 		}
 	}, {
-		["source/include"] = {
+		["source/include/**"] = {
 			"source/" .. project_name .. "/**.h*",
 			"example/" .. project_name .. "/source/**.h*"
 		}
 	}, {
-		["source/detail"] = {
+		["source/detail/**"] = {
 			"source/" .. project_name .. "/detail/**.c*",
 			"example/" .. project_name .. "/source/detail/**.c*"
 		}
 	}, {
-		["source"] = {
+		["source/**"] = {
 			"source/" .. project_name .. "/**.c*",
 			"example/" .. project_name .. "/source/**.c*"
 		}
 	}, {
-		["include"] = {
+		["include/**"] = {
 			"include/" .. project_name .. "/**.h*",
 			"example/" .. project_name .. "/include/**.h*"
 		}
