@@ -1,6 +1,8 @@
 ﻿#include "precompiled/ui.hpp"
 
 #include "resource/resource.hpp"
+#include "ui/vulkan/core.hpp"
+#include "ui/resource.hpp"
 
 #include <fstream>
 

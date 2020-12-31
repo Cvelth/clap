@@ -1,5 +1,10 @@
 ﻿#include "precompiled/ui.hpp"
 
+#include "resource/resource.hpp"
+#include "ui/vulkan/window.hpp"
+#include "ui/vulkan/core.hpp"
+#include "ui/zone.hpp"
+
 void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 		 std::vector<vk::SurfaceFormatKHR> const &formats,
 		 std::vector<vk::PresentModeKHR> const &modes) {
@@ -33,7 +38,7 @@ void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 		logger_stream << "\nNo available surface modes.";
 }
 
-clap::ui::detail::window::window(size_t width, size_t height, 
+clap::ui::vulkan::window::window(size_t width, size_t height,
 								 std::string_view title, 
 								 vkfw::WindowHints hints) {
 	resource_manager::identify();

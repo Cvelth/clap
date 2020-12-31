@@ -1,5 +1,8 @@
 ﻿#include "precompiled/ui.hpp"
 
+#include "ui/detail/manager.hpp"
+#include "ui/loop.hpp"
+
 using namespace std::literals;
 
 int clap::ui::loop(int argc, char **argv) {

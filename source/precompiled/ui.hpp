@@ -5,15 +5,6 @@
 
 #include "essential/log.hpp"
 #include "essential/utility.hpp"
-#include "resource/resource.hpp"
-#include "ui/detail/manager.hpp"
-#include "ui/detail/window.hpp"
-#include "ui/vulkan/core.hpp"
-#include "ui/vulkan/pipeline.hpp"
-#include "ui/compound.hpp"
-#include "ui/loop.hpp"
-#include "ui/resource.hpp"
-#include "ui/zone.hpp"
 using namespace clap::literals;
 
 #include <algorithm>

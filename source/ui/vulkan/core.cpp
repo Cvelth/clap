@@ -1,5 +1,8 @@
 #include "precompiled/ui.hpp"
 
+#include "resource/resource.hpp"
+#include "ui/vulkan/core.hpp"
+
 template <typename value_t>
 concept Printable = requires (std::ostream &stream, value_t value) {
 	{ stream << value } -> std::convertible_to<std::ostream &>;

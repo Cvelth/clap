@@ -1,10 +1,14 @@
 ﻿#include "precompiled/ui.hpp"
 
 #include "resource/resource.hpp"
+#include "ui/detail/manager.hpp"
+#include "ui/vulkan/window.hpp"
+#include "ui/compound.hpp"
+#include "ui/zone.hpp"
 
 clap::ui::zone::zone(std::string_view title, size_t width, size_t height)
 	: get_identifier([] { return "a free zone"; })
-	, state(when_free{ std::string(title), std::make_shared<detail::window>(width, height, title) })
+	, state(when_free{ std::string(title), std::make_shared<vulkan::window>(width, height, title) })
 	, size{width, height} {
 	std::visit(utility::overload{
 		[this, &title, &width, &height](when_free const &state) {
@@ -70,15 +74,33 @@ clap::ui::zone::zone(std::shared_ptr<compound::interface> owner)
 	assert(false); // TODO: Implement embeded zones.
 }
 
-std::optional<clap::ui::detail::window_view> clap::ui::zone::window() {
+std::optional<clap::ui::vulkan::window_view> clap::ui::zone::window() {
 	return std::visit(utility::overload{
-		[this](when_free &state) -> std::optional<detail::window_view> {
+		[this](when_free &state) -> std::optional<vulkan::window_view> {
 			if (state.window)
 				return *state.window;
 			else
 				return std::nullopt;
 		},
-		[this](when_owned &state) -> std::optional<detail::window_view> {
+		[this](when_owned &state) -> std::optional<vulkan::window_view> {
+			if (state.root)
+				return state.root->window();
+			else if (state.owner)
+				return state.owner->window();
+			else
+				return std::nullopt;
+		}
+	}, state);
+}
+std::optional<clap::ui::vulkan::window_view const> clap::ui::zone::window() const {
+	return std::visit(utility::overload{
+		[this](when_free const &state) -> std::optional<vulkan::window_view const> {
+			if (state.window)
+				return *state.window;
+			else
+				return std::nullopt;
+		},
+		[this](when_owned const &state) -> std::optional<vulkan::window_view const> {
 			if (state.root)
 				return state.root->window();
 			else if (state.owner)

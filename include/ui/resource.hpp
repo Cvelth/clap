@@ -16,6 +16,8 @@ namespace clap::resource_manager::detail {
 			vk::ShaderStageFlagBits stage;
 
 			loaded_t(vk::UniqueShaderModule &&module, vk::ShaderStageFlagBits stage);
+			loaded_t(loaded_t const &) = delete;
+			loaded_t(loaded_t&&) = default;
 			loaded_t();
 			~loaded_t();
 			operator bool() const { return bool(module); }

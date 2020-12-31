@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "essential/utility.hpp"
 
+#include "essential/utility.hpp"
 #include "ui/entity.hpp"
 
 #include <functional>
@@ -58,6 +58,8 @@ namespace clap::ui {
 	}
 	namespace detail {
 		class manager;
+	}
+	namespace vulkan {
 		struct window;
 		struct window_view;
 	}
@@ -75,7 +77,8 @@ namespace clap::ui {
 		[[nodiscard]] inline size_t height() const { return size.current_h; }
 
 	protected:
-		[[nodiscard]] std::optional<detail::window_view> window();
+		[[nodiscard]] std::optional<vulkan::window_view> window();
+		[[nodiscard]] std::optional<vulkan::window_view const> window() const;
 
 	private:
 		void do_add();
@@ -101,7 +104,7 @@ namespace clap::ui {
 	protected:
 		struct when_free {
 			std::string title;
-			std::shared_ptr<detail::window> window;
+			std::shared_ptr<vulkan::window> window;
 		};
 		struct when_owned {
 			std::shared_ptr<compound::interface> owner;

@@ -2,6 +2,9 @@
 
 #include <mutex>
 
+#include "ui/detail/manager.hpp"
+#include "ui/zone.hpp"
+
 static std::vector<clap::ui::zone *> added_queue, removed_queue;
 static std::mutex adding_mutex, removing_mutex;
 static size_t zone_counter = 0;

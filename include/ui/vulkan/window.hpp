@@ -1,11 +1,14 @@
 ﻿#pragma once
 #include "precompiled/ui.hpp"
 
-namespace clap::ui::detail {
+namespace clap::ui::vulkan {
 	struct window_view {
 		vkfw::Window vkfw;
 		vk::SurfaceKHR surface;
 		vk::SwapchainKHR swapchain;
+
+		vk::Format &swapchain_image_format;
+		vk::Extent2D &swapchain_extent;
 	};
 
 	struct window {
@@ -28,7 +31,9 @@ namespace clap::ui::detail {
 			return window_view {
 				vkfw ? *vkfw : vkfw::Window{},
 				surface ? *surface : vk::SurfaceKHR{},
-				swapchain ? *swapchain : vk::SwapchainKHR{}
+				swapchain ? *swapchain : vk::SwapchainKHR{},
+				swapchain_image_format,
+				swapchain_extent
 			};
 		}
 	};
