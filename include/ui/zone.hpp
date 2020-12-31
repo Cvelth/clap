@@ -4,6 +4,8 @@
 #include "ui/entity.hpp"
 
 #include <functional>
+#include <memory>
+#include <optional>
 #include <variant>
 
 namespace clap::ui {
@@ -56,33 +58,54 @@ namespace clap::ui {
 	}
 	namespace detail {
 		class manager;
+		struct window;
+		struct window_view;
 	}
 
 	class zone : public entity {
 		friend detail::manager;
 	public:
-		zone(std::string_view name, size_t width, size_t height);
+		zone(std::string_view title, size_t width, size_t height);
 	protected:
-		explicit zone(compound::interface &parent);
+		explicit zone(std::shared_ptr<compound::interface> parent);
 
 	public:
 		[[nodiscard]] std::string name() const;
 		[[nodiscard]] inline size_t width() const { return size.current_w; }
 		[[nodiscard]] inline size_t height() const { return size.current_h; }
 
+	protected:
+		[[nodiscard]] std::optional<detail::window_view> window();
+
+	private:
+		void do_add();
+		void do_remove();
+		inline void do_initialize() {
+			if (on_initialize)
+				on_initialize();
+		}
+		inline bool do_update(utility::timestep const &ts) {
+			if (on_update)
+				return on_update(ts);
+			else
+				return false;
+		}
+
 	public:
 		std::function<void()> on_initialize;
-		std::function<bool(utility::timestep)> on_update;
+		std::function<bool(utility::timestep const &)> on_update;
 
 	protected:
 		std::function<std::string_view()> get_identifier;
 
 	protected:
 		struct when_free {
-			std::string name;
+			std::string title;
+			std::shared_ptr<detail::window> window;
 		};
 		struct when_owned {
-			compound::interface *owner;
+			std::shared_ptr<compound::interface> owner;
+			zone *root;
 		};
 
 	protected:
