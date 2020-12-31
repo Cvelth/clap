@@ -85,3 +85,4 @@ templated.project "triangle"
 	clapped.files("triangle", "example")
 	templated.pch("triangle", "example")
 	links "ui"
+	depends { "glfw", "vkfw", "vulkan" }

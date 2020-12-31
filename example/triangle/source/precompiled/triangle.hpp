@@ -1,11 +1,14 @@
 #pragma once
-#include "essential/log.hpp"
+#include "precompiled/ui.hpp"
+
 #include "resource/resource.hpp"
+#include "ui/vulkan/core.hpp"
+#include "ui/vulkan/pipeline.hpp"
+#include "ui/vulkan/window.hpp"
+#include "ui/compound.hpp"
 #include "ui/loop.hpp"
 #include "ui/resource.hpp"
 #include "ui/zone.hpp"
-using namespace clap::literals;
 
 #include <iostream>
-#include <thread>
 using namespace std::literals;
