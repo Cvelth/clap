@@ -5,23 +5,23 @@
 #include <fstream>
 
 namespace clap::resource::load::shader {
-	detail::shader::loader<detail::vertex> vertex;
-	detail::shader::loader<detail::fragment> fragment;
-	detail::shader::loader<detail::tesselation_control> tesselation_control;
-	detail::shader::loader<detail::tesselation_evaluation> tesselation_evaluation;
-	detail::shader::loader<detail::geometry> geometry;
-	detail::shader::loader<detail::compute> compute;
+	resource_manager::detail::shader::loader<resource_manager::detail::vertex> vertex;
+	resource_manager::detail::shader::loader<resource_manager::detail::fragment> fragment;
+	resource_manager::detail::shader::loader<resource_manager::detail::tesselation_control> tesselation_control;
+	resource_manager::detail::shader::loader<resource_manager::detail::tesselation_evaluation> tesselation_evaluation;
+	resource_manager::detail::shader::loader<resource_manager::detail::geometry> geometry;
+	resource_manager::detail::shader::loader<resource_manager::detail::compute> compute;
 }
 
 template<typename tag_t> vk::ShaderStageFlagBits get_type();
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::vertex>() { return vk::ShaderStageFlagBits::eVertex; }
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::fragment>() { return vk::ShaderStageFlagBits::eFragment; }
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::tesselation_control>() { return vk::ShaderStageFlagBits::eTessellationControl; }
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::tesselation_evaluation>() { return vk::ShaderStageFlagBits::eTessellationEvaluation; }
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::geometry>() { return vk::ShaderStageFlagBits::eGeometry; }
-template<> vk::ShaderStageFlagBits get_type<clap::resource::detail::compute>() { return vk::ShaderStageFlagBits::eCompute; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::vertex>() { return vk::ShaderStageFlagBits::eVertex; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::fragment>() { return vk::ShaderStageFlagBits::eFragment; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::tesselation_control>() { return vk::ShaderStageFlagBits::eTessellationControl; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::tesselation_evaluation>() { return vk::ShaderStageFlagBits::eTessellationEvaluation; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::geometry>() { return vk::ShaderStageFlagBits::eGeometry; }
+template<> vk::ShaderStageFlagBits get_type<clap::resource_manager::detail::compute>() { return vk::ShaderStageFlagBits::eCompute; }
 
-namespace clap::resource::detail::shader {
+namespace clap::resource_manager::detail::shader {
 	loaded_t::loaded_t(vk::UniqueShaderModule &&module, vk::ShaderStageFlagBits stage)
 		: module(new vk::UniqueShaderModule(std::move(module))), stage(stage) {}
 	loaded_t::loaded_t() : module(nullptr), stage(vk::ShaderStageFlagBits{ 0u }) {}
@@ -47,13 +47,13 @@ namespace clap::resource::detail::shader {
 		return {};
 	}
 	template<typename tag_t> inline loaded_t loader<tag_t>::get(std::string_view const &identificator) {
-		if (auto const *file = resource::detail::storage<tag_t>::get(identificator); file)
+		if (auto const *file = resource_manager::detail::storage<tag_t>::get(identificator); file)
 			return get_impl<tag_t>(*file);
 		else
 			return {};
 	}
 	template<typename tag_t> inline loaded_t loader<tag_t>::try_get(std::string_view const &identificator) {
-		if (auto const *file = resource::detail::storage<tag_t>::try_get(identificator); file)
+		if (auto const *file = resource_manager::detail::storage<tag_t>::try_get(identificator); file)
 			return get_impl<tag_t>(*file);
 		else
 			return {};

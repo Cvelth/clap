@@ -10,16 +10,16 @@ using namespace clap::literals;
 #include <fstream>
 #include <iterator>
 #include <mutex>
-#include <queue>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 
 [[maybe_unused]] static std::string_view to_std(c4::csubstr const &input) { 
 	return std::string_view{ input.data(), input.size() }; 
 }
 
-namespace clap::resource::detail {
+namespace clap::resource_manager::detail {
 	class configuration_loader {
 	protected:
 		template <typename T>
@@ -27,7 +27,6 @@ namespace clap::resource::detail {
 							  std::filesystem::path const &absolute_filename);
 	public:
 		static void load(std::string_view name, ryml::NodeRef const &node,
-						 std::queue<std::filesystem::path> &left_to_identify,
 						 std::filesystem::path const &absolute_filename);
 		static void update_instance_extensions(std::span<char const *> extensions) {
 			std::ranges::copy(extensions, std::inserter(configuration::instance_extensions.underlying,
@@ -114,7 +113,6 @@ namespace clap::resource::detail {
 	}
 
 	inline void configuration_loader::load(std::string_view name, ryml::NodeRef const &node,
-										   std::queue<std::filesystem::path> &left_to_identify,
 										   std::filesystem::path const &absolute_filename) {
 		if (name == "application_name")
 			load_impl(configuration::application_name, name, node, absolute_filename);
@@ -132,15 +130,10 @@ namespace clap::resource::detail {
 			load_impl(configuration::device_extensions, name, node, absolute_filename);
 		else if (name == "device_layers")
 			load_impl(configuration::device_layers, name, node, absolute_filename);
-		else if (name == "additional_resourse_paths") {
-			decltype(configuration::additional_resourse_paths) delta({});
-			load_impl(delta, name, node, absolute_filename);
-			for (auto const &value : delta)
-				left_to_identify.push(value);
-			std::ranges::move(std::move(delta), 
-							  std::back_inserter(configuration::additional_resourse_paths.underlying));
-		} else if (name == "additional_configuration_filenames")
-			load_impl(configuration::additional_configuration_filenames, name, node, absolute_filename);
+		else if (name == "resource_paths")
+			load_impl(configuration::resource_paths, name, node, absolute_filename);
+		else if (name == "configuration_filenames")
+			load_impl(configuration::configuration_filenames, name, node, absolute_filename);
 		else if (name == "ignored_resource_filenames")
 			load_impl(configuration::ignored_resource_filenames, name, node, absolute_filename);
 		else
@@ -150,7 +143,7 @@ namespace clap::resource::detail {
 	}
 }
 
-void clap::resource::detail::update_instance_extensions(std::span<char const *> extensions) {
+void clap::resource_manager::detail::update_instance_extensions(std::span<char const *> extensions) {
 	configuration_loader::update_instance_extensions(std::move(extensions));
 }
 
@@ -158,7 +151,7 @@ static void on_ryml_error(const char *msg, size_t msg_len, ryml::Location, void 
 	clap::log << cL::error << cL::important << "clap"_tag << "resource"_tag << "configuration"_tag << "ryml"_tag
 		<< "RYML error: '" << std::string_view{ msg, msg_len } << "'\n";
 }
-inline void initialize_ryml() {
+static void initialize_ryml() {
 	static bool initialization_status = false;
 	if (!initialization_status) {
 		ryml::Callbacks callbacks = ryml::get_callbacks();
@@ -167,8 +160,7 @@ inline void initialize_ryml() {
 		initialization_status = true;
 	}
 }
-void load_configuration_file(std::filesystem::directory_entry directory_entry,
-							 std::queue<std::filesystem::path> &left_to_identify) {
+static void load_configuration_file(std::filesystem::directory_entry directory_entry) {
 	auto absolute_filename = std::filesystem::absolute(directory_entry.path());
 	if (std::ifstream file_stream(absolute_filename); !file_stream)
 		clap::log << cL::error << cL::important << "clap"_tag << "resource"_tag << "configuration"_tag << "load"_tag
@@ -177,21 +169,19 @@ void load_configuration_file(std::filesystem::directory_entry directory_entry,
 	else {
 		clap::log << cL::message << cL::minor << "clap"_tag << "resource"_tag << "configuration"_tag << "load"_tag
 			<< "Load a configuration file: '" << absolute_filename << "'";
-		std::string content{
+		std::string content {
 			std::istreambuf_iterator<std::string::value_type>(file_stream.rdbuf()),
 			std::istreambuf_iterator<std::string::value_type>()
 		};
 		c4::substr string_view(content.data(), content.size());
 
 		initialize_ryml();
-		[[maybe_unused]] auto tree = ryml::parse(string_view);
-		[[maybe_unused]] auto root = tree.rootref();
-
-		if (root.is_map()){
+		auto tree = ryml::parse(string_view);
+		if (auto root = tree.rootref(); root.is_map()){
 			for (auto const &node : root.children())
 				if (node.has_key())
-					clap::resource::detail::configuration_loader::load(
-						to_std(node.key()), node, left_to_identify, absolute_filename
+					clap::resource_manager::detail::configuration_loader::load(
+						to_std(node.key()), node, absolute_filename
 					);
 				else
 					clap::log << cL::error << cL::important << "clap"_tag << "resource"_tag << "configuration"_tag << "load"_tag << "ryml"_tag
@@ -205,12 +195,42 @@ void load_configuration_file(std::filesystem::directory_entry directory_entry,
 }
 
 bool is_configuration_file(std::filesystem::path const &path) {
-	return clap::configuration::default_configuration_filenames->contains(path.filename().string())
-		|| clap::configuration::additional_configuration_filenames->contains(path.filename().string());
+	return clap::configuration::configuration_filenames->contains(path.filename().string());
 }
 bool is_ignored(std::filesystem::path const &path) {
-	return clap::configuration::default_ignored_resource_filenames->contains(path.filename().string())
-		|| clap::configuration::ignored_resource_filenames->contains(path.filename().string());
+	return clap::configuration::ignored_resource_filenames->contains(path.filename().string());
+}
+
+static std::mutex loader_mutex;
+static void load_configuration_impl() {
+	static bool once = false;
+	if (!once) {
+		once = true;
+		std::scoped_lock guard(loader_mutex);
+		for (auto const &path : clap::configuration::resource_paths)
+			if (std::filesystem::exists(path))
+				for (auto &entry : std::filesystem::directory_iterator(path))
+					if (!is_ignored(entry.path()))
+						if (!entry.is_directory() && is_configuration_file(entry.path())) {
+							static std::unordered_set<std::string> already_read;
+							if (auto absolute = std::filesystem::absolute(entry.path()).string(); 
+									!already_read.contains(absolute)) {
+								already_read.emplace(absolute);
+								load_configuration_file(entry);
+							} else
+								clap::log << cL::warning << cL::minor << "clap"_tag << "resource"_tag << "configuration"_tag << "load"_tag
+									<< "Ignore an attempt to load a '" << absolute 
+									<< "' configuration file more than once:";
+						}
+	}
+}
+void clap::resource_manager::load_configuration() {
+	std::thread([] {
+		load_configuration_impl();
+	}).detach();
+}
+void clap::resource_manager::wait() {
+	std::scoped_lock guard(loader_mutex);
 }
 
 struct identified_resource_container_comparator_t : std::equal_to<> {
@@ -239,18 +259,19 @@ namespace identified {
 }
 namespace clap::resource {
 	namespace shader {
-		detail::storage<detail::vertex> vertex;
-		detail::storage<detail::fragment> fragment;
-		detail::storage<detail::tesselation_control> tesselation_control;
-		detail::storage<detail::tesselation_evaluation> tesselation_evaluation;
-		detail::storage<detail::geometry> geometry;
-		detail::storage<detail::compute> compute;
+		resource_manager::detail::storage<resource_manager::detail::vertex> vertex;
+		resource_manager::detail::storage<resource_manager::detail::fragment> fragment;
+		resource_manager::detail::storage<resource_manager::detail::tesselation_control> tesselation_control;
+		resource_manager::detail::storage<resource_manager::detail::tesselation_evaluation> tesselation_evaluation;
+		resource_manager::detail::storage<resource_manager::detail::geometry> geometry;
+		resource_manager::detail::storage<resource_manager::detail::compute> compute;
 	}
-	detail::storage<detail::unknown> unknown;
+	resource_manager::detail::storage<resource_manager::detail::unknown> unknown;
 }
 
-void add_resource(std::string &&identifier, std::filesystem::directory_entry const &entry,
-				  identified_resource_container_t &container) {
+static void add_resource(std::string &&identifier,
+						 std::filesystem::directory_entry const &entry,
+						 identified_resource_container_t &container) {
 	auto &&[iterator, success] = container.try_emplace(std::move(identifier), entry);
 	if (!success) 
 		clap::log << cL::warning << cL::major << "clap"_tag << "resource"_tag << "shader"_tag << "identify"_tag
@@ -258,7 +279,7 @@ void add_resource(std::string &&identifier, std::filesystem::directory_entry con
 			<< "'{resource_map}::try_emplace(...)' has returned 'false'";
 }
 
-identified_resource_container_t *filename_to_container(std::filesystem::path filename) {
+static identified_resource_container_t *filename_to_container(std::filesystem::path filename) {
 	if (filename == "vertex")
 		return &identified::shader::vertex;
 	if (filename == "fragment")
@@ -273,7 +294,7 @@ identified_resource_container_t *filename_to_container(std::filesystem::path fil
 		return &identified::shader::compute;
 	return nullptr;
 }
-void identify_shaders(std::filesystem::directory_entry const &resource_location) {
+static void identify_shaders(std::filesystem::directory_entry const &resource_location) {
 	for (auto &directory : std::filesystem::directory_iterator(resource_location)) {
 		auto *container = filename_to_container(directory.path().filename());
 		if (directory.is_directory() && container) {
@@ -294,24 +315,21 @@ void identify_shaders(std::filesystem::directory_entry const &resource_location)
 				<< "\n    - 'compute'";
 	}
 }
-void identify_unknown(std::filesystem::directory_entry const &resource_location) {
+static void identify_unknown(std::filesystem::directory_entry const &resource_location) {
 	for (auto &entry : std::filesystem::recursive_directory_iterator(resource_location))
 		if (!entry.is_directory() && !is_ignored(entry))
 			add_resource(entry.path().lexically_relative(resource_location).replace_extension().string(),
 						 entry, identified::unknown);
 }
 
-void identify(std::filesystem::directory_entry const &directory_entry,
-			  std::queue<std::filesystem::path> &left_to_identify) {
+static void identify(std::filesystem::directory_entry const &directory_entry) {
 	if (!is_ignored(directory_entry.path())) {
 		if (directory_entry.is_directory())
 			if (directory_entry.path().filename() == "shader")
 				identify_shaders(directory_entry);
 			else
 				identify_unknown(directory_entry);
-		else if (is_configuration_file(directory_entry.path()))
-			load_configuration_file(directory_entry, left_to_identify);
-		else
+		else if (!is_configuration_file(directory_entry.path()))
 			clap::log << cL::warning << cL::minor << "clap"_tag << "resource"_tag << "identify"_tag
 			<< "Ignore a resource: '"
 			<< std::filesystem::absolute(directory_entry.path()) << "'.\n"
@@ -332,35 +350,19 @@ void log(clap::logger::detail::logger_stream_t &logger_stream, std::string_view 
 
 static std::shared_mutex identification_mutex;
 static bool identification_status = false;
-void clap::resource::identify() {
+void clap::resource_manager::identify() {
 	if (!identification_status)
 		std::thread(
 			[] {
 				std::scoped_lock guard(identification_mutex);
-
-				static std::queue<std::filesystem::path> left_to_identify(
-					typename std::queue<std::filesystem::path>::container_type(
-						configuration::default_resourse_paths->begin(), 
-						configuration::default_resourse_paths->end()
-					)
-				);
-				while (!left_to_identify.empty()) {
-					[[maybe_unused]] auto target = std::filesystem::absolute(left_to_identify.front());
-					if (std::filesystem::exists(left_to_identify.front())) {
+				load_configuration_impl();
+				for (auto const &path : configuration::resource_paths)
+					if (std::filesystem::exists(path)) {
 						clap::log << cL::message << cL::important << "clap"_tag << "resource"_tag << "identify"_tag
-							<< "Identify resources from '" 
-							<< std::filesystem::absolute(left_to_identify.front()) << "'.";
-						for (auto &subpath : std::filesystem::directory_iterator(left_to_identify.front()))
-							::identify(subpath, left_to_identify);
-					} else
-						clap::log << cL::warning << cL::negligible << "clap"_tag << "resource"_tag << "identify"_tag
-							<< "Ignore a resource path: '"
-							<< std::filesystem::absolute(left_to_identify.front()) << "'. "
-								"It doesn't exist." << cL::extra
-							<< "std::filesystem::exists(...)"_fun << "false";
-					left_to_identify.pop();
-				}
-
+							<< "Identify resources from '" << std::filesystem::absolute(path) << "'.";
+						for (auto &subpath : std::filesystem::directory_iterator(path))
+							::identify(subpath);
+					}
 				{
 					auto logger_stream = clap::log.add_entry();
 					logger_stream << cL::message << cL::important << "clap"_tag << "resource"_tag << "identify"_tag
@@ -377,34 +379,38 @@ void clap::resource::identify() {
 			}
 		).detach();
 }
-void clap::resource::wait() {
-	std::shared_lock guard(identification_mutex);
-}
-bool clap::resource::were_identified() {
+bool clap::resource_manager::were_identified() {
 	return identification_status;
 }
 
 template <typename tag_t>
 identified_resource_container_t &get_container();
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::vertex>() { 
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::vertex>() {
 	return identified::shader::vertex; 
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::fragment>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::fragment>() {
 	return identified::shader::fragment;
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::tesselation_control>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::tesselation_control>() {
 	return identified::shader::tesselation_control;
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::tesselation_evaluation>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::tesselation_evaluation>() {
 	return identified::shader::tesselation_evaluation;
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::geometry>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::geometry>() {
 	return identified::shader::geometry;
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::compute>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::compute>() {
 	return identified::shader::compute;
 }
-template<> inline identified_resource_container_t &get_container<clap::resource::detail::unknown>() {
+template<> inline identified_resource_container_t &
+get_container<clap::resource_manager::detail::unknown>() {
 	return identified::unknown;
 }
 
@@ -418,12 +424,12 @@ template<typename tag_t> std::filesystem::directory_entry *get_impl(std::string_
 	return nullptr;
 }
 template<typename tag_t> std::filesystem::directory_entry *
-clap::resource::detail::storage<tag_t>::get(std::string_view const &identifier) {
+clap::resource_manager::detail::storage<tag_t>::get(std::string_view const &identifier) {
 	std::shared_lock guard(identification_mutex);
 	return get_impl<tag_t>(identifier);
 }
 template<typename tag_t> std::filesystem::directory_entry *
-clap::resource::detail::storage<tag_t>::try_get(std::string_view const &identifier) {
+clap::resource_manager::detail::storage<tag_t>::try_get(std::string_view const &identifier) {
 	if (identification_mutex.try_lock_shared()) {
 		std::shared_lock guard(identification_mutex, std::adopt_lock);
 		return get_impl<tag_t>(identifier);
@@ -433,7 +439,7 @@ clap::resource::detail::storage<tag_t>::try_get(std::string_view const &identifi
 	return nullptr;
 }
 
-namespace clap::resource::detail {
+namespace clap::resource_manager::detail {
 	using namespace std::filesystem;
 	template directory_entry *storage<vertex>::get(std::string_view const &identifier);
 	template directory_entry *storage<fragment>::get(std::string_view const &identifier);

@@ -57,7 +57,7 @@ application_version_patch: 0
 ###   - "engine/resource"
 ###   - "../engine/resource"
 ###   - "../../engine/resource"
-# additional_resourse_paths:
+# resource_paths:
 # - local/path
 # - c:\windows\global\path
 # - /usr/linux/global/path
@@ -66,7 +66,7 @@ application_version_patch: 0
 ### Files must still be located in directories defined as 'additional_resourse_paths'
 ### Default filename:
 ###   - "configuration.yml"
-# additional_configuration_filenames:
+# configuration_filenames:
 # - filename.yml
 # - 日本語_config.yml
 

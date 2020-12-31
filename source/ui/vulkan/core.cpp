@@ -113,28 +113,28 @@ vkfw::UniqueInstance clap::ui::vulkan::detail::create_vkfw_instance() {
 	return output;
 }
 vk::UniqueInstance clap::ui::vulkan::detail::create_instance() {
-	resource::wait();
-
-	clap::log << cL::message << cL::major << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
-		<< "Start '" << clap::configuration::application_name << "' (v"
-		<< *clap::configuration::application_version_major << "."
-		<< *clap::configuration::application_version_minor << "."
-		<< *clap::configuration::application_version_patch << ").";
-
-	const vk::ApplicationInfo application_info{
-		.pApplicationName = clap::configuration::application_name->data(),
-		.applicationVersion = VK_MAKE_VERSION(clap::configuration::application_version_major,
-											  clap::configuration::application_version_minor,
-											  clap::configuration::application_version_patch),
-		.pEngineName = CLAP_NAME,
-		.engineVersion = VK_MAKE_VERSION(CLAP_VERSION_MAJOR,
-										 CLAP_VERSION_MINOR,
-										 CLAP_VERSION_PATCH),
-		.apiVersion = VK_MAKE_VERSION(1, 0, 0)
-	};
-
 	if (auto &vkfw_instance = vulkan::vkfw(); vkfw_instance) {
-		resource::detail::update_instance_extensions(vkfw::getRequiredInstanceExtensions());
+		resource_manager::wait();
+
+		clap::log << cL::message << cL::major << "clap"_tag << "ui"_tag << "vulkan"_tag << "initialize"_tag
+			<< "Start '" << clap::configuration::application_name << "' (v"
+			<< *clap::configuration::application_version_major << "."
+			<< *clap::configuration::application_version_minor << "."
+			<< *clap::configuration::application_version_patch << ").";
+
+		const vk::ApplicationInfo application_info{
+			.pApplicationName = clap::configuration::application_name->data(),
+			.applicationVersion = VK_MAKE_VERSION(clap::configuration::application_version_major,
+												  clap::configuration::application_version_minor,
+												  clap::configuration::application_version_patch),
+			.pEngineName = CLAP_NAME,
+			.engineVersion = VK_MAKE_VERSION(CLAP_VERSION_MAJOR,
+											 CLAP_VERSION_MINOR,
+											 CLAP_VERSION_PATCH),
+			.apiVersion = VK_MAKE_VERSION(1, 0, 0)
+		};
+
+		resource_manager::detail::update_instance_extensions(vkfw::getRequiredInstanceExtensions());
 		::log(clap::configuration::instance_extensions, cL::insignificant,
 			  "Required Vulkan instance extensions", "No required instance extensions.");
 		::log(vk::enumerateInstanceExtensionProperties(), cL::negligible,

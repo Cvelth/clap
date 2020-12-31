@@ -36,7 +36,7 @@ void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 clap::ui::detail::window::window(size_t width, size_t height, 
 								 std::string_view title, 
 								 vkfw::WindowHints hints) {
-	resource::identify();
+	resource_manager::identify();
 
 	if (vulkan::vkfw())
 		vkfw = vkfw::createWindowUnique(
