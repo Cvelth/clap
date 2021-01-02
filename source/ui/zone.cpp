@@ -136,8 +136,7 @@ void clap::ui::zone::do_add() {
 				std::chrono::duration_cast<clap::utility::timestep>(start_time - last_frame);
 			last_frame = start_time;
 
-			if (do_update(timestep))
-				window->vkfw.swapBuffers();
+			do_update(timestep);
 
 			auto end_time = std::chrono::high_resolution_clock::now();
 			auto frame_duration = end_time - start_time;

@@ -83,20 +83,12 @@ namespace clap::ui {
 	private:
 		void do_add();
 		void do_remove();
-		inline void do_initialize() {
-			if (on_initialize)
-				on_initialize();
-		}
-		inline bool do_update(utility::timestep const &ts) {
-			if (on_update)
-				return on_update(ts);
-			else
-				return false;
-		}
+		inline void do_initialize() { if (on_initialize) on_initialize(); }
+		inline void do_update(utility::timestep const &ts) { if (on_update) on_update(ts); }
 
 	public:
 		std::function<void()> on_initialize;
-		std::function<bool(utility::timestep const &)> on_update;
+		std::function<void(utility::timestep const &)> on_update;
 
 	protected:
 		std::function<std::string_view()> get_identifier;
