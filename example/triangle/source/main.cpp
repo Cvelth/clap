@@ -7,7 +7,7 @@ public:
 		on_update = [this](auto const &) { update(); };
 	}
 protected:
-	void initialize_pipeline() {
+	inline void initialize_pipeline() {
 		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window) {
 				auto shader_stages = clap::ui::vulkan::shaders(
@@ -113,7 +113,7 @@ protected:
 				pipeline = device.createGraphicsPipelineUnique(nullptr, pipeline_info).value;
 			}
 	}
-	void initialize_command_buffers() {
+	inline void initialize_command_buffers() {
 		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window) {
 				vk::CommandBufferAllocateInfo command_buffer_info = {
@@ -145,43 +145,62 @@ protected:
 				}
 			}
 	}
+	inline void initialize_synchronization() {
+		if (auto &device = clap::ui::vulkan::device(); device)
+			if (auto window = this->window(); window) {
+				synchronization.resize(window->framebuffers.size());
+				for (auto &sync : synchronization) {
+					sync.framebuffer_ready_semaphore = device.createSemaphoreUnique({});
+					sync.queue_submitted_semaphore = device.createSemaphoreUnique({});
+					sync.queue_submitted_fence = device.createFenceUnique(vk::FenceCreateInfo{
+						.flags = vk::FenceCreateFlagBits::eSignaled 
+					});
+				}
+			}
+	}
 	void initialize() {
 		initialize_pipeline();
 		initialize_command_buffers();
-		if (auto &device = clap::ui::vulkan::device(); device) {
-			render_begin_semaphore = device.createSemaphoreUnique({});
-			render_end_semaphore = device.createSemaphoreUnique({});
-		}
+		initialize_synchronization();
 	}
 	void update() {
 		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window)
 				if (auto &queue = clap::ui::vulkan::queue(); queue) {
-					uint32_t image_index = device.acquireNextImageKHR(window->swapchain,
-																	  std::numeric_limits<uint64_t>::max(),
-																	  *render_begin_semaphore, nullptr).value;
-					std::array wait_stages = { vk::PipelineStageFlags {
-						vk::PipelineStageFlagBits::eColorAttachmentOutput
-					} };
+					auto temporary_semaphore = device.createSemaphoreUnique({});
+					uint32_t framebuffer_index = device.acquireNextImageKHR(
+						window->swapchain, std::numeric_limits<uint64_t>::max(),
+						*temporary_semaphore, nullptr
+					).value;
+					auto &sync = synchronization[framebuffer_index];
+
+					[[maybe_unused]] auto wait_result = device.waitForFences(
+						std::array{ *sync.queue_submitted_fence },
+						true, std::numeric_limits<uint64_t>::max()
+					);
+					device.resetFences(std::array{ *sync.queue_submitted_fence });
+					sync.framebuffer_ready_semaphore = std::move(temporary_semaphore);
+
+					vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 					vk::SubmitInfo submit_info = {
 						.waitSemaphoreCount = 1,
-						.pWaitSemaphores = &*render_begin_semaphore,
-						.pWaitDstStageMask = wait_stages.data(),
+						.pWaitSemaphores = &*sync.framebuffer_ready_semaphore,
+						.pWaitDstStageMask = &wait_stage,
 						.commandBufferCount = 1,
-						.pCommandBuffers = &*command_buffers[image_index],
+						.pCommandBuffers = &*command_buffers[framebuffer_index],
 						.signalSemaphoreCount = 1,
-						.pSignalSemaphores = &*render_end_semaphore
+						.pSignalSemaphores = &*sync.queue_submitted_semaphore
 					};
-					queue.submit(std::array{ submit_info }, nullptr);
+					queue.submit(std::array{ submit_info }, *sync.queue_submitted_fence);
 
 					vk::PresentInfoKHR present_info = {
 						.waitSemaphoreCount = 1,
-						.pWaitSemaphores = &*render_end_semaphore,
+						.pWaitSemaphores = &*sync.queue_submitted_semaphore,
 						.swapchainCount = 1,
 						.pSwapchains = &window->swapchain,
-						.pImageIndices = &image_index
+						.pImageIndices = &framebuffer_index
 					};
-					[[maybe_unused]] auto result = queue.presentKHR(present_info);
+					[[maybe_unused]] auto present_result = queue.presentKHR(present_info);
 					queue.waitIdle();
 				}
 	}
@@ -190,8 +209,12 @@ protected:
 	vk::UniquePipeline pipeline;
 	std::vector<vk::UniqueCommandBuffer> command_buffers;
 
-	vk::UniqueSemaphore render_begin_semaphore;
-	vk::UniqueSemaphore render_end_semaphore;
+	struct synchronization_t {
+		vk::UniqueSemaphore framebuffer_ready_semaphore;
+		vk::UniqueSemaphore queue_submitted_semaphore;
+		vk::UniqueFence queue_submitted_fence;
+	};
+	std::vector<synchronization_t> synchronization;
 };
 
 void initialize_logger() {
