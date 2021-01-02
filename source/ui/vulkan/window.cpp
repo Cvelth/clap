@@ -26,7 +26,7 @@ void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 		logger_stream << "\nAvailable surface formats (" << formats.size() << "):";
 		for (auto const &format : formats)
 			logger_stream << "\n    " << vk::to_string(format.format) << " (color space: "
-			<< vk::to_string(format.colorSpace) << ")";
+				<< vk::to_string(format.colorSpace) << ")";
 	} else
 		logger_stream << "\nNo available surface formats.";
 
@@ -57,7 +57,7 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 			auto support = physical_device.getSurfaceSupportKHR(vulkan::queue_family_id(), *surface);
 			if (!support)
 				clap::log << cL::error << cL::critical << "clap"_tag << "ui"_tag << "manager"_tag << "swapchain"_tag
-				<< "The Vulkan surface does not support chosen queue family.";
+					<< "The Vulkan surface does not support chosen queue family.";
 			else {
 				auto capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
 				auto formats = physical_device.getSurfaceFormatsKHR(*surface);
@@ -81,16 +81,18 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 					auto chosen_extent = capabilities.currentExtent;
 					if (chosen_extent.width == std::numeric_limits<uint32_t>::max())
 						chosen_extent = decltype(chosen_extent) {
-						std::clamp(static_cast<uint32_t>(vkfw->getFramebufferWidth()),
-								   capabilities.minImageExtent.width,
-								   capabilities.maxImageExtent.width),
+							std::clamp(static_cast<uint32_t>(vkfw->getFramebufferWidth()),
+									   capabilities.minImageExtent.width,
+									   capabilities.maxImageExtent.width),
 							std::clamp(static_cast<uint32_t>(vkfw->getFramebufferHeight()),
 									   capabilities.minImageExtent.height,
 									   capabilities.maxImageExtent.height)
 					};
 					auto chosen_image_count = std::clamp(capabilities.minImageCount + 1,
 														 capabilities.minImageCount,
-														 capabilities.maxImageCount);
+														 (capabilities.maxImageCount == 0
+														  ? ~0U 
+														  : capabilities.maxImageCount));
 
 					clap::log << cL::message << cL::minor << "clap"_tag << "ui"_tag << "manager"_tag << "swapchain"_tag
 						<< "Create a swapchain with parameters: "
@@ -106,7 +108,7 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 						<< "\n    Present mode: " << vk::to_string(chosen_mode)
 						<< "\n    Clipped: true";
 
-					vk::SwapchainCreateInfoKHR swapchain_info{
+					vk::SwapchainCreateInfoKHR swapchain_info = {
 						.surface = *surface,
 						.minImageCount = chosen_image_count,
 						.imageFormat = chosen_format.format,
@@ -125,7 +127,8 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 						swapchain_extent = chosen_extent;
 						swapchain_images = device.getSwapchainImagesKHR(*swapchain);
 
-						vk::ImageViewCreateInfo image_view_info{
+						vk::ImageViewCreateInfo image_view_info = {
+							//.image = &swapchain_images[image_index]
 							.viewType = vk::ImageViewType::e2D,
 							.format = swapchain_image_format,
 							.subresourceRange = vk::ImageSubresourceRange {
@@ -140,10 +143,68 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 						std::ranges::transform(
 							swapchain_images, std::back_inserter(swapchain_image_views),
 							[&image_view_info, &device](auto &image) {
-							image_view_info.image = image;
-							return device.createImageViewUnique(image_view_info);
-						}
+								image_view_info.image = image;
+								return device.createImageViewUnique(image_view_info);
+							}
 						);
+
+						vk::AttachmentDescription color_attachment = {
+							.format = swapchain_image_format,
+							.samples = vk::SampleCountFlagBits::e1,
+							.loadOp = vk::AttachmentLoadOp::eClear,
+							.storeOp = vk::AttachmentStoreOp::eStore,
+							.stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+							.stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+							.initialLayout = vk::ImageLayout::eUndefined,
+							.finalLayout = vk::ImageLayout::ePresentSrcKHR
+						};
+						vk::AttachmentReference color_attachment_ref = {
+							.attachment = 0,
+							.layout = vk::ImageLayout::eColorAttachmentOptimal
+						};
+						vk::SubpassDescription subpass = {
+							.pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
+							.colorAttachmentCount = 1,
+							.pColorAttachments = &color_attachment_ref
+						};
+						vk::SubpassDependency dependency = {
+							.srcSubpass = VK_SUBPASS_EXTERNAL,
+							.dstSubpass = 0,
+							.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+							.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+							.srcAccessMask = vk::AccessFlags(0),
+							.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite
+						};
+						vk::RenderPassCreateInfo render_pass_info = {
+							.attachmentCount = 1,
+							.pAttachments = &color_attachment,
+							.subpassCount = 1,
+							.pSubpasses = &subpass,
+							.dependencyCount = 1,
+							.pDependencies = &dependency
+						};
+						render_pass = device.createRenderPassUnique(render_pass_info);
+						if (render_pass) {
+							vk::FramebufferCreateInfo framebuffer_info = {
+								.renderPass = *render_pass,
+								.attachmentCount = 1,
+								//.pAttachments = &swapchain_image_views[framebuffer_index]
+								.width = swapchain_extent.width,
+								.height = swapchain_extent.height,
+								.layers = 1
+							};
+							framebuffers.reserve(swapchain_images.size());
+							std::ranges::transform(
+								swapchain_image_views, std::back_inserter(framebuffers),
+								[&framebuffer_info, &device](auto &image_view) -> vk::UniqueFramebuffer {
+									if (image_view) {
+										framebuffer_info.pAttachments = &*image_view;
+										return device.createFramebufferUnique(framebuffer_info);
+									} else
+										return {};
+								}
+							);
+						}
 					}
 				}
 			}
