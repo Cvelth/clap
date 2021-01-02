@@ -276,6 +276,13 @@ vk::Queue clap::ui::vulkan::detail::initialize_queue() {
 		return device.getQueue(queue_family_id(), 0);
 	return {};
 }
+vk::UniqueCommandPool clap::ui::vulkan::detail::create_command_pool() {
+	if (auto &device = vulkan::device(); device)
+		return device.createCommandPoolUnique(vk::CommandPoolCreateInfo{
+			.queueFamilyIndex = queue_family_id()
+		});
+	return {};
+}
 vk::DispatchLoaderDynamic clap::ui::vulkan::detail::initialize_loader() {
 	if (auto &instance = vulkan::instance(); instance)
 		if (auto &device = vulkan::device(); device) {

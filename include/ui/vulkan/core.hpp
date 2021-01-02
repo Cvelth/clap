@@ -8,6 +8,7 @@ namespace clap::ui::vulkan {
 		vk::PhysicalDevice choose_device();
 		vk::UniqueDevice initialize_device();
 		vk::Queue initialize_queue();
+		vk::UniqueCommandPool create_command_pool();
 		vk::DispatchLoaderDynamic initialize_loader();
 
 #ifndef NDEBUG
@@ -39,6 +40,10 @@ namespace clap::ui::vulkan {
 	[[nodiscard]] inline vk::Queue &queue() {
 		static auto queue = detail::initialize_queue();
 		return queue;
+	}
+	[[nodiscard]] inline vk::CommandPool &command_pool() {
+		static auto pool = detail::create_command_pool();
+		return *pool;
 	}
 	[[nodiscard]] inline vk::DispatchLoaderDynamic &loader() {
 		static auto loader = detail::initialize_loader();
