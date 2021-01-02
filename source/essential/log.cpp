@@ -152,7 +152,7 @@ clap::logger::detail::stream_preferences clap::logger::add_stream(std::ostream &
 
 		auto logger_stream = clap::log.add_entry();
 		logger_stream << cL::minor << "clap"_tag << "essential"_tag << "log"_tag << "logger"_tag
-			<< "Add an additional stream to the logger.";
+			<< "Add an additional stream to the logger." << cL::extra;
 		if (stream.rdbuf() == std::cout.rdbuf())
 			logger_stream << "The stream is 'std::cout'";
 		else if (stream.rdbuf() == std::cerr.rdbuf())
