@@ -1,13 +1,14 @@
 #include "precompiled/triangle.hpp"
 
 class my_zone : public clap::ui::zone {
-protected:
-	vk::UniquePipelineLayout pipeline_layout;
-	vk::UniqueRenderPass render_pass;
-	vk::UniquePipeline pipeline;
 public:
+	my_zone() : clap::ui::zone("Triangle example", 1280, 720) {
+		on_initialize = [this] { initialize(); };
+		on_update = [this](auto const &) { update(); };
+	}
+protected:
 	void initialize_pipeline() {
-		if (auto &device = clap::ui::vulkan::device(); device) {
+		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window) {
 				auto shader_stages = clap::ui::vulkan::shaders(
 					clap::resource::load::shader::vertex["triangle"],
@@ -33,7 +34,7 @@ public:
 				};
 				vk::Rect2D scissor = {
 					.offset = {0u, 0u},
-					.extent = {0u, 0u}
+					.extent = window->swapchain_extent
 				};
 				vk::PipelineViewportStateCreateInfo viewport_info = {
 					.viewportCount = 1,
@@ -91,34 +92,6 @@ public:
 				};
 				pipeline_layout = device.createPipelineLayoutUnique(layout_info);
 
-				vk::AttachmentDescription color_attachment = {
-					.format = window->swapchain_image_format,
-					.samples = vk::SampleCountFlagBits::e1,
-					.loadOp = vk::AttachmentLoadOp::eClear,
-					.storeOp = vk::AttachmentStoreOp::eStore,
-					.stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-					.stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-					.initialLayout = vk::ImageLayout::eUndefined,
-					.finalLayout = vk::ImageLayout::ePresentSrcKHR
-				};
-				vk::AttachmentReference color_attachment_ref = {
-					.attachment = 0,
-					.layout = vk::ImageLayout::eColorAttachmentOptimal
-				};
-				vk::SubpassDescription subpass = {
-					.pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-					.colorAttachmentCount = 1,
-					.pColorAttachments = &color_attachment_ref
-				};
-
-				vk::RenderPassCreateInfo render_pass_info = {
-					.attachmentCount = 1,
-					.pAttachments = &color_attachment,
-					.subpassCount = 1,
-					.pSubpasses = &subpass
-				};
-				render_pass = device.createRenderPassUnique(render_pass_info);
-
 				vk::GraphicsPipelineCreateInfo pipeline_info = {
 					.stageCount = static_cast<uint32_t>(shader_stages->size()),
 					.pStages = shader_stages->data(),
@@ -132,23 +105,93 @@ public:
 					.pDynamicState = &dynamic_info,
 
 					.layout = *pipeline_layout,
-					.renderPass = *render_pass,
+					.renderPass = window->render_pass,
 					.subpass = 0,
 					.basePipelineHandle = nullptr,
 					.basePipelineIndex = -1
 				};
 				pipeline = device.createGraphicsPipelineUnique(nullptr, pipeline_info).value;
 			}
+	}
+	void initialize_command_buffers() {
+		if (auto &device = clap::ui::vulkan::device(); device)
+			if (auto window = this->window(); window) {
+				vk::CommandBufferAllocateInfo command_buffer_info = {
+					.commandPool = clap::ui::vulkan::command_pool(),
+					.level = vk::CommandBufferLevel::ePrimary,
+					.commandBufferCount = static_cast<uint32_t>(window->framebuffers.size())
+				};
+				command_buffers = device.allocateCommandBuffersUnique(command_buffer_info);
+
+				for (size_t counter = 0u; auto &buffer : command_buffers) {
+					buffer->begin(vk::CommandBufferBeginInfo{});
+
+					vk::ClearValue clear_color(std::array{ 0.8f, 0.4f, 0.9f, 1.f });
+					vk::RenderPassBeginInfo render_pass_begin_info = {
+						.renderPass = window->render_pass,
+						.framebuffer = *window->framebuffers[counter++],
+						.renderArea = vk::Rect2D {
+							.offset = {0, 0},
+							.extent = window->swapchain_extent
+						},
+						.clearValueCount = 1,
+						.pClearValues = &clear_color
+					};
+					buffer->beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+					buffer->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+					buffer->draw(3, 1, 0, 0);
+					buffer->endRenderPass();
+					buffer->end();
+				}
+			}
+	}
+	void initialize() {
+		initialize_pipeline();
+		initialize_command_buffers();
+		if (auto &device = clap::ui::vulkan::device(); device) {
+			render_begin_semaphore = device.createSemaphoreUnique({});
+			render_end_semaphore = device.createSemaphoreUnique({});
 		}
 	}
+	void update() {
+		if (auto &device = clap::ui::vulkan::device(); device)
+			if (auto window = this->window(); window)
+				if (auto &queue = clap::ui::vulkan::queue(); queue) {
+					uint32_t image_index = device.acquireNextImageKHR(window->swapchain,
+																	  std::numeric_limits<uint64_t>::max(),
+																	  *render_begin_semaphore, nullptr).value;
+					std::array wait_stages = { vk::PipelineStageFlags {
+						vk::PipelineStageFlagBits::eColorAttachmentOutput
+					} };
+					vk::SubmitInfo submit_info = {
+						.waitSemaphoreCount = 1,
+						.pWaitSemaphores = &*render_begin_semaphore,
+						.pWaitDstStageMask = wait_stages.data(),
+						.commandBufferCount = 1,
+						.pCommandBuffers = &*command_buffers[image_index],
+						.signalSemaphoreCount = 1,
+						.pSignalSemaphores = &*render_end_semaphore
+					};
+					queue.submit(std::array{ submit_info }, nullptr);
 
-	my_zone() : clap::ui::zone("Triangle example", 1280, 720) {
-		on_initialize = [this] { initialize_pipeline(); };
-		on_update = [](auto const &) {
-			std::this_thread::sleep_for(4ms);
-			return false;
-		};
+					vk::PresentInfoKHR present_info = {
+						.waitSemaphoreCount = 1,
+						.pWaitSemaphores = &*render_end_semaphore,
+						.swapchainCount = 1,
+						.pSwapchains = &window->swapchain,
+						.pImageIndices = &image_index
+					};
+					[[maybe_unused]] auto result = queue.presentKHR(present_info);
+					queue.waitIdle();
+				}
 	}
+protected:
+	vk::UniquePipelineLayout pipeline_layout;
+	vk::UniquePipeline pipeline;
+	std::vector<vk::UniqueCommandBuffer> command_buffers;
+
+	vk::UniqueSemaphore render_begin_semaphore;
+	vk::UniqueSemaphore render_end_semaphore;
 };
 
 void initialize_logger() {
