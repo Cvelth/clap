@@ -14,6 +14,7 @@ using namespace clap::literals;
 #include <iterator>
 #include <limits>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <thread>
 #include <variant>
