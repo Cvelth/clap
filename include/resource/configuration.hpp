@@ -40,7 +40,11 @@ namespace clap::configuration {
 	inline resource_manager::detail::value<uint32_t> application_version_minor(0u);
 	inline resource_manager::detail::value<uint32_t> application_version_patch(0u);
 
-	inline resource_manager::detail::value<std::set<std::string>> instance_extensions({});
+	inline resource_manager::detail::value<std::set<std::string>> instance_extensions({
+#ifndef NDEBUG
+		"VK_EXT_debug_utils"
+#endif
+	});
 	inline resource_manager::detail::value<std::set<std::string>> instance_layers({
 #ifndef NDEBUG
 		"VK_LAYER_KHRONOS_validation"
