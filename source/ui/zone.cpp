@@ -17,6 +17,7 @@ clap::ui::zone::zone(std::string_view title, size_t width, size_t height)
 					<< "Create a new free zone: " << title 
 					<< " (" << width << ", " << height << ")";
 				detail::manager::add(*this);
+				state.window->vkfw->callbacks()->on_framebuffer_resize = std::bind_front(&zone::do_resize, *this);
 			} else
 				clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone"_tag
 					<< "Fail to create a window for a new free zone: " << title
@@ -163,4 +164,17 @@ void clap::ui::zone::do_remove() {
 				<< "Fail to remove a window from " << name() << ". It is not free.";
 		}
 	}, state);
+}
+void clap::ui::zone::do_resize([[maybe_unused]] vkfw::Window const &event_window, 
+							   size_t new_width, size_t new_height) {
+	std::visit(utility::overload{
+		[this, event_window, new_width, new_height](when_free &state) {
+			assert(state.window->vkfw && event_window == *state.window->vkfw);
+			state.window->do_resize(new_width, new_height);
+		},
+		[this](when_owned const &) { /* Do nothing */ }
+	}, state);
+
+	if (on_resize)
+		on_resize(new_width, new_height);
 }

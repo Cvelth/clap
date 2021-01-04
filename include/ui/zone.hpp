@@ -75,6 +75,14 @@ namespace clap::ui {
 		[[nodiscard]] std::string name() const;
 		[[nodiscard]] inline size_t width() const { return size.current_w; }
 		[[nodiscard]] inline size_t height() const { return size.current_h; }
+		[[nodiscard]] inline bool is_free() const {
+			std::visit([]<typename T>(T &) {
+				if constexpr (std::is_same<T, when_free>::value)
+					return true;
+				else
+					return false;
+			}, state);
+		}
 
 	protected:
 		[[nodiscard]] std::optional<vulkan::window_view> window();
@@ -85,10 +93,12 @@ namespace clap::ui {
 		void do_remove();
 		inline void do_initialize() { if (on_initialize) on_initialize(); }
 		inline void do_update(utility::timestep const &ts) { if (on_update) on_update(ts); }
+		void do_resize(vkfw::Window const &window, size_t new_width, size_t new_height);
 
 	public:
 		std::function<void()> on_initialize;
 		std::function<void(utility::timestep const &)> on_update;
+		std::function<bool(size_t, size_t)> on_resize;
 
 	protected:
 		std::function<std::string_view()> get_identifier;
