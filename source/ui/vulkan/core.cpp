@@ -285,11 +285,7 @@ vk::UniqueCommandPool clap::ui::vulkan::detail::create_command_pool() {
 }
 vk::DispatchLoaderDynamic clap::ui::vulkan::detail::initialize_loader() {
 	if (auto &instance = vulkan::instance(); instance)
-		if (auto &device = vulkan::device(); device) {
-			vk::DispatchLoaderDynamic output;
-			output.init(instance, device);
-			return output;
-		}
+		return vk::DispatchLoaderDynamic(instance, vkGetInstanceProcAddr);
 	return {};
 }
 
@@ -300,7 +296,7 @@ clap::ui::vulkan::detail::initialize_debug_messenger() {
 		using enum ::vk::DebugUtilsMessageSeverityFlagBitsEXT;
 		using enum ::vk::DebugUtilsMessageTypeFlagBitsEXT;
 		const ::vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {
-			.messageSeverity = eInfo | eWarning | eError | eVerbose,
+			.messageSeverity = eWarning | eError | eVerbose,
 			.messageType = eGeneral | ePerformance | eValidation,
 			.pfnUserCallback = [](VkDebugUtilsMessageSeverityFlagBitsEXT,
 								  VkDebugUtilsMessageTypeFlagsEXT,
