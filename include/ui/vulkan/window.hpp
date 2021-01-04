@@ -30,7 +30,7 @@ namespace clap::ui::vulkan {
 		explicit window(size_t width, size_t height,
 						std::string_view title,
 						vkfw::WindowHints hints = {});
-		void do_resize(size_t new_width, size_t new_height);
+		void do_resize();
 		operator bool() const { 
 			return vkfw && surface && swapchain && render_pass && !framebuffers.empty(); 
 		}

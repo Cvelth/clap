@@ -5,6 +5,8 @@
 #include "ui/vulkan/core.hpp"
 #include "ui/zone.hpp"
 
+#include <mutex>
+
 void log(vk::SurfaceCapabilitiesKHR const &capabilities,
 		 std::vector<vk::SurfaceFormatKHR> const &formats,
 		 std::vector<vk::PresentModeKHR> const &modes) {
@@ -42,15 +44,14 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 								 std::string_view title, 
 								 vkfw::WindowHints hints) {
 	resource_manager::identify();
-#ifndef NDEBUG
-	[[maybe_unused]] auto debug = debug_messenger();
-#endif
-
 	if (vulkan::vkfw())
 		vkfw = vkfw::createWindowUnique(
 			width, height, title.data(),
 			hints, nullptr, nullptr, false
 		);
+#ifndef NDEBUG
+	[[maybe_unused]] auto &debug = debug_messenger();
+#endif
 	if (auto &instance = vulkan::instance(); instance)
 		surface = vkfw::createWindowSurfaceUnique(
 			instance, *vkfw
@@ -114,106 +115,109 @@ clap::ui::vulkan::window::window(size_t width, size_t height,
 				};
 				if (auto &device = vulkan::device(); device)
 					render_pass = device.createRenderPassUnique(render_pass_info);
-				do_resize(vkfw->getFramebufferWidth(), vkfw->getFramebufferHeight());
+				do_resize();
 			} else
 				clap::log << cL::error << cL::critical << "clap"_tag << "ui"_tag << "manager"_tag << "swapchain"_tag
 					<< "The Vulkan surface does not support chosen queue family.";
 }
-void clap::ui::vulkan::window::do_resize(size_t new_width, size_t new_height) {
+void clap::ui::vulkan::window::do_resize() {
+	static std::mutex mutex;
+	std::scoped_lock guard(mutex);
 	if (auto &physical_device = vulkan::physical_device(); physical_device && surface && vkfw) {
 		auto capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-		extent = capabilities.currentExtent;
-		if (extent.width == std::numeric_limits<uint32_t>::max())
-			extent = decltype(extent) {
-				std::clamp(static_cast<uint32_t>(new_width),
-						   capabilities.minImageExtent.width,
-						   capabilities.maxImageExtent.width),
-				std::clamp(static_cast<uint32_t>(new_height),
-						   capabilities.minImageExtent.height,
-						   capabilities.maxImageExtent.height)
+		if (extent != capabilities.currentExtent) {
+			extent = capabilities.currentExtent;
+			if (extent.width == std::numeric_limits<uint32_t>::max())
+				extent = decltype(extent) {
+					std::clamp(static_cast<uint32_t>(vkfw->getFramebufferWidth()),
+							   capabilities.minImageExtent.width,
+							   capabilities.maxImageExtent.width),
+					std::clamp(static_cast<uint32_t>(vkfw->getFramebufferHeight()),
+							   capabilities.minImageExtent.height,
+							   capabilities.maxImageExtent.height)
 			};
-		auto chosen_image_count = std::clamp(capabilities.minImageCount + 1,
-											 capabilities.minImageCount,
-											 (capabilities.maxImageCount == 0
-											  ? ~0U
-											  : capabilities.maxImageCount));
+			auto chosen_image_count = std::clamp(capabilities.minImageCount + 1,
+												 capabilities.minImageCount,
+												 (capabilities.maxImageCount == 0
+												  ? ~0U
+												  : capabilities.maxImageCount));
 
-		if (auto &device = vulkan::device(); device) {
-			clap::log << cL::message << cL::minor << "clap"_tag << "ui"_tag << "manager"_tag << "swapchain"_tag
-				<< "Create a swapchain with parameters: "
-				<< "\n    Image count: " << chosen_image_count
-				<< "\n    Image format: " << vk::to_string(surface_format.format)
-				<< "\n    Image color space: " << vk::to_string(surface_format.colorSpace)
-				<< "\n    Image extent: {" << extent.width << ", " << extent.height << "}"
-				<< "\n    Image array layer count: 1"
-				<< "\n    Image usage: " << vk::to_string(vk::ImageUsageFlagBits::eColorAttachment)
-				<< "\n    Image sharing mode: " << vk::to_string(vk::SharingMode::eExclusive)
-				<< "\n    Composite alpha: " << vk::to_string(vk::CompositeAlphaFlagBitsKHR::eOpaque)
-				<< "\n    Present mode: " << vk::to_string(present_mode)
-				<< "\n    Clipped: true";
+			if (auto &device = vulkan::device(); device) {
+				clap::log << cL::message << cL::minor << "clap"_tag << "ui"_tag << "manager"_tag << "swapchain"_tag
+					<< "Create a swapchain with parameters: "
+					<< "\n    Image count: " << chosen_image_count
+					<< "\n    Image format: " << vk::to_string(surface_format.format)
+					<< "\n    Image color space: " << vk::to_string(surface_format.colorSpace)
+					<< "\n    Image extent: {" << extent.width << ", " << extent.height << "}"
+					<< "\n    Image array layer count: 1"
+					<< "\n    Image usage: " << vk::to_string(vk::ImageUsageFlagBits::eColorAttachment)
+					<< "\n    Image sharing mode: " << vk::to_string(vk::SharingMode::eExclusive)
+					<< "\n    Composite alpha: " << vk::to_string(vk::CompositeAlphaFlagBitsKHR::eOpaque)
+					<< "\n    Present mode: " << vk::to_string(present_mode)
+					<< "\n    Clipped: true";
 
-			vk::SwapchainCreateInfoKHR swapchain_info = {
-				.surface = *surface,
-				.minImageCount = chosen_image_count,
-				.imageFormat = surface_format.format,
-				.imageColorSpace = surface_format.colorSpace,
-				.imageExtent = extent,
-				.imageArrayLayers = 1,
-				.imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
-				.imageSharingMode = vk::SharingMode::eExclusive,
-				.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
-				.presentMode = present_mode,
-				.clipped = true,
-				.oldSwapchain = *swapchain
-			};
-
-			device.waitIdle();
-			if (swapchain = device.createSwapchainKHRUnique(swapchain_info)) {
-				auto swapchain_images = device.getSwapchainImagesKHR(*swapchain);
-
-				vk::ImageViewCreateInfo image_view_info = {
-					//.image = &swapchain_images[image_index]
-					.viewType = vk::ImageViewType::e2D,
-					.format = surface_format.format,
-					.subresourceRange = vk::ImageSubresourceRange {
-						.aspectMask = vk::ImageAspectFlagBits::eColor,
-						.baseMipLevel = 0,
-						.levelCount = 1,
-						.baseArrayLayer = 0,
-						.layerCount = 1
-					}
+				vk::SwapchainCreateInfoKHR swapchain_info = {
+					.surface = *surface,
+					.minImageCount = chosen_image_count,
+					.imageFormat = surface_format.format,
+					.imageColorSpace = surface_format.colorSpace,
+					.imageExtent = extent,
+					.imageArrayLayers = 1,
+					.imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+					.imageSharingMode = vk::SharingMode::eExclusive,
+					.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+					.presentMode = present_mode,
+					.clipped = true,
+					.oldSwapchain = *swapchain
 				};
-				swapchain_image_views.clear();
-				swapchain_image_views.reserve(swapchain_images.size());
-				std::ranges::transform(
-					swapchain_images, std::back_inserter(swapchain_image_views),
-					[&image_view_info, &device](auto &image) {
-						image_view_info.image = image;
-						return device.createImageViewUnique(image_view_info);
-					}
-				);
 
-				if (render_pass) {
-					vk::FramebufferCreateInfo framebuffer_info = {
-						.renderPass = *render_pass,
-						.attachmentCount = 1,
-						//.pAttachments = &swapchain_image_views[framebuffer_index]
-						.width = extent.width,
-						.height = extent.height,
-						.layers = 1
+				if (swapchain = device.createSwapchainKHRUnique(swapchain_info)) {
+					auto swapchain_images = device.getSwapchainImagesKHR(*swapchain);
+
+					vk::ImageViewCreateInfo image_view_info = {
+						//.image = &swapchain_images[image_index]
+						.viewType = vk::ImageViewType::e2D,
+						.format = surface_format.format,
+						.subresourceRange = vk::ImageSubresourceRange {
+							.aspectMask = vk::ImageAspectFlagBits::eColor,
+							.baseMipLevel = 0,
+							.levelCount = 1,
+							.baseArrayLayer = 0,
+							.layerCount = 1
+						}
 					};
-					framebuffers.clear();
-					framebuffers.reserve(swapchain_image_views.size());
+					swapchain_image_views.clear();
+					swapchain_image_views.reserve(swapchain_images.size());
 					std::ranges::transform(
-						swapchain_image_views, std::back_inserter(framebuffers),
-						[&framebuffer_info, &device](auto &image_view) -> vk::UniqueFramebuffer {
-							if (image_view) {
-								framebuffer_info.pAttachments = &*image_view;
-								return device.createFramebufferUnique(framebuffer_info);
-							} else
-								return {};
+						swapchain_images, std::back_inserter(swapchain_image_views),
+						[&image_view_info, &device](auto &image) {
+							image_view_info.image = image;
+							return device.createImageViewUnique(image_view_info);
 						}
 					);
+
+					if (render_pass) {
+						vk::FramebufferCreateInfo framebuffer_info = {
+							.renderPass = *render_pass,
+							.attachmentCount = 1,
+							//.pAttachments = &swapchain_image_views[framebuffer_index]
+							.width = extent.width,
+							.height = extent.height,
+							.layers = 1
+						};
+						framebuffers.clear();
+						framebuffers.reserve(swapchain_image_views.size());
+						std::ranges::transform(
+							swapchain_image_views, std::back_inserter(framebuffers),
+							[&framebuffer_info, &device](auto &image_view) -> vk::UniqueFramebuffer {
+								if (image_view) {
+									framebuffer_info.pAttachments = &*image_view;
+									return device.createFramebufferUnique(framebuffer_info);
+								} else
+									return {};
+							}
+						);
+					}
 				}
 			}
 		}

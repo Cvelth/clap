@@ -30,6 +30,10 @@ clap::ui::zone::zone(std::string_view title, size_t width, size_t height)
 		}
 	}, state);
 }
+clap::ui::zone::~zone() {
+	if (auto &device = vulkan::device(); device)
+		device.waitIdle();
+}
 std::string clap::ui::zone::name() const {
 	// TODO: Optimize so that strings are not built from the ground up each time.
 	return std::visit(utility::overload{
@@ -124,33 +128,8 @@ void clap::ui::zone::do_add() {
 	if (!should_continue) return;
 	if (auto window = this->window(); window) {
 		do_initialize();
-
-		auto last_frame = std::chrono::high_resolution_clock::now();
-		while (!window->vkfw.shouldClose()) {
-			using namespace std::literals;
-			constexpr static auto frame_limit = 1'000'000us / 60;
-			constexpr static float numeric_frame_limit =
-				std::chrono::duration_cast<std::chrono::duration<float>>(frame_limit).count();
-
-			auto start_time = std::chrono::high_resolution_clock::now();
-			auto timestep =
-				std::chrono::duration_cast<clap::utility::timestep>(start_time - last_frame);
-			last_frame = start_time;
-
-			do_update(timestep);
-
-			auto end_time = std::chrono::high_resolution_clock::now();
-			auto frame_duration = end_time - start_time;
-			float numeric_frame_duration =
-				std::chrono::duration_cast<std::chrono::duration<float>>(frame_duration).count();
-
-			clap::log << cL::message << cL::negligible << "clap"_tag << "ui"_tag << "zone"_tag
-				<< "Draw a frame." << cL::extra
-				<< "It took " << numeric_frame_duration << "/" << numeric_frame_limit
-				<< "s (" << (100.f * numeric_frame_duration / numeric_frame_limit) << "%)";
-
-			std::this_thread::sleep_until(start_time + frame_limit);
-		}
+		while (!window->vkfw.shouldClose())
+			do_update();
 	} else
 		clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone"_tag
 			<< "Fail to launch zone loop for " << name() << ". "
@@ -239,8 +218,12 @@ inline void clap::ui::zone::do_render() {
 			}
 		}
 }
-inline void clap::ui::zone::do_update(utility::timestep const &ts) {
-	if (on_update && on_update(ts) && !command_buffers.empty())
+inline void clap::ui::zone::do_update() {
+	auto current_frame = std::chrono::high_resolution_clock::now();
+	static auto last_frame = current_frame;
+	auto time_step = std::chrono::duration_cast<clap::utility::timestep>(current_frame - last_frame);
+
+	if (on_update && on_update(time_step) && !command_buffers.empty())
 		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window)
 				if (auto &queue = clap::ui::vulkan::queue(); queue) {
@@ -282,6 +265,26 @@ inline void clap::ui::zone::do_update(utility::timestep const &ts) {
 						[[maybe_unused]] auto present_result = vkQueuePresentKHR(
 							queue, &present_info.operator const VkPresentInfoKHR & ()
 						);
-					}
+						if (vk::Result(present_result) == vk::Result::eErrorOutOfDateKHR)
+							do_resize();
+					} else if (result == vk::Result::eErrorOutOfDateKHR)
+						do_resize();
 				}
+}
+
+inline void clap::ui::zone::do_resize() {
+	std::visit(utility::overload {
+		[this](when_free &state) {
+			if (auto &device = clap::ui::vulkan::device(); device)
+				device.waitIdle();
+			command_buffers.clear();
+			state.window->do_resize();
+			size.current_w = state.window->extent.width;
+			size.current_h = state.window->extent.height;
+			do_render();
+		},
+		[this](when_owned const &state) {
+			state.owner->do_resize();
+		}
+	}, state);
 }

@@ -62,6 +62,7 @@ namespace clap::ui {
 		friend detail::manager;
 	public:
 		zone(std::string_view title, size_t width, size_t height);
+		~zone();
 	protected:
 		explicit zone(std::shared_ptr<compound::interface> parent);
 
@@ -87,7 +88,8 @@ namespace clap::ui {
 		void do_remove();
 		inline void do_initialize();
 		inline void do_render();
-		inline void do_update(utility::timestep const &ts);
+		inline void do_update();
+		inline void do_resize();
 
 	public:
 		std::function<vk::UniquePipeline()> on_initialize;
