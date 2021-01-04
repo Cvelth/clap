@@ -13,6 +13,7 @@ using namespace clap::literals;
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string_view>
