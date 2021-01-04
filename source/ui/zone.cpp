@@ -2,6 +2,7 @@
 
 #include "resource/resource.hpp"
 #include "ui/detail/manager.hpp"
+#include "ui/vulkan/core.hpp"
 #include "ui/vulkan/window.hpp"
 #include "ui/compound.hpp"
 #include "ui/zone.hpp"
@@ -17,7 +18,6 @@ clap::ui::zone::zone(std::string_view title, size_t width, size_t height)
 					<< "Create a new free zone: " << title 
 					<< " (" << width << ", " << height << ")";
 				detail::manager::add(*this);
-				state.window->vkfw->callbacks()->on_framebuffer_resize = std::bind_front(&zone::do_resize, *this);
 			} else
 				clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone"_tag
 					<< "Fail to create a window for a new free zone: " << title
@@ -165,16 +165,123 @@ void clap::ui::zone::do_remove() {
 		}
 	}, state);
 }
-void clap::ui::zone::do_resize([[maybe_unused]] vkfw::Window const &event_window, 
-							   size_t new_width, size_t new_height) {
-	std::visit(utility::overload{
-		[this, event_window, new_width, new_height](when_free &state) {
-			assert(state.window->vkfw && event_window == *state.window->vkfw);
-			state.window->do_resize(new_width, new_height);
-		},
-		[this](when_owned const &) { /* Do nothing */ }
-	}, state);
+void clap::ui::zone::do_initialize() {
+	if (on_initialize)
+		pipeline = std::make_shared<vk::UniquePipeline>(std::move(on_initialize()));
+	else 
+		std::visit(utility::overload{
+			[this](when_free &) { /* Do nothing */ },
+			[this](when_owned const &state) {
+				pipeline = state.owner->pipeline;
+			}
+		}, state);
+	if (!pipeline)
+		clap::log << cL::warning << cL::major << name() << " was initialized without a valid pipeline object.";
+	else if (auto &device = clap::ui::vulkan::device(); device)
+		if (auto window = this->window(); window) {
+			synchronization.resize(window->framebuffers.size());
+			for (auto &sync : synchronization) {
+				sync.framebuffer_ready_semaphore = device.createSemaphoreUnique({});
+				sync.queue_submitted_semaphore = device.createSemaphoreUnique({});
+				sync.queue_submitted_fence = device.createFenceUnique(vk::FenceCreateInfo{
+					.flags = vk::FenceCreateFlagBits::eSignaled
+				});
+			}
+			do_render();
+		}
+}
+inline void clap::ui::zone::do_render() {
+	if (on_render && pipeline && *pipeline)
+		if (auto window = this->window(); window) {
+			vk::CommandBufferAllocateInfo command_buffer_info = {
+				.commandPool = clap::ui::vulkan::command_pool(),
+				.level = vk::CommandBufferLevel::ePrimary,
+				.commandBufferCount = static_cast<uint32_t>(window->framebuffers.size())
+			};
+			if (auto device = vulkan::device(); device)
+				command_buffers = device.allocateCommandBuffersUnique(command_buffer_info);
+			else
+				return;
 
-	if (on_resize)
-		on_resize(new_width, new_height);
+			vk::Rect2D render_area = {
+				.offset = { static_cast<int32_t>(size.x()), static_cast<int32_t>(size.y()) },
+				.extent = { static_cast<uint32_t>(size.w()), static_cast<uint32_t>(size.h()) }
+			};
+			vk::ClearValue clear_color_value(clear_color);
+			vk::RenderPassBeginInfo render_pass_begin_info = {
+				.renderPass = window->render_pass,
+				//.framebuffer = *window->framebuffers[counter++],
+				.renderArea = render_area,
+				.clearValueCount = 1,
+				.pClearValues = &clear_color_value
+			};
+			vk::Viewport viewport = {
+				.x = static_cast<float>(size.x()),
+				.y = static_cast<float>(size.y()),
+				.width = static_cast<float>(size.w()),
+				.height = static_cast<float>(size.h()),
+				.minDepth = 0.f,
+				.maxDepth = 1.f
+			};
+
+			for (size_t counter = 0u; auto &command_buffer : command_buffers) {
+				command_buffer->begin(vk::CommandBufferBeginInfo{});
+				render_pass_begin_info.framebuffer = *window->framebuffers[counter++];
+				command_buffer->beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+				command_buffer->bindPipeline(vk::PipelineBindPoint::eGraphics, **pipeline);
+				command_buffer->setViewport(0, std::array{ viewport });
+				command_buffer->setScissor(0, std::array{ render_area });
+
+				on_render(*command_buffer);
+
+				command_buffer->endRenderPass();
+				command_buffer->end();
+			}
+		}
+}
+inline void clap::ui::zone::do_update(utility::timestep const &ts) {
+	if (on_update && on_update(ts) && !command_buffers.empty())
+		if (auto &device = clap::ui::vulkan::device(); device)
+			if (auto window = this->window(); window)
+				if (auto &queue = clap::ui::vulkan::queue(); queue) {
+					auto temporary_semaphore = device.createSemaphoreUnique({});
+					auto [result, framebuffer_index] = device.acquireNextImageKHR(
+						window->swapchain, std::numeric_limits<uint64_t>::max(),
+						*temporary_semaphore, nullptr
+					);
+					if (result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) {
+						auto &sync = synchronization[framebuffer_index];
+
+						[[maybe_unused]] auto wait_result = device.waitForFences(
+							std::array{ *sync.queue_submitted_fence },
+							true, std::numeric_limits<uint64_t>::max()
+						);
+						device.resetFences(std::array{ *sync.queue_submitted_fence });
+						sync.framebuffer_ready_semaphore = std::move(temporary_semaphore);
+
+						vk::PipelineStageFlags wait_stage =
+							vk::PipelineStageFlagBits::eColorAttachmentOutput;
+						vk::SubmitInfo submit_info = {
+							.waitSemaphoreCount = 1,
+							.pWaitSemaphores = &*sync.framebuffer_ready_semaphore,
+							.pWaitDstStageMask = &wait_stage,
+							.commandBufferCount = 1,
+							.pCommandBuffers = &*command_buffers[framebuffer_index],
+							.signalSemaphoreCount = 1,
+							.pSignalSemaphores = &*sync.queue_submitted_semaphore
+						};
+						queue.submit(std::array{ submit_info }, *sync.queue_submitted_fence);
+
+						vk::PresentInfoKHR present_info = {
+							.waitSemaphoreCount = 1,
+							.pWaitSemaphores = &*sync.queue_submitted_semaphore,
+							.swapchainCount = 1,
+							.pSwapchains = &window->swapchain,
+							.pImageIndices = &framebuffer_index
+						};
+						[[maybe_unused]] auto present_result = vkQueuePresentKHR(
+							queue, &present_info.operator const VkPresentInfoKHR & ()
+						);
+					}
+				}
 }

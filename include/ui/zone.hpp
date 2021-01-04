@@ -1,12 +1,6 @@
 ﻿#pragma once
-
-#include "essential/utility.hpp"
+#include "precompiled/ui.hpp"
 #include "ui/entity.hpp"
-
-#include <functional>
-#include <memory>
-#include <optional>
-#include <variant>
 
 namespace clap::ui {
 	class zone;
@@ -91,14 +85,17 @@ namespace clap::ui {
 	private:
 		void do_add();
 		void do_remove();
-		inline void do_initialize() { if (on_initialize) on_initialize(); }
-		inline void do_update(utility::timestep const &ts) { if (on_update) on_update(ts); }
-		void do_resize(vkfw::Window const &window, size_t new_width, size_t new_height);
+		inline void do_initialize();
+		inline void do_render();
+		inline void do_update(utility::timestep const &ts);
 
 	public:
-		std::function<void()> on_initialize;
-		std::function<void(utility::timestep const &)> on_update;
+		std::function<vk::UniquePipeline()> on_initialize;
+		std::function<void(vk::CommandBuffer &)> on_render;
+		std::function<bool(utility::timestep const &)> on_update;
 		std::function<bool(size_t, size_t)> on_resize;
+
+		std::array<float, 4> clear_color = { 0.f, 0.f, 0.f, 1.f };
 
 	protected:
 		std::function<std::string_view()> get_identifier;
@@ -116,5 +113,15 @@ namespace clap::ui {
 	protected:
 		std::variant<when_free, when_owned> state;
 		detail::size_constraints size;
+
+		std::shared_ptr<vk::UniquePipeline> pipeline;
+		std::vector<vk::UniqueCommandBuffer> command_buffers;
+
+		struct synchronization_t {
+			vk::UniqueSemaphore framebuffer_ready_semaphore;
+			vk::UniqueSemaphore queue_submitted_semaphore;
+			vk::UniqueFence queue_submitted_fence;
+		};
+		std::vector<synchronization_t> synchronization;
 	};
 }
