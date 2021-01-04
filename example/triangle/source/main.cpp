@@ -5,6 +5,7 @@ public:
 	my_zone() : clap::ui::zone("Triangle example", 1280, 720) {
 		on_initialize = [this] { initialize(); };
 		on_update = [this](auto const &) { update(); };
+		on_resize = [this](size_t width, size_t height) { return resize(width, height); };
 	}
 protected:
 	inline void initialize_pipeline() {
@@ -24,23 +25,9 @@ protected:
 					.topology = vk::PrimitiveTopology::eTriangleFan,
 					.primitiveRestartEnable = false
 				};
-				vk::Viewport viewport = {
-					.x = 0.f,
-					.y = 0.f,
-					.width = static_cast<float>(this->width()),
-					.height = static_cast<float>(this->height()),
-					.minDepth = 0.f,
-					.maxDepth = 1.f
-				};
-				vk::Rect2D scissor = {
-					.offset = {0u, 0u},
-					.extent = window->swapchain_extent
-				};
 				vk::PipelineViewportStateCreateInfo viewport_info = {
 					.viewportCount = 1,
-					.pViewports = &viewport,
-					.scissorCount = 1,
-					.pScissors = &scissor
+					.scissorCount = 1
 				};
 				vk::PipelineRasterizationStateCreateInfo rasterization_info = {
 					.depthClampEnable = false,
@@ -55,7 +42,6 @@ protected:
 					.rasterizationSamples = vk::SampleCountFlagBits::e1,
 					.sampleShadingEnable = false
 				};
-				//vk::PipelineDepthStencilStateCreateInfo depth_stencil_info = {/* ... */}
 				vk::PipelineColorBlendAttachmentState color_blend_attachment = {
 					.blendEnable = false,
 					.srcColorBlendFactor = vk::BlendFactor::eOneMinusDstAlpha,
@@ -76,9 +62,8 @@ protected:
 					.pAttachments = &color_blend_attachment
 				};
 				std::array dynamic_states = {
-					//vk::DynamicState::eViewport,
-					vk::DynamicState::eLineWidth,
-					//vk::DynamicState::eScissor
+					vk::DynamicState::eViewport,
+					vk::DynamicState::eScissor
 				};
 				vk::PipelineDynamicStateCreateInfo dynamic_info = {
 					.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size()),
@@ -132,13 +117,26 @@ protected:
 						.framebuffer = *window->framebuffers[counter++],
 						.renderArea = vk::Rect2D {
 							.offset = {0, 0},
-							.extent = window->swapchain_extent
+							.extent = window->extent
 						},
 						.clearValueCount = 1,
 						.pClearValues = &clear_color
 					};
 					buffer->beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 					buffer->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+					
+					buffer->setViewport(0, std::array{vk::Viewport {
+						.x = 0,
+						.y = 0,
+						.width = static_cast<float>(window->extent.width),
+						.height = static_cast<float>(window->extent.height),
+						.minDepth = 0,
+						.maxDepth = 1
+					}});
+					buffer->setScissor(0, std::array{vk::Rect2D {
+						.offset = {0u, 0u},
+						.extent = window->extent
+					}});
 					buffer->draw(3, 1, 0, 0);
 					buffer->endRenderPass();
 					buffer->end();
@@ -168,41 +166,50 @@ protected:
 			if (auto window = this->window(); window)
 				if (auto &queue = clap::ui::vulkan::queue(); queue) {
 					auto temporary_semaphore = device.createSemaphoreUnique({});
-					uint32_t framebuffer_index = device.acquireNextImageKHR(
+					auto [result, framebuffer_index] = device.acquireNextImageKHR(
 						window->swapchain, std::numeric_limits<uint64_t>::max(),
 						*temporary_semaphore, nullptr
-					).value;
-					auto &sync = synchronization[framebuffer_index];
-
-					[[maybe_unused]] auto wait_result = device.waitForFences(
-						std::array{ *sync.queue_submitted_fence },
-						true, std::numeric_limits<uint64_t>::max()
 					);
-					device.resetFences(std::array{ *sync.queue_submitted_fence });
-					sync.framebuffer_ready_semaphore = std::move(temporary_semaphore);
+					if (result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) {
+						auto &sync = synchronization[framebuffer_index];
 
-					vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-					vk::SubmitInfo submit_info = {
-						.waitSemaphoreCount = 1,
-						.pWaitSemaphores = &*sync.framebuffer_ready_semaphore,
-						.pWaitDstStageMask = &wait_stage,
-						.commandBufferCount = 1,
-						.pCommandBuffers = &*command_buffers[framebuffer_index],
-						.signalSemaphoreCount = 1,
-						.pSignalSemaphores = &*sync.queue_submitted_semaphore
-					};
-					queue.submit(std::array{ submit_info }, *sync.queue_submitted_fence);
+						[[maybe_unused]] auto wait_result = device.waitForFences(
+							std::array{ *sync.queue_submitted_fence },
+							true, std::numeric_limits<uint64_t>::max()
+						);
+						device.resetFences(std::array{ *sync.queue_submitted_fence });
+						sync.framebuffer_ready_semaphore = std::move(temporary_semaphore);
 
-					vk::PresentInfoKHR present_info = {
-						.waitSemaphoreCount = 1,
-						.pWaitSemaphores = &*sync.queue_submitted_semaphore,
-						.swapchainCount = 1,
-						.pSwapchains = &window->swapchain,
-						.pImageIndices = &framebuffer_index
-					};
-					[[maybe_unused]] auto present_result = queue.presentKHR(present_info);
-					queue.waitIdle();
+						vk::PipelineStageFlags wait_stage = 
+							vk::PipelineStageFlagBits::eColorAttachmentOutput;
+						vk::SubmitInfo submit_info = {
+							.waitSemaphoreCount = 1,
+							.pWaitSemaphores = &*sync.framebuffer_ready_semaphore,
+							.pWaitDstStageMask = &wait_stage,
+							.commandBufferCount = 1,
+							.pCommandBuffers = &*command_buffers[framebuffer_index],
+							.signalSemaphoreCount = 1,
+							.pSignalSemaphores = &*sync.queue_submitted_semaphore
+						};
+						queue.submit(std::array{ submit_info }, *sync.queue_submitted_fence);
+
+						vk::PresentInfoKHR present_info = {
+							.waitSemaphoreCount = 1,
+							.pWaitSemaphores = &*sync.queue_submitted_semaphore,
+							.swapchainCount = 1,
+							.pSwapchains = &window->swapchain,
+							.pImageIndices = &framebuffer_index
+						};
+						[[maybe_unused]] auto present_result = vkQueuePresentKHR(
+							queue, &present_info.operator const VkPresentInfoKHR &()
+						);
+					}
 				}
+	}
+	bool resize(size_t new_width, size_t new_height) {
+		initialize_command_buffers();
+		clap::log << "Got resized to (" << new_width << ", " << new_height << ").";
+		return true;
 	}
 protected:
 	vk::UniquePipelineLayout pipeline_layout;
