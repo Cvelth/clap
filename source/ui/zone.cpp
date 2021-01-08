@@ -228,11 +228,13 @@ inline void clap::ui::zone::do_update() {
 			if (auto window = this->window(); window)
 				if (auto &queue = clap::ui::vulkan::queue(); queue) {
 					auto temporary_semaphore = device.createSemaphoreUnique({});
-					auto [result, framebuffer_index] = device.acquireNextImageKHR(
-						window->swapchain, std::numeric_limits<uint64_t>::max(),
-						*temporary_semaphore, nullptr
-					);
-					if (result == vk::Result::eSuccess || result == vk::Result::eSuboptimalKHR) {
+					uint32_t framebuffer_index = ~0u;
+					auto acquire_result = static_cast<vk::Result>(vkAcquireNextImageKHR(
+						device, window->swapchain, std::numeric_limits<uint64_t>::max(),
+						*temporary_semaphore, nullptr, &framebuffer_index
+					));
+					if (acquire_result == vk::Result::eSuccess 
+					 || acquire_result == vk::Result::eSuboptimalKHR) {
 						auto &sync = synchronization[framebuffer_index];
 
 						[[maybe_unused]] auto wait_result = device.waitForFences(
@@ -262,12 +264,12 @@ inline void clap::ui::zone::do_update() {
 							.pSwapchains = &window->swapchain,
 							.pImageIndices = &framebuffer_index
 						};
-						[[maybe_unused]] auto present_result = vkQueuePresentKHR(
+						auto present_result = static_cast<vk::Result>(vkQueuePresentKHR(
 							queue, &present_info.operator const VkPresentInfoKHR & ()
-						);
-						if (vk::Result(present_result) == vk::Result::eErrorOutOfDateKHR)
+						));
+						if (present_result == vk::Result::eErrorOutOfDateKHR)
 							do_resize();
-					} else if (result == vk::Result::eErrorOutOfDateKHR)
+					} else if (acquire_result == vk::Result::eErrorOutOfDateKHR)
 						do_resize();
 				}
 }

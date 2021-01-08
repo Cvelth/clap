@@ -125,9 +125,12 @@ void clap::ui::vulkan::window::do_resize() {
 	std::scoped_lock guard(mutex);
 	if (auto &physical_device = vulkan::physical_device(); physical_device && surface && vkfw) {
 		auto capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-		if (extent != capabilities.currentExtent) {
+		if (extent != capabilities.currentExtent 
+		 && capabilities.currentExtent.width != 0 
+		 && capabilities.currentExtent.width != 0) {
 			extent = capabilities.currentExtent;
-			if (extent.width == std::numeric_limits<uint32_t>::max())
+			if (extent.width == std::numeric_limits<uint32_t>::max() 
+			 || extent.height == std::numeric_limits<uint32_t>::max())
 				extent = decltype(extent) {
 					std::clamp(static_cast<uint32_t>(vkfw->getFramebufferWidth()),
 							   capabilities.minImageExtent.width,
@@ -135,7 +138,9 @@ void clap::ui::vulkan::window::do_resize() {
 					std::clamp(static_cast<uint32_t>(vkfw->getFramebufferHeight()),
 							   capabilities.minImageExtent.height,
 							   capabilities.maxImageExtent.height)
-			};
+				};
+			else if (extent.width == 0 || extent.height == 0)
+				return;
 			auto chosen_image_count = std::clamp(capabilities.minImageCount + 1,
 												 capabilities.minImageCount,
 												 (capabilities.maxImageCount == 0
