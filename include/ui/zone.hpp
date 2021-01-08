@@ -79,6 +79,8 @@ namespace clap::ui {
 			}, state);
 		}
 
+		inline void request_update() const { update_request.release(); }
+
 	protected:
 		[[nodiscard]] std::optional<vulkan::window_view> window();
 		[[nodiscard]] std::optional<vulkan::window_view const> window() const;
@@ -125,5 +127,8 @@ namespace clap::ui {
 			vk::UniqueFence queue_submitted_fence;
 		};
 		std::vector<synchronization_t> synchronization;
+
+	private:
+		mutable std::binary_semaphore update_request{ 1 };
 	};
 }

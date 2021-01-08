@@ -18,6 +18,10 @@ clap::ui::zone::zone(std::string_view title, size_t width, size_t height)
 					<< "Create a new free zone: " << title 
 					<< " (" << width << ", " << height << ")";
 				detail::manager::add(*this);
+				state.window->vkfw->callbacks()->on_window_resize = 
+					[this](auto const &, auto, auto) { update_request.release(); };
+				state.window->vkfw->callbacks()->on_window_close =
+					[this](auto const &) { update_request.release(); };
 			} else
 				clap::log << cL::warning << cL::major << "clap"_tag << "ui"_tag << "zone"_tag
 					<< "Fail to create a window for a new free zone: " << title
@@ -219,11 +223,11 @@ inline void clap::ui::zone::do_render() {
 		}
 }
 inline void clap::ui::zone::do_update() {
+	update_request.acquire();
 	auto current_frame = std::chrono::high_resolution_clock::now();
 	static auto last_frame = current_frame;
 	auto time_step = std::chrono::duration_cast<clap::utility::timestep>(current_frame - last_frame);
-
-	if (on_update && on_update(time_step) && !command_buffers.empty())
+	if (!command_buffers.empty() && on_update && on_update(time_step))
 		if (auto &device = clap::ui::vulkan::device(); device)
 			if (auto window = this->window(); window)
 				if (auto &queue = clap::ui::vulkan::queue(); queue) {
@@ -233,8 +237,8 @@ inline void clap::ui::zone::do_update() {
 						device, window->swapchain, std::numeric_limits<uint64_t>::max(),
 						*temporary_semaphore, nullptr, &framebuffer_index
 					));
-					if (acquire_result == vk::Result::eSuccess 
-					 || acquire_result == vk::Result::eSuboptimalKHR) {
+					if (acquire_result == vk::Result::eSuccess
+						|| acquire_result == vk::Result::eSuboptimalKHR) {
 						auto &sync = synchronization[framebuffer_index];
 
 						[[maybe_unused]] auto wait_result = device.waitForFences(
@@ -284,9 +288,19 @@ inline void clap::ui::zone::do_resize() {
 			size.current_w = state.window->extent.width;
 			size.current_h = state.window->extent.height;
 			do_render();
-		},
+			if (on_resize && !on_resize(size.current_w, size.current_h))
+				clap::log << cL::warning << cL::important << "clap"_tag << "ui"_tag << "zone"_tag
+					<< name() << " resize event has returned 'false'. New size is ("
+					<< size.current_w << ", " << size.current_h << ").";
+			update_request.release();
+		},				  
 		[this](when_owned const &state) {
 			state.owner->do_resize();
+			if (on_resize && !on_resize(size.current_w, size.current_h))
+				clap::log << cL::warning << cL::important << "clap"_tag << "ui"_tag << "zone"_tag
+					<< name() << " resize event has returned 'false'. New size is ("
+					<< size.current_w << ", " << size.current_h << ").";
+			update_request.release();
 		}
 	}, state);
 }

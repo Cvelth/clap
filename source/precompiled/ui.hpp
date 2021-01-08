@@ -15,6 +15,7 @@ using namespace clap::literals;
 #include <limits>
 #include <memory>
 #include <optional>
+#include <semaphore>
 #include <span>
 #include <string_view>
 #include <thread>
