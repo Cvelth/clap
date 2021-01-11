@@ -20,11 +20,10 @@ function template.files(name, prefix)
 
     for id, shader_stage in pairs(template.supported_shader_stages) do
         files {
-            shader_source .. shader_stage .. "/**.glsl",
-            shader_include .. shader_stage .. "/**.glsl",
+            shader_source .. shader_stage .. "/**.*lsl",
+            shader_include .. shader_stage .. "/**.*lsl",
         }
-        filter {"files:" .. shader_source .. shader_stage .. "**.glsl"}
-            --local relative_to_root = 
+        filter {"files:" .. shader_source .. shader_stage .. "**.*lsl"}
             buildmessage("Compiling a " .. shader_stage .. " shader: " .. "%{file.abspath}")
             buildcommands {
                 "{MKDIR} %{cfg.objdir}/" .. shader_stage,

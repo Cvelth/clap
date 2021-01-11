@@ -22,8 +22,8 @@ public:
 protected:
 	inline vk::UniquePipeline initialize() {
 		clap::ui::vulkan::pipeline::constructor pipeline_parameters;
-		pipeline_parameters.shaders(clap::resource::load::shader::vertex["triangle"],
-									clap::resource::load::shader::fragment["triangle"]);
+		pipeline_parameters.shaders(clap::resource::load::shader::vertex["hlsl_triangle"],
+									clap::resource::load::shader::fragment["hlsl_triangle"]);
 		pipeline_parameters.input_assembly(vk::PrimitiveTopology::eTriangleFan, false);
 		pipeline_parameters.color_blend(vk::PipelineColorBlendAttachmentState {
 			.blendEnable = false,

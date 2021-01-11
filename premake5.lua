@@ -11,6 +11,16 @@ templated.vpaths = function(project_name) return {
 	}, {
 		["precompiled/source"] = "**/precompiled/**.c*"
 	}, {
+		["shader/include/*"] = {
+			"include/" .. project_name .. "/shader/*/**.*lsl",
+			"example/" .. project_name .. "/include/shader/*/**.*lsl"
+		 }
+	}, {
+		["shader/*"] = {
+			"source/" .. project_name .. "/shader/*/**.*lsl",
+			"example/" .. project_name .. "/source/shader/*/**.*lsl",
+		 }
+	}, {
 		["include/detail/**"] = {
 			"include/" .. project_name .. "/detail/**.h*",
 			"example/" .. project_name .. "/include/detail/**.h*"
@@ -40,16 +50,6 @@ templated.vpaths = function(project_name) return {
 			"include/" .. project_name .. "/**.h*",
 			"example/" .. project_name .. "/include/**.h*"
 		}
-	}, {
-		["shader/include/*"] = {
-			"include/" .. project_name .. "/shader/*/**.glsl",
-			"example/" .. project_name .. "/include/shader/*/**.glsl"
-		 }
-	}, {
-		["shader/*"] = {
-			"source/" .. project_name .. "/shader/*/**.glsl",
-			"example/" .. project_name .. "/source/shader/*/**.glsl"
-		 }
 	}, {
 		[""] = "**.manifest"
 	}
