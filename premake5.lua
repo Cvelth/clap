@@ -73,18 +73,16 @@ templated.project "resource"
 	depends "ryml"
 templated.project "ui"
 	templated.kind "StaticLib"
-	clapped.files "ui"
 	templated.pch "ui"
+	clapped.files "ui"
 	links "resource"
 	depends { "glfw", "vkfw", "vulkan", "vma", "vkma" }
-	filter {"files:source/**/no_pch/**"}
-		flags "NoPCH"
 
 group "example"
 templated.project "triangle"
 	templated.location "../example/triangle/build"
 	templated.kind "ConsoleApp"
-	clapped.files("triangle", "example")
 	templated.pch("triangle", "example")
+	clapped.files("triangle", "example")
 	links "ui"
 	depends { "glfw", "vkfw", "vulkan", "vma", "vkma" }
