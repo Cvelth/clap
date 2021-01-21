@@ -76,7 +76,9 @@ templated.project "ui"
 	clapped.files "ui"
 	templated.pch "ui"
 	links "resource"
-	depends { "glfw", "vkfw", "vulkan" }
+	depends { "glfw", "vkfw", "vulkan", "vma", "vkma" }
+	filter {"files:source/**/no_pch/**"}
+		flags "NoPCH"
 
 group "example"
 templated.project "triangle"
@@ -85,4 +87,4 @@ templated.project "triangle"
 	clapped.files("triangle", "example")
 	templated.pch("triangle", "example")
 	links "ui"
-	depends { "glfw", "vkfw", "vulkan" }
+	depends { "glfw", "vkfw", "vulkan", "vma", "vkma" }

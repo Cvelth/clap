@@ -47,3 +47,22 @@ vulkan:
 - global:
     include: $VULKAN_SDK/Include
     lib: $VULKAN_SDK/Lib/vulkan-1
+
+vma:
+- github_clone:
+    owner: GPUOpen-LibrariesAndSDKs
+    name: VulkanMemoryAllocator
+    tag: master
+- install:
+    include: src/vk_mem_alloc.h
+- depend:
+    include: include/src
+
+vkma:
+- github_clone:
+    owner: cvelth
+    tag: main
+- install:
+    include: vkma.hpp
+- depend:
+    include: include

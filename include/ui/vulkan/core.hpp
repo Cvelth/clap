@@ -7,6 +7,7 @@ namespace clap::ui::vulkan {
 		vk::UniqueInstance create_instance();
 		vk::PhysicalDevice choose_device();
 		vk::UniqueDevice initialize_device();
+		vkma::UniqueAllocator create_allocator();
 		vk::Queue initialize_queue();
 		vk::UniqueCommandPool create_command_pool();
 		vk::DispatchLoaderDynamic initialize_loader();
@@ -32,6 +33,10 @@ namespace clap::ui::vulkan {
 	[[nodiscard]] inline vk::Device &device() {
 		static auto device = detail::initialize_device();
 		return *device;
+	}
+	[[nodiscard]] inline vkma::Allocator &allocator() {
+		static auto allocator = detail::create_allocator();
+		return *allocator;
 	}
 	[[nodiscard]] inline uint32_t &queue_family_id() {
 		static uint32_t id = 0;

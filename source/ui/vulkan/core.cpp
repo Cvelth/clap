@@ -271,6 +271,14 @@ vk::UniqueDevice clap::ui::vulkan::detail::initialize_device() {
 				<< "No queue families available.";
 	return {};
 }
+vkma::UniqueAllocator clap::ui::vulkan::detail::create_allocator() {
+	vkma::AllocatorCreateInfo allocator_info = {
+		.physicalDevice = physical_device(),
+		.device = device(),
+		.instance = instance()
+	};
+	return vkma::createAllocatorUnique(allocator_info);
+}
 vk::Queue clap::ui::vulkan::detail::initialize_queue() {
 	if (auto &device = vulkan::device(); device)
 		return device.getQueue(queue_family_id(), 0);
